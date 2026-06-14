@@ -1,0 +1,237 @@
+import { useState, useRef, useEffect } from 'react'
+import { Pencil, Copy, Trash2, MoreVertical, Paperclip, FileText } from 'lucide-react'
+import { Card } from '@/components/ui/Card'
+import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay'
+import { MovimientoForm } from './MovimientoForm'
+import type { Movimiento } from '@/types/app.types'
+import { formatDate } from '@/utils/dates'
+import { useDeleteMovimiento } from '@/hooks/useMovimientos'
+
+interface MovimientoCardProps {
+  movimiento: Movimiento
+}
+
+const tipoLabel: Record<string, string> = {
+  ingreso:       'Ingreso',
+  gasto:         'Gasto',
+  ahorro:        'Ahorro',
+  pago_deuda:    'Pago deuda',
+  transferencia: 'Transferencia'
+}
+
+const tipoBadgeColor: Record<string, string> = {
+  ingreso:       'bg-success-50 text-success-700',
+  gasto:         'bg-danger-50 text-danger-700',
+  ahorro:        'bg-primary-50 text-primary-700',
+  pago_deuda:    'bg-warning-50 text-warning-700',
+  transferencia: 'bg-slate-100 text-slate-600'
+}
+
+function ComprobanteIcon({ url }: { url: string }) {
+  const isPDF = url.toLowerCase().includes('.pdf')
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={e => e.stopPropagation()}
+      className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 hover:bg-primary-100 transition-colors"
+      title="Ver comprobante"
+    >
+      {isPDF
+        ? <FileText className="h-3.5 w-3.5 text-danger-500" />
+        : <Paperclip className="h-3.5 w-3.5 text-slate-500" />
+      }
+    </a>
+  )
+}
+
+// Menú flotante con posición fija para evitar clipping en listas
+function ContextMenu({
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onClose,
+  anchorRef
+}: {
+  onEdit:       () => void
+  onDuplicate:  () => void
+  onDelete:     () => void
+  onClose:      () => void
+  anchorRef:    React.RefObject<HTMLButtonElement>
+}) {
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Calcular posición relativa al botón.
+  // IMPORTANTE: position:fixed es relativo al VIEWPORT, no al documento.
+  // getBoundingClientRect() ya devuelve coords de viewport → NO sumar scrollY.
+  useEffect(() => {
+    if (!anchorRef.current || !menuRef.current) return
+    const rect = anchorRef.current.getBoundingClientRect()
+    const menu = menuRef.current
+
+    // Posicionar debajo del botón, alineado a la derecha
+    let top  = rect.bottom + 4
+    let left = rect.right - menu.offsetWidth
+
+    // Evitar que salga por debajo del viewport
+    if (top + menu.offsetHeight > window.innerHeight) {
+      top = rect.top - menu.offsetHeight - 4
+    }
+    // Evitar que salga por la izquierda del viewport
+    if (left < 8) left = 8
+
+    menu.style.top  = `${top}px`
+    menu.style.left = `${left}px`
+  }, [anchorRef])
+
+  return (
+    <>
+      {/* Overlay para cerrar al tocar fuera */}
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div
+        ref={menuRef}
+        className="fixed z-50 bg-white rounded-2xl shadow-card-lg border border-slate-100 py-1.5 w-44 animate-fade-in"
+      >
+        <button
+          onClick={() => { onEdit(); onClose() }}
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          <Pencil className="h-4 w-4 text-slate-400" />
+          Editar
+        </button>
+        <button
+          onClick={() => { onDuplicate(); onClose() }}
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          <Copy className="h-4 w-4 text-slate-400" />
+          Duplicar
+        </button>
+        <div className="mx-3 my-1 h-px bg-slate-100" />
+        <button
+          onClick={() => { onDelete(); onClose() }}
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger-600 hover:bg-danger-50 transition-colors"
+        >
+          <Trash2 className="h-4 w-4" />
+          Eliminar
+        </button>
+      </div>
+    </>
+  )
+}
+
+export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
+  const [menuOpen,      setMenuOpen]      = useState(false)
+  const [editOpen,      setEditOpen]      = useState(false)
+  const [duplicateOpen, setDuplicateOpen] = useState(false)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const deleteMutation = useDeleteMovimiento()
+
+  function handleDelete() {
+    if (!confirm(`¿Eliminar este movimiento?\nSe revertirá el impacto en los saldos.`)) return
+    deleteMutation.mutate(mov.id)
+  }
+
+  return (
+    <>
+      <Card padding="sm" className="relative">
+        <div className="flex items-center gap-3">
+          {/* Ícono categoría */}
+          <div
+            className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
+            style={{ backgroundColor: `${mov.categoria?.color ?? '#6B7280'}18` }}
+          >
+            {mov.tipo === 'transferencia' ? '🔄' : (mov.categoria?.emoji ?? '💸')}
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <p className="text-sm font-semibold text-slate-900 truncate">
+                {mov.tipo === 'transferencia'
+                  ? `${mov.cuenta?.nombre ?? '?'} → ${mov.cuenta_destino?.nombre ?? '?'}`
+                  : (mov.categoria?.nombre ?? 'Sin categoría')
+                }
+              </p>
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${tipoBadgeColor[mov.tipo] ?? 'bg-slate-100 text-slate-600'}`}>
+                {tipoLabel[mov.tipo] ?? mov.tipo}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {mov.subcategoria && (
+                <>
+                  <span className="text-xs text-slate-400">{mov.subcategoria.nombre}</span>
+                  <span className="text-slate-200">·</span>
+                </>
+              )}
+              <span className="text-xs text-slate-400">{formatDate(mov.fecha)}</span>
+              {mov.cuenta && mov.tipo !== 'transferencia' && (
+                <>
+                  <span className="text-slate-200">·</span>
+                  <span className="text-xs text-slate-400">{mov.cuenta.nombre}</span>
+                </>
+              )}
+            </div>
+            {(mov.para_tercero || (mov.comision > 0)) && (
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                {mov.para_tercero && (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning-50 text-warning-700">
+                    👥 Para{mov.tercero_nombre ? ` ${mov.tercero_nombre}` : ' tercero'}
+                  </span>
+                )}
+                {mov.comision > 0 && (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                    +${mov.comision.toLocaleString('es-CL')} comisión
+                  </span>
+                )}
+              </div>
+            )}
+            {mov.nota && (
+              <p className="text-xs text-slate-400 mt-0.5 truncate italic">"{mov.nota}"</p>
+            )}
+          </div>
+
+          {/* Monto + acciones */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {mov.comprobante_url && <ComprobanteIcon url={mov.comprobante_url} />}
+            <CurrencyDisplay amount={mov.monto} size="sm" showSign tipo={mov.tipo} />
+            <button
+              ref={btnRef}
+              onClick={() => setMenuOpen(o => !o)}
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+            >
+              <MoreVertical className="h-4 w-4 text-slate-400" />
+            </button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Menú contextual */}
+      {menuOpen && (
+        <ContextMenu
+          anchorRef={btnRef}
+          onEdit={()      => setEditOpen(true)}
+          onDuplicate={() => setDuplicateOpen(true)}
+          onDelete={handleDelete}
+          onClose={()     => setMenuOpen(false)}
+        />
+      )}
+
+      {/* Modal editar */}
+      <MovimientoForm
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        editingMovimiento={mov}
+        onSuccess={() => setEditOpen(false)}
+      />
+
+      {/* Modal duplicar */}
+      <MovimientoForm
+        isOpen={duplicateOpen}
+        onClose={() => setDuplicateOpen(false)}
+        duplicateFrom={mov}
+        onSuccess={() => setDuplicateOpen(false)}
+      />
+    </>
+  )
+}

@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "PowerShell(pip install pdfplumber -q 2>&1)",
+      "Read(//usr/**)",
+      "Bash(ls /c/Python*)",
+      "Read(//c/Users/rojas/AppData/Local/Programs/**)",
+      "Bash(pdftotext \"/c/Users/rojas/OneDrive/Escritorio/Claude/App Finanzas/Documento/FINANZAS VACIO.pdf\" -)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\rojas\\\\OneDrive\\\\Escritorio\\\\Claude\\\\App Finanzas\\\\src\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | ForEach-Object { $_.FullName.Replace\\(\"C:\\\\Users\\\\rojas\\\\OneDrive\\\\Escritorio\\\\Claude\\\\App Finanzas\\\\src\\\\\", \"src/\"\\) })",
+      "Bash(node -e ' *)",
+      "Bash(npx tsc *)",
+      "Bash(npm list *)",
+      "Bash(npm audit *)",
+      "Bash(npx npm-check-updates *)",
+      "Bash(npm run *)"
+    ]
+  }
+}

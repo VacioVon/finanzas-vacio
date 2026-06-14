@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-slate-900;
+    overscroll-behavior: none;
+  }
+
+  /* Padding seguro para notch/barra inferior en móviles */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+
+@layer utilities {
+  /* Ocultar scrollbar pero mantener scroll */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Altura con safe area */
+  .h-13 {
+    height: 3.25rem;
+  }
+}
