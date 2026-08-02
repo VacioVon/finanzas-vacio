@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  User, Tag, LogOut, ChevronRight, Moon, Sun, Monitor, DollarSign, CalendarDays
+  User, Tag, LogOut, ChevronRight, Moon, Sun, Monitor, DollarSign, CalendarDays, Trash2
 } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -10,6 +10,8 @@ import { PerfilForm } from '@/components/modules/perfil/PerfilForm'
 import { useAuthStore } from '@/store/authStore'
 import { useUpdatePerfil } from '@/hooks/usePerfil'
 import { signOut } from '@/services/auth.service'
+import { supabase } from '@/lib/supabase'
+import { useQueryClient } from '@tanstack/react-query'
 
 type Tema = 'light' | 'dark' | 'auto'
 
@@ -34,7 +36,9 @@ export function AjustesPage() {
   const navigate    = useNavigate()
   const { profile } = useAuthStore()
   const updatePerfil = useUpdatePerfil()
-  const [perfilOpen, setPerfilOpen] = useState(false)
+  const qc          = useQueryClient()
+  const [perfilOpen,    setPerfilOpen]    = useState(false)
+  const [reiniciando,   setReiniciando]   = useState(false)
 
   const temaActual    = (profile?.tema ?? 'auto') as Tema
   const monedaActual  = profile?.moneda ?? 'CLP'
@@ -54,6 +58,30 @@ export function AjustesPage() {
 
   async function handleLogout() {
     if (confirm('¿Cerrar sesión?')) await signOut()
+  }
+
+  async function handleReiniciar() {
+    const paso1 = confirm(
+      '⚠️ ¿Reiniciar todos los datos?\n\nSe eliminarán permanentemente:\n• Todas las cuentas y saldos\n• Todos los movimientos\n• Cuotas, deudas y suscripciones\n• Presupuestos y objetivos\n\nTu usuario y categorías se conservan.'
+    )
+    if (!paso1) return
+
+    const paso2 = confirm('¿Estás seguro? Esta acción no se puede deshacer.')
+    if (!paso2) return
+
+    setReiniciando(true)
+    try {
+      const { error } = await supabase.rpc('reiniciar_datos_usuario')
+      if (error) throw error
+      // Limpiar todo el cache de TanStack Query
+      await qc.invalidateQueries()
+      alert('Datos eliminados correctamente. La aplicación está lista para empezar de cero.')
+      navigate('/')
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Error al reiniciar datos')
+    } finally {
+      setReiniciando(false)
+    }
   }
 
   return (
@@ -196,17 +224,33 @@ export function AjustesPage() {
           </Card>
         </section>
 
-        {/* Sesión */}
+        {/* Zona de peligro */}
         <section>
-          <Card padding="none">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Zona de peligro</p>
+          <Card padding="none" className="divide-y divide-slate-100">
+            <button
+              onClick={handleReiniciar}
+              disabled={reiniciando}
+              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-danger-50 rounded-t-2xl transition-colors disabled:opacity-50"
+            >
+              <div className="w-9 h-9 rounded-xl bg-danger-50 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="h-4 w-4 text-danger-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-medium text-danger-600">
+                  {reiniciando ? 'Eliminando datos…' : 'Reiniciar todos los datos'}
+                </p>
+                <p className="text-xs text-slate-400">Elimina cuentas, movimientos, cuotas y más</p>
+              </div>
+            </button>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-danger-50 rounded-2xl transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-slate-50 rounded-b-2xl transition-colors"
             >
-              <div className="w-9 h-9 rounded-xl bg-danger-50 flex items-center justify-center">
-                <LogOut className="h-4 w-4 text-danger-600" />
+              <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
+                <LogOut className="h-4 w-4 text-slate-600" />
               </div>
-              <p className="text-sm font-medium text-danger-600">Cerrar sesión</p>
+              <p className="text-sm font-medium text-slate-700">Cerrar sesión</p>
             </button>
           </Card>
         </section>
