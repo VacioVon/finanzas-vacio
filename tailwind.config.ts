@@ -130,11 +130,11 @@ const config: Config = {
 
         // ── Superficies nocturnas (dark-first) ───────────────────
         night: {
-          0:      '#0A0F1E',   // fondo base — azul-negro profundo
-          1:      '#0F1629',   // cards
-          2:      '#151E35',   // cards elevadas
-          3:      '#1A2540',   // inputs, interactivos
-          border: '#1E2D4D',   // bordes sutiles
+          0:      '#1A1822',   // fondo base — cosmic profundo
+          1:      '#23212C',   // modal / cards — cosmic
+          2:      '#2C2A38',   // cards elevadas
+          3:      '#353344',   // inputs, interactivos
+          border: '#3D3B50',   // bordes sutiles
         },
 
         // ── Superficie light ──────────────────────────────────────
