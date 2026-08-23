@@ -46,17 +46,24 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', theme = '
         sizeClass,
         isDark ? 'border-t border-night-border' : 'bg-white'
       ].join(' ')}
-        style={isDark ? { backgroundColor: '#23212C' } : undefined}
+        style={isDark ? {
+          backgroundColor: '#23212C',
+          boxShadow: '0 -1px 0 0 rgba(155,93,229,0.35), 0 0 40px 0 rgba(155,93,229,0.12), 0 -20px 60px 0 rgba(41,121,255,0.08)'
+        } : undefined}
       >
         {/* Starfield + nebula — solo en dark */}
         {isDark && (
           <>
-            <StarField className="opacity-70 rounded-t-3xl" />
-            {/* Nebulosa sutil: gradiente violeta-azul en esquina superior */}
+            <StarField className="opacity-90 rounded-t-3xl" />
+            {/* Nebulosa: violeta fuerte arriba-derecha, cian suave abajo-izquierda, coral muy sutil al centro */}
             <div
               className="absolute inset-0 pointer-events-none rounded-t-3xl"
               style={{
-                background: 'radial-gradient(ellipse 60% 40% at 80% 0%, rgba(155,93,229,0.12) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 10% 100%, rgba(41,121,255,0.08) 0%, transparent 60%)'
+                background: [
+                  'radial-gradient(ellipse 70% 50% at 85% -5%,  rgba(155,93,229,0.28) 0%, transparent 65%)',
+                  'radial-gradient(ellipse 50% 35% at 5%  95%,  rgba(41,121,255,0.20) 0%, transparent 60%)',
+                  'radial-gradient(ellipse 40% 30% at 50% 40%,  rgba(244,100,95,0.06) 0%, transparent 70%)',
+                ].join(', ')
               }}
             />
           </>
