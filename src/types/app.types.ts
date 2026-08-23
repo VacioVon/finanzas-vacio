@@ -68,6 +68,7 @@ export interface Movimiento {
   objetivo_ahorro_id: string | null
   deuda_id: string | null
   monto: number
+  comercio: string | null
   nota: string | null
   comprobante_url: string | null
   comision: number                 // cargo adicional (impuesto/fee) asociado a la compra; default 0
@@ -191,6 +192,7 @@ export interface MovimientoFormData {
   objetivo_ahorro_id?: string
   deuda_id?: string
   monto: number
+  comercio?: string
   nota?: string
   comprobante_url?: string | null
   comision?: number

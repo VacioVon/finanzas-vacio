@@ -41,6 +41,8 @@ export function useCreateMovimiento() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [MOVIMIENTOS_KEY] })
       qc.invalidateQueries({ queryKey: [CUENTAS_KEY] })
+      qc.invalidateQueries({ queryKey: ['presupuestos'] })
+      qc.invalidateQueries({ queryKey: ['objetivos'] })
     }
   })
 }
@@ -53,6 +55,8 @@ export function useDeleteMovimiento() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [MOVIMIENTOS_KEY] })
       qc.invalidateQueries({ queryKey: [CUENTAS_KEY] })
+      qc.invalidateQueries({ queryKey: ['presupuestos'] })
+      qc.invalidateQueries({ queryKey: ['objetivos'] })
     }
   })
 }
@@ -73,6 +77,8 @@ export function useUpdateMovimiento() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [MOVIMIENTOS_KEY] })
       qc.invalidateQueries({ queryKey: [CUENTAS_KEY] })
+      qc.invalidateQueries({ queryKey: ['presupuestos'] })
+      qc.invalidateQueries({ queryKey: ['objetivos'] })
     }
   })
 }
