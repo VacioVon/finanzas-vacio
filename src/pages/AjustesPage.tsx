@@ -72,13 +72,13 @@ export function AjustesPage() {
     setReiniciando(true)
     try {
       const { error } = await supabase.rpc('reiniciar_datos_usuario')
-      if (error) throw error
-      // Limpiar todo el cache de TanStack Query
-      await qc.invalidateQueries()
+      if (error) throw new Error(error.message)
+      await qc.resetQueries()
       alert('Datos eliminados correctamente. La aplicación está lista para empezar de cero.')
       navigate('/')
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Error al reiniciar datos')
+      const msg = e instanceof Error ? e.message : String(e)
+      alert(`Error al reiniciar datos:\n\n${msg}`)
     } finally {
       setReiniciando(false)
     }
