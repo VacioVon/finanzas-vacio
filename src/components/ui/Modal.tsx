@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { StarField } from './StarField'
 
 interface ModalProps {
   isOpen: boolean
@@ -13,6 +14,7 @@ interface ModalProps {
 
 export function Modal({ isOpen, onClose, title, children, size = 'md', theme = 'light' }: ModalProps) {
   const isDark = theme === 'dark'
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -32,23 +34,43 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', theme = '
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+      {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
+
+      {/* Sheet */}
       <div className={[
-        'relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto',
+        'relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto overflow-x-hidden',
         sizeClass,
-        isDark
-          ? 'bg-night-1 border-t border-night-border'
-          : 'bg-white'
-      ].join(' ')}>
+        isDark ? 'border-t border-night-border' : 'bg-white'
+      ].join(' ')}
+        style={isDark ? { backgroundColor: '#23212C' } : undefined}
+      >
+        {/* Starfield + nebula — solo en dark */}
+        {isDark && (
+          <>
+            <StarField className="opacity-70 rounded-t-3xl" />
+            {/* Nebulosa sutil: gradiente violeta-azul en esquina superior */}
+            <div
+              className="absolute inset-0 pointer-events-none rounded-t-3xl"
+              style={{
+                background: 'radial-gradient(ellipse 60% 40% at 80% 0%, rgba(155,93,229,0.12) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 10% 100%, rgba(41,121,255,0.08) 0%, transparent 60%)'
+              }}
+            />
+          </>
+        )}
+
+        {/* Header */}
         {title && (
           <div className={[
-            'flex items-center justify-between px-5 py-4 border-b',
-            isDark ? 'border-night-border' : 'border-slate-100'
+            'relative z-10 flex items-center justify-between px-5 py-4 border-b',
+            isDark ? 'border-night-border/60' : 'border-slate-100'
           ].join(' ')}>
-            <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h2>
+            <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              {title}
+            </h2>
             <button
               onClick={onClose}
               className={[
@@ -60,7 +82,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', theme = '
             </button>
           </div>
         )}
-        <div className="p-5 pb-8">{children}</div>
+
+        {/* Content */}
+        <div className="relative z-10 p-5 pb-8">{children}</div>
       </div>
     </div>,
     document.body
