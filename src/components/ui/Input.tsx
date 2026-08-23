@@ -31,10 +31,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={[
               'w-full h-11 rounded-xl border bg-white text-slate-900 text-sm',
               'placeholder:text-slate-400 outline-none transition-colors duration-150',
-              'focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+              'focus:ring-2 focus:ring-brand-500 focus:border-brand-500',
               error
                 ? 'border-danger-400 focus:ring-danger-400 focus:border-danger-400'
-                : 'border-slate-200 hover:border-slate-300',
+                : 'border-night-border hover:border-brand-500/40',
               prefix ? 'pl-8' : 'pl-3',
               suffix ? 'pr-8' : 'pr-3',
               className

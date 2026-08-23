@@ -31,10 +31,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             className={[
               'w-full h-11 rounded-xl border bg-white text-slate-900 text-sm',
               'pl-3 pr-9 outline-none appearance-none transition-colors duration-150',
-              'focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+              'focus:ring-2 focus:ring-brand-500 focus:border-brand-500',
               error
                 ? 'border-danger-400'
-                : 'border-slate-200 hover:border-slate-300',
+                : 'border-night-border hover:border-brand-500/40',
               className
             ].join(' ')}
             {...props}

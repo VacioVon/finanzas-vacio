@@ -2,6 +2,7 @@ import { type ButtonHTMLAttributes, forwardRef } from 'react'
 import { Loader2 } from 'lucide-react'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'
+  | 'gasto' | 'ingreso' | 'ahorro' | 'mover'
 type Size = 'sm' | 'md' | 'lg'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -12,11 +13,17 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-  primary:   'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 shadow-sm',
-  secondary: 'bg-slate-100 text-slate-700 hover:bg-slate-200 active:bg-slate-300',
-  ghost:     'bg-transparent text-slate-600 hover:bg-slate-100 active:bg-slate-200',
+  // Sistema
+  primary:   'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 shadow-sm',
+  secondary: 'bg-white/10 text-slate-300 border border-night-border hover:bg-white/15 active:bg-white/20',
+  ghost:     'bg-transparent text-slate-400 hover:bg-white/8 active:bg-white/12',
   danger:    'bg-danger-600 text-white hover:bg-danger-700 active:bg-danger-800 shadow-sm',
-  success:   'bg-success-600 text-white hover:bg-success-700 active:bg-success-800 shadow-sm'
+  success:   'bg-ingreso-600 text-white hover:bg-ingreso-700 active:bg-ingreso-800 shadow-sm',
+  // Semánticos financieros
+  gasto:     'bg-gasto-500 text-white hover:bg-gasto-600 active:bg-gasto-700 shadow-glow-gasto',
+  ingreso:   'bg-ingreso-500 text-white hover:bg-ingreso-600 active:bg-ingreso-700 shadow-glow-ingreso',
+  ahorro:    'bg-ahorro-500 text-white hover:bg-ahorro-600 active:bg-ahorro-700 shadow-glow-ahorro',
+  mover:     'bg-mover-500 text-white hover:bg-mover-600 active:bg-mover-700 shadow-glow-mover',
 }
 
 const sizeClasses: Record<Size, string> = {
@@ -32,8 +39,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={[
-          'inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
+          'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-150',
+          'disabled:opacity-40 disabled:cursor-not-allowed',
           variantClasses[variant],
           sizeClasses[size],
           fullWidth ? 'w-full' : '',

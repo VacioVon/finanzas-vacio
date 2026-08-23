@@ -16,7 +16,71 @@ import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
 import type { Movimiento, TipoMovimiento } from '@/types/app.types'
 
-// ── Schema ──────────────────────────────────────────────────────
+// ── Tokens visuales por tipo ─────────────────────────────────────
+const TIPO_THEME = {
+  gasto: {
+    accent:       'text-gasto-400',
+    border:       'border-gasto-500/30',
+    bg:           'bg-gasto-500/8',
+    bgActive:     'bg-gasto-500/20',
+    ring:         'ring-gasto-500/50',
+    btnVariant:   'gasto' as const,
+    glow:         'shadow-glow-gasto',
+    monto:        'text-gasto-400',
+    selectorBg:   'bg-gasto-500/15 border-gasto-500/40 text-gasto-300',
+    emoji:        '💸',
+  },
+  ingreso: {
+    accent:       'text-ingreso-400',
+    border:       'border-ingreso-500/30',
+    bg:           'bg-ingreso-500/8',
+    bgActive:     'bg-ingreso-500/20',
+    ring:         'ring-ingreso-500/50',
+    btnVariant:   'ingreso' as const,
+    glow:         'shadow-glow-ingreso',
+    monto:        'text-ingreso-400',
+    selectorBg:   'bg-ingreso-500/15 border-ingreso-500/40 text-ingreso-300',
+    emoji:        '💰',
+  },
+  ahorro: {
+    accent:       'text-ahorro-400',
+    border:       'border-ahorro-500/30',
+    bg:           'bg-ahorro-500/8',
+    bgActive:     'bg-ahorro-500/20',
+    ring:         'ring-ahorro-500/50',
+    btnVariant:   'ahorro' as const,
+    glow:         'shadow-glow-ahorro',
+    monto:        'text-ahorro-400',
+    selectorBg:   'bg-ahorro-500/15 border-ahorro-500/40 text-ahorro-300',
+    emoji:        '🏦',
+  },
+  transferencia: {
+    accent:       'text-mover-400',
+    border:       'border-mover-500/30',
+    bg:           'bg-mover-500/8',
+    bgActive:     'bg-mover-500/20',
+    ring:         'ring-mover-500/50',
+    btnVariant:   'mover' as const,
+    glow:         'shadow-glow-mover',
+    monto:        'text-mover-400',
+    selectorBg:   'bg-mover-500/15 border-mover-500/40 text-mover-300',
+    emoji:        '🔄',
+  },
+  pago_deuda: {
+    accent:       'text-xp-400',
+    border:       'border-xp-500/30',
+    bg:           'bg-xp-500/8',
+    bgActive:     'bg-xp-500/20',
+    ring:         'ring-xp-500/50',
+    btnVariant:   'gasto' as const,
+    glow:         'shadow-glow-gasto',
+    monto:        'text-xp-400',
+    selectorBg:   'bg-xp-500/15 border-xp-500/40 text-xp-300',
+    emoji:        '🏦',
+  },
+}
+
+// ── Schema ───────────────────────────────────────────────────────
 const schema = z.object({
   tipo:              z.enum(['ingreso', 'gasto', 'ahorro', 'pago_deuda', 'transferencia']),
   fecha:             z.string().min(1, 'Requerido'),
@@ -44,12 +108,12 @@ const schema = z.object({
 })
 
 type FormValues = z.infer<typeof schema>
-type Paso = 'principal' | 'detalles' | 'confirmacion'
+type Paso = 'principal' | 'detalles'
 
 const TIPOS: { value: TipoMovimiento; label: string; emoji: string }[] = [
-  { value: 'ingreso',       label: 'Ingreso',       emoji: '💰' },
-  { value: 'gasto',         label: 'Gasto',         emoji: '💸' },
-  { value: 'transferencia', label: 'Mover',          emoji: '🔄' }
+  { value: 'ingreso',       label: 'Ingreso', emoji: '💰' },
+  { value: 'gasto',         label: 'Gasto',   emoji: '💸' },
+  { value: 'transferencia', label: 'Mover',   emoji: '🔄' }
 ]
 
 function tipoToCategoriaTipo(tipo: TipoMovimiento): string {
@@ -75,21 +139,15 @@ export function MovimientoForm({
   editingMovimiento,
   duplicateFrom
 }: Props) {
-  const [tipo,        setTipo]        = useState<TipoMovimiento>(defaultTipo)
-  const [paso,        setPaso]        = useState<Paso>('principal')
-  const [pagoDeuda,   setPagoDeuda]   = useState(false)
-
-  // Crédito / cuotas
-  const [cuotasTotal,       setCuotasTotal]       = useState(1)
-  const [primeraYaPagada,   setPrimeraYaPagada]   = useState(false)
-  const [comisionCuota,     setComisionCuota]     = useState(0)
-
-  // Para tercero
-  const [paraTercero,   setParaTercero]   = useState(false)
-  const [terceroNombre, setTerceroNombre] = useState('')
-
-  // Comprobante
-  const [comprobanteUrl, setComprobante] = useState<string | null>(null)
+  const [tipo,            setTipo]            = useState<TipoMovimiento>(defaultTipo)
+  const [paso,            setPaso]            = useState<Paso>('principal')
+  const [pagoDeuda,       setPagoDeuda]       = useState(false)
+  const [cuotasTotal,     setCuotasTotal]     = useState(1)
+  const [primeraYaPagada, setPrimeraYaPagada] = useState(false)
+  const [comisionCuota,   setComisionCuota]   = useState(0)
+  const [paraTercero,     setParaTercero]     = useState(false)
+  const [terceroNombre,   setTerceroNombre]   = useState('')
+  const [comprobanteUrl,  setComprobante]     = useState<string | null>(null)
 
   const { data: cuentas }    = useCuentas()
   const { data: categorias } = useCategoriasByTipo(tipoToCategoriaTipo(tipo))
@@ -105,25 +163,24 @@ export function MovimientoForm({
     defaultValues: { tipo: defaultTipo, fecha: todayISO(), monto: 0 }
   })
 
-  const selectedCategoriaId  = watch('categoria_id')
-  const selectedCuentaId     = watch('cuenta_id')
-  const selectedDestId       = watch('cuenta_destino_id')
-  const monto                = Number(watch('monto') ?? 0)
+  const selectedCategoriaId = watch('categoria_id')
+  const selectedCuentaId    = watch('cuenta_id')
+  const selectedDestId      = watch('cuenta_destino_id')
+  const monto               = Number(watch('monto') ?? 0)
 
   const cuentaOrigen  = (cuentas ?? []).find(c => c.id === selectedCuentaId)
   const cuentaDest    = (cuentas ?? []).find(c => c.id === selectedDestId)
   const esTarjeta     = cuentaOrigen?.tipo === 'credito'
 
   const tipoReal: TipoMovimiento = tipo === 'gasto' && pagoDeuda ? 'pago_deuda' : tipo
+  const theme = TIPO_THEME[tipoReal] ?? TIPO_THEME.gasto
 
   const mostrarCuotas    = tipo === 'gasto' && esTarjeta && !editingMovimiento
   const mostrarTercero   = tipo === 'gasto' && !editingMovimiento
   const mostrarTransf    = tipo === 'transferencia'
   const mostrarCategoria = tipo !== 'transferencia' && !pagoDeuda
 
-  const montoCuota = monto > 0 && cuotasTotal >= 1
-    ? Math.ceil(monto / cuotasTotal)
-    : 0
+  const montoCuota     = monto > 0 && cuotasTotal >= 1 ? Math.ceil(monto / cuotasTotal) : 0
   const registrarCuota = mostrarCuotas && cuotasTotal >= 1
 
   // ── Reset al abrir ───────────────────────────────────────────
@@ -162,7 +219,6 @@ export function MovimientoForm({
     }
   }, [isOpen, editingMovimiento, duplicateFrom]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Limpiar categoría al cambiar tipo ───────────────────────
   useEffect(() => {
     if (!editingMovimiento && !duplicateFrom) {
       setValue('categoria_id', '')
@@ -170,7 +226,6 @@ export function MovimientoForm({
     }
   }, [tipo, pagoDeuda, setValue, editingMovimiento, duplicateFrom])
 
-  // ── Limpiar estado cuotas cuando deja de aplicar ────────────
   useEffect(() => {
     if (!mostrarCuotas) {
       setCuotasTotal(1)
@@ -196,58 +251,47 @@ export function MovimientoForm({
     .map(s => ({ value: s.id, label: s.nombre }))
 
   // ── Submit ───────────────────────────────────────────────────
-  async function onSubmit(data: FormValues) {
+  async function submitForm(data: FormValues, skipDetalles = false) {
     const formData = {
       tipo:              tipoReal,
       fecha:             data.fecha,
       monto:             data.monto,
-      comercio:          data.comercio?.trim() || undefined,
+      comercio:          skipDetalles ? undefined : (data.comercio?.trim() || undefined),
       categoria_id:      mostrarCategoria ? (data.categoria_id ?? '') : '',
       subcategoria_id:   mostrarCategoria ? data.subcategoria_id : undefined,
       cuenta_id:         data.cuenta_id,
       cuenta_destino_id: mostrarTransf ? data.cuenta_destino_id : undefined,
-      nota:              data.nota,
-      comprobante_url:   comprobanteUrl,
+      nota:              skipDetalles ? undefined : data.nota,
+      comprobante_url:   skipDetalles ? null : comprobanteUrl,
       comision:          mostrarCuotas ? comisionCuota : 0,
-      para_tercero:      mostrarTercero ? paraTercero : false,
-      tercero_nombre:    mostrarTercero && paraTercero && terceroNombre.trim()
+      para_tercero:      skipDetalles ? false : (mostrarTercero ? paraTercero : false),
+      tercero_nombre:    skipDetalles ? undefined : (mostrarTercero && paraTercero && terceroNombre.trim()
         ? terceroNombre.trim()
-        : undefined
+        : undefined)
     }
 
     try {
       if (editingMovimiento) {
-        await updateMutation.mutateAsync({
-          id:       editingMovimiento.id,
-          original: editingMovimiento,
-          form:     formData
-        })
+        await updateMutation.mutateAsync({ id: editingMovimiento.id, original: editingMovimiento, form: formData })
       } else {
         await createMutation.mutateAsync(formData)
-
         if (registrarCuota) {
-          const nombreCuota = data.comercio?.trim()
-            || data.nota?.trim()
-            || selectedCategoria?.nombre
-            || 'Compra'
-
           await createCuotaMutation.mutateAsync({
             cuenta_id:              data.cuenta_id,
-            nombre:                 nombreCuota,
+            nombre:                 data.comercio?.trim() || data.nota?.trim() || selectedCategoria?.nombre || 'Compra',
             emoji:                  selectedCategoria?.emoji ?? undefined,
             monto_total:            data.monto,
             cuotas_total:           cuotasTotal,
             cuotas_pagadas_inicial: primeraYaPagada ? 1 : 0,
             monto_cuota:            montoCuota,
             comision:               comisionCuota,
-            para_tercero:           paraTercero,
-            tercero_nombre:         paraTercero && terceroNombre.trim() ? terceroNombre.trim() : undefined,
+            para_tercero:           skipDetalles ? false : paraTercero,
+            tercero_nombre:         !skipDetalles && paraTercero && terceroNombre.trim() ? terceroNombre.trim() : undefined,
             interes:                0,
             fecha_inicio:           data.fecha
           })
         }
       }
-
       handleClose()
       onSuccess?.()
     } catch (e: unknown) {
@@ -271,67 +315,68 @@ export function MovimientoForm({
   }
 
   const isLoading = createMutation.isPending || updateMutation.isPending || createCuotaMutation.isPending
+
   const title = editingMovimiento ? 'Editar movimiento'
     : duplicateFrom ? 'Duplicar movimiento'
+    : paso === 'detalles' ? 'Más detalles'
     : 'Nuevo movimiento'
 
-  // ── Resumen para confirmación ────────────────────────────────
-  const saldoOrigenActual = cuentaOrigen?.saldo_actual ?? 0
-  const saldoOrigenDespues = tipo === 'ingreso'
-    ? saldoOrigenActual + monto
-    : saldoOrigenActual - monto
+  // ── Clases reutilizables ─────────────────────────────────────
+  const inputDark = 'bg-night-3 border-night-border text-white placeholder:text-slate-500 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500'
+  const labelDark = 'text-xs font-medium text-slate-400'
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={
-      paso === 'detalles'     ? 'Más detalles'
-      : paso === 'confirmacion' ? 'Confirmar'
-      : title
-    }>
-      {/* ── Header de navegación para paso detalles/confirmacion ── */}
-      {paso !== 'principal' && (
+    <Modal isOpen={isOpen} onClose={handleClose} title={title} theme="dark">
+
+      {/* Volver — paso detalles */}
+      {paso === 'detalles' && (
         <button
           type="button"
-          onClick={() => setPaso(paso === 'confirmacion' ? 'detalles' : 'principal')}
-          className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 mb-3 -mt-1 transition-colors"
+          onClick={() => setPaso('principal')}
+          className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-300 mb-3 -mt-1 transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
           Volver
         </button>
       )}
 
-      {/* ════════════════════════════════════════════════════════
+      {/* ════════════════════════════════════════════════════
           PASO 1 — PRINCIPAL
-      ════════════════════════════════════════════════════════ */}
+      ════════════════════════════════════════════════════ */}
       {paso === 'principal' && (
         <form onSubmit={handleSubmit(() => setPaso('detalles'))} className="space-y-4">
 
           {/* Selector de tipo */}
           {!editingMovimiento && (
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-2xl">
-              {TIPOS.map(t => (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => {
-                    setTipo(t.value)
-                    setValue('tipo', t.value)
-                    setPagoDeuda(false)
-                  }}
-                  className={[
-                    'flex flex-col items-center py-2 px-1 rounded-xl transition-all text-xs font-medium',
-                    tipo === t.value
-                      ? 'bg-white text-slate-900 shadow-card'
-                      : 'text-slate-500 hover:text-slate-700'
-                  ].join(' ')}
-                >
-                  <span className="text-lg mb-0.5">{t.emoji}</span>
-                  {t.label}
-                </button>
-              ))}
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-night-0 rounded-2xl border border-night-border">
+              {TIPOS.map(t => {
+                const th = TIPO_THEME[t.value as keyof typeof TIPO_THEME]
+                const isActive = tipo === t.value && (t.value !== 'gasto' || !pagoDeuda)
+                return (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => {
+                      setTipo(t.value)
+                      setValue('tipo', t.value)
+                      setPagoDeuda(false)
+                    }}
+                    className={[
+                      'flex flex-col items-center py-2.5 px-1 rounded-xl transition-all text-xs font-semibold border',
+                      isActive
+                        ? `${th.selectorBg} ${th.glow}`
+                        : 'text-slate-500 border-transparent hover:text-slate-300 hover:bg-white/5'
+                    ].join(' ')}
+                  >
+                    <span className="text-lg mb-0.5">{t.emoji}</span>
+                    {t.label}
+                  </button>
+                )
+              })}
             </div>
           )}
 
-          {/* Toggle Pago de deuda (solo en Gasto) */}
+          {/* Toggle Pago de deuda */}
           {tipo === 'gasto' && !editingMovimiento && (
             <button
               type="button"
@@ -339,8 +384,8 @@ export function MovimientoForm({
               className={[
                 'w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border text-xs font-medium transition-all',
                 pagoDeuda
-                  ? 'border-orange-300 bg-orange-50 text-orange-700'
-                  : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300'
+                  ? 'border-xp-500/40 bg-xp-500/10 text-xp-300'
+                  : 'border-night-border bg-night-3 text-slate-500 hover:border-brand-500/30 hover:text-slate-300'
               ].join(' ')}
             >
               <span className="text-base">🏦</span>
@@ -348,88 +393,130 @@ export function MovimientoForm({
                 {pagoDeuda ? 'Modo: Pago de deuda activo' : 'Registrar como pago de deuda'}
               </span>
               <div className={[
-                'w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0',
-                pagoDeuda ? 'bg-orange-500 border-orange-500' : 'border-slate-300'
+                'w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                pagoDeuda ? 'bg-xp-500 border-xp-500' : 'border-slate-600'
               ].join(' ')}>
-                {pagoDeuda && <span className="text-white text-[10px] font-bold">✓</span>}
+                {pagoDeuda && <span className="text-night-0 text-[10px] font-bold">✓</span>}
               </div>
             </button>
           )}
 
-          {/* Monto */}
-          <div className="text-center">
-            <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">Monto</label>
-            <div className="relative mt-1">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-slate-400">$</span>
+          {/* Monto — protagonista visual */}
+          <div className="text-center py-2">
+            <p className={`text-[10px] font-semibold uppercase tracking-widest mb-2 ${theme.accent}`}>
+              {theme.emoji} {pagoDeuda ? 'Pago de deuda' : tipo === 'transferencia' ? 'Mover dinero' : tipo}
+            </p>
+            <div className="relative">
+              <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold ${theme.monto} opacity-60`}>$</span>
               <input
                 {...register('monto')}
                 type="number"
                 inputMode="numeric"
                 placeholder="0"
                 className={[
-                  'w-full h-14 pl-8 pr-4 text-center text-2xl font-bold rounded-2xl border bg-white',
-                  'outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-                  errors.monto ? 'border-danger-400' : 'border-slate-200'
+                  'w-full h-16 pl-9 pr-4 text-center text-4xl font-bold rounded-2xl border-2 bg-night-0 outline-none transition-all',
+                  theme.monto,
+                  errors.monto
+                    ? 'border-danger-500/60 focus:border-danger-500'
+                    : `border-night-border focus:${theme.border} focus:shadow-${theme.glow.replace('shadow-', '')}`
                 ].join(' ')}
               />
             </div>
-            {errors.monto && <p className="text-xs text-danger-600 mt-1">{errors.monto.message}</p>}
+            {errors.monto && (
+              <p className="text-xs text-danger-400 mt-1.5">{errors.monto.message}</p>
+            )}
           </div>
 
-          {/* Categoría (no en transferencia ni pago_deuda) */}
+          {/* Categoría */}
           {mostrarCategoria && (
-            <>
-              <Select
-                label="Categoría"
-                options={categoriaOptions}
-                placeholder="Selecciona una categoría"
-                {...register('categoria_id')}
-                error={errors.categoria_id?.message}
-              />
+            <div className="space-y-3">
+              <div>
+                <label className={labelDark}>Categoría</label>
+                <div className="relative mt-1">
+                  <select
+                    {...register('categoria_id')}
+                    className={`w-full h-11 rounded-xl border pl-3 pr-9 text-sm appearance-none outline-none transition-all ${inputDark} ${errors.categoria_id ? 'border-danger-500/60' : ''}`}
+                  >
+                    <option value="" className="bg-night-2">Selecciona una categoría</option>
+                    {categoriaOptions.map(o => (
+                      <option key={o.value} value={o.value} className="bg-night-2">{o.label}</option>
+                    ))}
+                  </select>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">▾</span>
+                </div>
+                {errors.categoria_id && <p className="text-xs text-danger-400 mt-1">{errors.categoria_id.message}</p>}
+              </div>
               {subcategoriaOptions.length > 0 && (
-                <Select
-                  label="Subcategoría (opcional)"
-                  options={subcategoriaOptions}
-                  placeholder="Sin subcategoría"
-                  {...register('subcategoria_id')}
-                />
+                <div>
+                  <label className={labelDark}>Subcategoría <span className="text-slate-600">(opcional)</span></label>
+                  <div className="relative mt-1">
+                    <select
+                      {...register('subcategoria_id')}
+                      className={`w-full h-11 rounded-xl border pl-3 pr-9 text-sm appearance-none outline-none transition-all ${inputDark}`}
+                    >
+                      <option value="" className="bg-night-2">Sin subcategoría</option>
+                      {subcategoriaOptions.map(o => (
+                        <option key={o.value} value={o.value} className="bg-night-2">{o.label}</option>
+                      ))}
+                    </select>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">▾</span>
+                  </div>
+                </div>
               )}
-            </>
+            </div>
           )}
 
-          {/* Cuenta origen */}
-          <Select
-            label={mostrarTransf ? 'Cuenta origen' : 'Cuenta'}
-            options={cuentaOptions}
-            placeholder="Selecciona una cuenta"
-            {...register('cuenta_id')}
-            error={errors.cuenta_id?.message}
-          />
+          {/* Cuenta */}
+          <div>
+            <label className={labelDark}>{mostrarTransf ? 'Cuenta origen' : 'Cuenta'}</label>
+            <div className="relative mt-1">
+              <select
+                {...register('cuenta_id')}
+                className={`w-full h-11 rounded-xl border pl-3 pr-9 text-sm appearance-none outline-none transition-all ${inputDark} ${errors.cuenta_id ? 'border-danger-500/60' : ''}`}
+              >
+                <option value="" className="bg-night-2">Selecciona una cuenta</option>
+                {cuentaOptions.map(o => (
+                  <option key={o.value} value={o.value} className="bg-night-2">{o.label}</option>
+                ))}
+              </select>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">▾</span>
+            </div>
+            {errors.cuenta_id && <p className="text-xs text-danger-400 mt-1">{errors.cuenta_id.message}</p>}
+          </div>
 
-          {/* Transferencia: cuenta destino + preview */}
+          {/* Transferencia — cuenta destino + preview */}
           {mostrarTransf && (
             <>
-              <Select
-                label="Cuenta destino"
-                options={cuentaOptions}
-                placeholder="Selecciona cuenta destino"
-                {...register('cuenta_destino_id')}
-                error={errors.cuenta_destino_id?.message}
-              />
+              <div>
+                <label className={labelDark}>Cuenta destino</label>
+                <div className="relative mt-1">
+                  <select
+                    {...register('cuenta_destino_id')}
+                    className={`w-full h-11 rounded-xl border pl-3 pr-9 text-sm appearance-none outline-none transition-all ${inputDark} ${errors.cuenta_destino_id ? 'border-danger-500/60' : ''}`}
+                  >
+                    <option value="" className="bg-night-2">Selecciona cuenta destino</option>
+                    {cuentaOptions.map(o => (
+                      <option key={o.value} value={o.value} className="bg-night-2">{o.label}</option>
+                    ))}
+                  </select>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">▾</span>
+                </div>
+                {errors.cuenta_destino_id && <p className="text-xs text-danger-400 mt-1">{errors.cuenta_destino_id.message}</p>}
+              </div>
               {cuentaOrigen && cuentaDest && monto > 0 && (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs space-y-1.5 text-slate-600">
-                  <div className="flex justify-between">
-                    <span>{cuentaOrigen.nombre}</span>
+                <div className="rounded-xl border border-mover-500/20 bg-mover-500/5 p-3 space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">{cuentaOrigen.nombre}</span>
                     <span>
-                      <span className="text-slate-400 line-through mr-1">{formatCLP(cuentaOrigen.saldo_actual)}</span>
-                      <span className="font-semibold text-danger-600">{formatCLP(cuentaOrigen.saldo_actual - monto)}</span>
+                      <span className="text-slate-600 line-through mr-2">{formatCLP(cuentaOrigen.saldo_actual)}</span>
+                      <span className="font-semibold text-gasto-400">{formatCLP(cuentaOrigen.saldo_actual - monto)}</span>
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>{cuentaDest.nombre}</span>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">{cuentaDest.nombre}</span>
                     <span>
-                      <span className="text-slate-400 line-through mr-1">{formatCLP(cuentaDest.saldo_actual)}</span>
-                      <span className="font-semibold text-emerald-600">{formatCLP(cuentaDest.saldo_actual + monto)}</span>
+                      <span className="text-slate-600 line-through mr-2">{formatCLP(cuentaDest.saldo_actual)}</span>
+                      <span className="font-semibold text-ingreso-400">{formatCLP(cuentaDest.saldo_actual + monto)}</span>
                     </span>
                   </div>
                 </div>
@@ -437,44 +524,38 @@ export function MovimientoForm({
             </>
           )}
 
-          {/* Sección tarjeta crédito — cuotas */}
+          {/* Cuotas — tarjeta crédito */}
           {mostrarCuotas && (
-            <div className="rounded-2xl border border-primary-200 bg-primary-50/60 overflow-hidden">
-              <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+            <div className={`rounded-2xl border ${theme.border} bg-night-2 overflow-hidden`}>
+              <div className={`flex items-center gap-2 px-4 pt-3 pb-2 border-b ${theme.border}`}>
                 <span className="text-base">💳</span>
-                <p className="text-xs font-semibold text-primary-800">Compra en tarjeta de crédito</p>
+                <p className={`text-xs font-semibold ${theme.accent}`}>Compra en tarjeta de crédito</p>
               </div>
+              <div className="px-4 pb-4 pt-3 space-y-3">
 
-              <div className="px-4 pb-4 space-y-3">
-                {/* N° cuotas + $ cuota */}
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-xs text-slate-500 font-medium">N° cuotas</label>
+                    <label className={labelDark}>N° cuotas</label>
                     <input
-                      type="number"
-                      inputMode="numeric"
-                      min={1}
+                      type="number" inputMode="numeric" min={1}
                       value={cuotasTotal}
-                      onChange={e => {
-                        const v = Math.max(1, parseInt(e.target.value) || 1)
-                        setCuotasTotal(v)
-                      }}
-                      className="w-full mt-1 h-10 px-3 rounded-xl border border-primary-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-400 text-center font-semibold"
+                      onChange={e => setCuotasTotal(Math.max(1, parseInt(e.target.value) || 1))}
+                      className={`w-full mt-1 h-10 px-3 rounded-xl border text-sm outline-none text-center font-bold ${inputDark}`}
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-500 font-medium">$ Cuota</label>
-                    <div className="mt-1 h-10 px-2 rounded-xl border border-primary-200 bg-white flex items-center justify-center">
-                      <span className="text-sm font-bold text-primary-700">
+                    <label className={labelDark}>$ Cuota</label>
+                    <div className={`mt-1 h-10 px-2 rounded-xl border ${theme.border} bg-night-3 flex items-center justify-center`}>
+                      <span className={`text-sm font-bold ${theme.accent}`}>
                         {montoCuota > 0 ? formatCLP(montoCuota) : '—'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Primera cuota — radio Pendiente / Ya pagada */}
+                {/* Radio primera cuota */}
                 <div>
-                  <label className="text-xs text-slate-500 font-medium mb-1.5 block">Primera cuota</label>
+                  <label className={`${labelDark} block mb-1.5`}>Primera cuota</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { value: false, label: '⏳ Pendiente' },
@@ -485,10 +566,10 @@ export function MovimientoForm({
                         type="button"
                         onClick={() => setPrimeraYaPagada(opt.value)}
                         className={[
-                          'py-2 rounded-xl border text-xs font-medium transition-all',
+                          'py-2 rounded-xl border text-xs font-semibold transition-all',
                           primeraYaPagada === opt.value
-                            ? 'border-primary-400 bg-primary-100 text-primary-700'
-                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                            ? `${theme.border} ${theme.bgActive} ${theme.accent} ${theme.glow}`
+                            : 'border-night-border bg-night-3 text-slate-500 hover:border-brand-500/30'
                         ].join(' ')}
                       >
                         {opt.label}
@@ -499,29 +580,25 @@ export function MovimientoForm({
 
                 {/* Comisión */}
                 <div>
-                  <label className="text-xs text-slate-500 font-medium">
-                    Comisión / Impuesto <span className="font-normal text-slate-400">— opcional</span>
-                  </label>
+                  <label className={labelDark}>Comisión / Impuesto <span className="text-slate-600">— opcional</span></label>
                   <div className="relative mt-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
                     <input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
+                      type="number" inputMode="numeric" min={0}
                       value={comisionCuota || ''}
                       placeholder="0"
                       onChange={e => setComisionCuota(parseFloat(e.target.value) || 0)}
-                      className="w-full h-10 pl-7 pr-4 rounded-xl border border-primary-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-400"
+                      className={`w-full h-10 pl-7 pr-4 rounded-xl border text-sm outline-none ${inputDark}`}
                     />
                   </div>
                 </div>
 
                 {/* Resumen cuotas */}
-                <div className="p-2.5 bg-white rounded-xl border border-primary-100 text-xs text-primary-700">
+                <div className={`p-2.5 rounded-xl border ${theme.border} bg-night-0 text-xs ${theme.accent}`}>
                   {cuotasTotal === 1 ? (
                     <>💳 <strong>Pago único</strong>
                       {comisionCuota > 0 && <> · costo real <strong>{formatCLP(monto + comisionCuota)}</strong></>}
-                      {primeraYaPagada && <> · marcada como pagada</>}
+                      {primeraYaPagada && <> · ya pagada</>}
                     </>
                   ) : (
                     <>💳 <strong>{cuotasTotal} cuotas</strong> de <strong>{formatCLP(montoCuota)}</strong> c/u
@@ -534,89 +611,59 @@ export function MovimientoForm({
             </div>
           )}
 
-          {/* Botones principales */}
+          {/* Botones */}
           <div className="flex gap-2 pt-2">
-            <Button type="button" variant="secondary" fullWidth onClick={handleClose}>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="flex-1 h-11 rounded-2xl border border-night-border bg-night-3 text-slate-400 text-sm font-semibold hover:bg-night-2 hover:text-slate-300 transition-all"
+            >
               Cancelar
-            </Button>
+            </button>
             <button
               type="submit"
-              className="flex-1 h-11 rounded-2xl bg-primary-600 text-white text-sm font-semibold flex items-center justify-center gap-1 hover:bg-primary-700 transition-colors"
+              className={[
+                'flex-1 h-11 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-all',
+                tipo === 'ingreso'       ? 'bg-ingreso-500 hover:bg-ingreso-600 shadow-glow-ingreso' :
+                tipo === 'transferencia' ? 'bg-mover-500 hover:bg-mover-600 shadow-glow-mover' :
+                pagoDeuda               ? 'bg-xp-500 hover:bg-xp-600 text-night-0' :
+                                          'bg-gasto-500 hover:bg-gasto-600 shadow-glow-gasto'
+              ].join(' ')}
             >
               Más detalles
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Guardar directo (skip detalles) */}
+          {/* Guardar rápido */}
           <button
             type="button"
-            onClick={handleSubmit(async (data) => {
-              const formData = {
-                tipo:              tipoReal,
-                fecha:             data.fecha,
-                monto:             data.monto,
-                categoria_id:      mostrarCategoria ? (data.categoria_id ?? '') : '',
-                subcategoria_id:   mostrarCategoria ? data.subcategoria_id : undefined,
-                cuenta_id:         data.cuenta_id,
-                cuenta_destino_id: mostrarTransf ? data.cuenta_destino_id : undefined,
-                nota:              data.nota,
-                comprobante_url:   null,
-                comision:          mostrarCuotas ? comisionCuota : 0,
-                para_tercero:      false,
-                tercero_nombre:    undefined
-              }
-              try {
-                if (editingMovimiento) {
-                  await updateMutation.mutateAsync({ id: editingMovimiento.id, original: editingMovimiento, form: formData })
-                } else {
-                  await createMutation.mutateAsync(formData)
-                  if (registrarCuota) {
-                    await createCuotaMutation.mutateAsync({
-                      cuenta_id:              data.cuenta_id,
-                      nombre:                 selectedCategoria?.nombre || 'Compra',
-                      emoji:                  selectedCategoria?.emoji ?? undefined,
-                      monto_total:            data.monto,
-                      cuotas_total:           cuotasTotal,
-                      cuotas_pagadas_inicial: primeraYaPagada ? 1 : 0,
-                      monto_cuota:            montoCuota,
-                      comision:               comisionCuota,
-                      para_tercero:           false,
-                      interes:                0,
-                      fecha_inicio:           data.fecha
-                    })
-                  }
-                }
-                handleClose()
-                onSuccess?.()
-              } catch (e: unknown) {
-                const msg = e instanceof Error ? e.message : String(e)
-                alert(`Error al guardar:\n\n${msg}`)
-              }
-            })}
+            onClick={handleSubmit(data => submitForm(data, true))}
             disabled={isLoading}
-            className="w-full text-center text-xs text-slate-400 hover:text-slate-600 py-1 transition-colors disabled:opacity-40"
+            className="w-full text-center text-xs text-slate-600 hover:text-slate-400 py-1 transition-colors disabled:opacity-40"
           >
             {isLoading ? 'Guardando…' : 'Guardar sin detalles adicionales'}
           </button>
         </form>
       )}
 
-      {/* ════════════════════════════════════════════════════════
+      {/* ════════════════════════════════════════════════════
           PASO 2 — MÁS DETALLES
-      ════════════════════════════════════════════════════════ */}
+      ════════════════════════════════════════════════════ */}
       {paso === 'detalles' && (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(data => submitForm(data, false))} className="space-y-4">
 
           {/* Banner de contexto */}
-          <div className="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">
-                {tipo === 'ingreso' ? '💰' : tipo === 'transferencia' ? '🔄' : pagoDeuda ? '🏦' : '💸'}
-              </span>
+          <div className={`rounded-xl border ${theme.border} bg-night-0 px-4 py-3 flex items-center justify-between`}>
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">{theme.emoji}</span>
               <div>
-                <p className="text-xs text-slate-400 capitalize">{pagoDeuda ? 'Pago de deuda' : tipo}</p>
-                <p className="text-sm font-bold text-slate-900">{monto > 0 ? formatCLP(monto) : '—'}</p>
+                <p className={`text-[10px] font-semibold uppercase tracking-wider ${theme.accent}`}>
+                  {pagoDeuda ? 'Pago de deuda' : tipo}
+                </p>
+                <p className={`text-lg font-bold ${theme.monto}`}>
+                  {monto > 0 ? formatCLP(monto) : '—'}
+                </p>
               </div>
             </div>
             {cuentaOrigen && (
@@ -624,25 +671,46 @@ export function MovimientoForm({
             )}
           </div>
 
-          <Input label="Fecha" type="date" {...register('fecha')} error={errors.fecha?.message} />
+          {/* Fecha */}
+          <div>
+            <label className={labelDark}>Fecha</label>
+            <input
+              {...register('fecha')}
+              type="date"
+              className={`w-full mt-1 h-11 px-3 rounded-xl border text-sm outline-none ${inputDark} ${errors.fecha ? 'border-danger-500/60' : ''}`}
+            />
+            {errors.fecha && <p className="text-xs text-danger-400 mt-1">{errors.fecha.message}</p>}
+          </div>
 
-          <Input
-            label="Comercio / Tienda (opcional)"
-            placeholder="Ej: Falabella, Uber, Netflix…"
-            {...register('comercio')}
-          />
+          {/* Comercio */}
+          <div>
+            <label className={labelDark}>Comercio / Tienda <span className="text-slate-600">(opcional)</span></label>
+            <input
+              {...register('comercio')}
+              type="text"
+              placeholder="Ej: Falabella, Uber, Netflix…"
+              className={`w-full mt-1 h-11 px-3 rounded-xl border text-sm outline-none ${inputDark}`}
+            />
+          </div>
 
-          <Input
-            label="Nota (opcional)"
-            placeholder="Ej: Compra de cumpleaños, factura febrero…"
-            {...register('nota')}
-          />
+          {/* Nota */}
+          <div>
+            <label className={labelDark}>Nota <span className="text-slate-600">(opcional)</span></label>
+            <input
+              {...register('nota')}
+              type="text"
+              placeholder="Ej: Compra de cumpleaños, factura febrero…"
+              className={`w-full mt-1 h-11 px-3 rounded-xl border text-sm outline-none ${inputDark}`}
+            />
+          </div>
 
-          {/* Compra para otra persona */}
+          {/* Para tercero */}
           {mostrarTercero && (
             <div className={[
               'rounded-2xl border transition-all',
-              paraTercero ? 'border-warning-200 bg-warning-50' : 'border-slate-200 bg-white'
+              paraTercero
+                ? 'border-warning-500/40 bg-warning-500/8'
+                : 'border-night-border bg-night-3'
             ].join(' ')}>
               <button
                 type="button"
@@ -650,33 +718,33 @@ export function MovimientoForm({
                 className="w-full flex items-center gap-3 px-4 py-3"
               >
                 <div className={[
-                  'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0',
-                  paraTercero ? 'bg-warning-500 border-warning-500' : 'border-slate-300 bg-white'
+                  'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                  paraTercero ? 'bg-warning-500 border-warning-500' : 'border-slate-600'
                 ].join(' ')}>
-                  {paraTercero && <span className="text-white text-[10px] font-bold">✓</span>}
+                  {paraTercero && <span className="text-night-0 text-[10px] font-bold">✓</span>}
                 </div>
                 <div className="flex items-center gap-2 flex-1 text-left">
-                  <Users className={`h-4 w-4 ${paraTercero ? 'text-warning-600' : 'text-slate-400'}`} />
+                  <Users className={`h-4 w-4 ${paraTercero ? 'text-warning-400' : 'text-slate-600'}`} />
                   <div>
-                    <p className={`text-xs font-semibold ${paraTercero ? 'text-warning-700' : 'text-slate-700'}`}>
+                    <p className={`text-xs font-semibold ${paraTercero ? 'text-warning-300' : 'text-slate-400'}`}>
                       Compra para otra persona
                     </p>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-[10px] text-slate-600">
                       Se excluirá de tus gastos y presupuestos
                     </p>
                   </div>
                 </div>
               </button>
               {paraTercero && (
-                <div className="px-4 pb-4 border-t border-warning-100 pt-3">
-                  <label className="text-xs text-slate-500 font-medium">¿Para quién? (opcional)</label>
+                <div className="px-4 pb-4 border-t border-warning-500/20 pt-3">
+                  <label className={labelDark}>¿Para quién? (opcional)</label>
                   <input
                     type="text"
                     value={terceroNombre}
                     onChange={e => setTerceroNombre(e.target.value)}
                     placeholder="Ej: Mamá, Pareja, Juan…"
                     maxLength={60}
-                    className="w-full mt-1 h-10 px-3 rounded-xl border border-warning-200 bg-white text-sm outline-none focus:ring-2 focus:ring-warning-400"
+                    className={`w-full mt-1 h-10 px-3 rounded-xl border border-warning-500/30 text-sm outline-none ${inputDark}`}
                   />
                 </div>
               )}
@@ -686,13 +754,31 @@ export function MovimientoForm({
           {/* Comprobante */}
           <FileUploader value={comprobanteUrl} onChange={setComprobante} />
 
+          {/* Botones */}
           <div className="flex gap-2 pt-2">
-            <Button type="button" variant="secondary" fullWidth onClick={() => setPaso('principal')}>
+            <button
+              type="button"
+              onClick={() => setPaso('principal')}
+              className="flex-1 h-11 rounded-2xl border border-night-border bg-night-3 text-slate-400 text-sm font-semibold hover:bg-night-2 hover:text-slate-300 transition-all"
+            >
               Atrás
-            </Button>
-            <Button type="submit" variant="primary" fullWidth loading={isLoading}>
-              {editingMovimiento ? 'Guardar cambios' : 'Guardar'}
-            </Button>
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={[
+                'flex-1 h-11 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40',
+                tipo === 'ingreso'       ? 'bg-ingreso-500 hover:bg-ingreso-600 shadow-glow-ingreso' :
+                tipo === 'transferencia' ? 'bg-mover-500 hover:bg-mover-600 shadow-glow-mover' :
+                pagoDeuda               ? 'bg-xp-500 hover:bg-xp-600 text-night-0' :
+                                          'bg-gasto-500 hover:bg-gasto-600 shadow-glow-gasto'
+              ].join(' ')}
+            >
+              {isLoading
+                ? <><span className="animate-spin">◌</span> Guardando…</>
+                : editingMovimiento ? 'Guardar cambios' : 'Guardar'
+              }
+            </button>
           </div>
         </form>
       )}
