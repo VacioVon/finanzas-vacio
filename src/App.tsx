@@ -14,7 +14,8 @@ import { CuotasPage } from '@/pages/CuotasPage'
 import { MasPage } from '@/pages/MasPage'
 import { SuscripcionesPage } from '@/pages/SuscripcionesPage'
 import { CalendarioPage } from '@/pages/CalendarioPage'
-import { AjustesPage } from '@/pages/AjustesPage'
+import { AjustesPage }   from '@/pages/AjustesPage'
+import { AnalisisPage }  from '@/pages/AnalisisPage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthStore()
@@ -69,6 +70,9 @@ export function App() {
       <Route path="/suscripciones" element={<PrivateRoute><SuscripcionesPage /></PrivateRoute>} />
       <Route path="/calendario"    element={<PrivateRoute><CalendarioPage /></PrivateRoute>} />
       <Route path="/ajustes"       element={<PrivateRoute><AjustesPage /></PrivateRoute>} />
+
+      {/* Rutas privadas — Sprint 4 */}
+      <Route path="/analisis" element={<PrivateRoute><AnalisisPage /></PrivateRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,13 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Home, ArrowLeftRight, CalendarDays, MoreHorizontal, Plus, BarChart2 } from 'lucide-react'
+import { Home, ArrowLeftRight, BarChart2, MoreHorizontal, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { MovimientoForm } from '@/components/modules/movimientos/MovimientoForm'
 
 const navItems = [
-  { to: '/',            icon: Home,            label: 'Inicio'       },
-  { to: '/movimientos', icon: ArrowLeftRight,   label: 'Movimientos'  },
-  { to: '/calendario',  icon: CalendarDays,     label: 'Calendario'   },
-  { to: '/mas',         icon: MoreHorizontal,   label: 'Más'          },
+  { to: '/',            icon: Home,           label: 'Inicio'      },
+  { to: '/movimientos', icon: ArrowLeftRight,  label: 'Movimientos' },
+  { to: '/analisis',    icon: BarChart2,       label: 'Análisis'    },
+  { to: '/mas',         icon: MoreHorizontal,  label: 'Más'         },
 ]
 
 export function AppNav() {

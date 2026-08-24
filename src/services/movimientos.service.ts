@@ -52,6 +52,65 @@ export async function getMovimientosDelMes(userId: string): Promise<Movimiento[]
   return data as Movimiento[]
 }
 
+export async function getMovimientosPorPeriodo(
+  userId: string,
+  start: string,
+  end: string
+): Promise<Movimiento[]> {
+  const { data, error } = await supabase
+    .from('movimientos')
+    .select(MOVIMIENTO_SELECT)
+    .eq('usuario_id', userId)
+    .gte('fecha', start)
+    .lte('fecha', end)
+    .order('fecha', { ascending: false })
+
+  if (error) throw error
+  return data as Movimiento[]
+}
+
+function pad2(n: number) { return String(n).padStart(2, '0') }
+
+export async function getEvolucionMensual(
+  userId: string,
+  meses = 6
+): Promise<{ mes: string; ingresos: number; gastos: number }[]> {
+  const now  = new Date()
+  const keys: string[] = []
+  for (let i = meses - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    keys.push(`${d.getFullYear()}-${pad2(d.getMonth() + 1)}`)
+  }
+  const start = `${keys[0]}-01`
+  const end   = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-31`
+
+  const { data, error } = await supabase
+    .from('movimientos')
+    .select('tipo, monto, fecha, para_tercero')
+    .eq('usuario_id', userId)
+    .gte('fecha', start)
+    .lte('fecha', end)
+    .in('tipo', ['ingreso', 'gasto'])
+
+  if (error) throw error
+
+  const byMes: Record<string, { ingresos: number; gastos: number }> = {}
+  keys.forEach(k => { byMes[k] = { ingresos: 0, gastos: 0 } })
+
+  for (const m of data ?? []) {
+    const key = m.fecha.slice(0, 7)
+    if (!byMes[key]) continue
+    if (m.tipo === 'ingreso') byMes[key].ingresos += m.monto
+    if (m.tipo === 'gasto' && !m.para_tercero) byMes[key].gastos += m.monto
+  }
+
+  const nombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+  return keys.map(k => ({
+    mes: nombres[parseInt(k.split('-')[1]) - 1],
+    ...byMes[k]
+  }))
+}
+
 export async function createMovimiento(
   userId: string,
   form: MovimientoFormData
