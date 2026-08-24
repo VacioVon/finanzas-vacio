@@ -1,7 +1,7 @@
-import { Pencil, Trash2, CalendarClock, Percent } from 'lucide-react'
+import { Pencil, Trash2, CalendarClock, Percent, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay'
-import type { Cuenta } from '@/types/app.types'
+import type { Cuenta, Valorizacion } from '@/types/app.types'
 import { iconoCuenta, labelTipoCuenta } from '@/utils/financial'
 import { useDeleteCuenta } from '@/hooks/useCuentas'
 import { formatCLP } from '@/utils/currency'
@@ -9,9 +9,11 @@ import { formatCLP } from '@/utils/currency'
 interface CuentaCardProps {
   cuenta: Cuenta
   onEdit: (cuenta: Cuenta) => void
+  onActualizarValor?: (cuenta: Cuenta) => void
+  valorizaciones?: Valorizacion[]
 }
 
-export function CuentaCard({ cuenta, onEdit }: CuentaCardProps) {
+export function CuentaCard({ cuenta, onEdit, onActualizarValor, valorizaciones }: CuentaCardProps) {
   const deleteMutation = useDeleteCuenta()
 
   function handleDelete() {
@@ -20,7 +22,12 @@ export function CuentaCard({ cuenta, onEdit }: CuentaCardProps) {
     }
   }
 
-  const isCreditCard = cuenta.tipo === 'credito'
+  const isCreditCard  = cuenta.tipo === 'credito'
+  const isInversion   = cuenta.tipo === 'inversion'
+  // Historial de valorizaciones de esta cuenta (últimas 5 para sparkline)
+  const historial = valorizaciones
+    ?.filter(v => v.cuenta_id === cuenta.id)
+    .slice(-5) ?? []
 
   return (
     <Card padding="md">
@@ -75,6 +82,45 @@ export function CuentaCard({ cuenta, onEdit }: CuentaCardProps) {
               Mín: {formatCLP(Math.ceil(Math.abs(cuenta.saldo_actual) * cuenta.pago_minimo_pct / 100))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Sección inversión: sparkline + botón actualizar */}
+      {isInversion && (
+        <div className="mt-3 pt-3 border-t border-night-border/40">
+          {/* Mini sparkline */}
+          {historial.length >= 2 && (
+            <div className="flex items-end gap-0.5 h-8 mb-2">
+              {historial.map((v, i) => {
+                const max = Math.max(...historial.map(h => h.valor))
+                const min = Math.min(...historial.map(h => h.valor))
+                const range = max - min || 1
+                const pct = ((v.valor - min) / range) * 100
+                const isLast = i === historial.length - 1
+                return (
+                  <div
+                    key={v.id}
+                    className="flex-1 rounded-sm transition-all"
+                    style={{
+                      height: `${Math.max(20, pct)}%`,
+                      backgroundColor: isLast ? cuenta.color : `${cuenta.color}50`
+                    }}
+                  />
+                )
+              })}
+            </div>
+          )}
+          <button
+            onClick={() => onActualizarValor?.(cuenta)}
+            className="w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 rounded-xl border transition-colors"
+            style={{
+              borderColor: `${cuenta.color}40`,
+              color: cuenta.color,
+            }}
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            Actualizar valor
+          </button>
         </div>
       )}
 

@@ -257,6 +257,16 @@ export interface MovimientoFormData {
   tercero_nombre?: string
 }
 
+export interface Valorizacion {
+  id: string
+  usuario_id: string
+  cuenta_id: string
+  fecha: string
+  valor: number
+  nota: string | null
+  created_at: string
+}
+
 export interface CuentaFormData {
   nombre: string
   tipo: TipoCuenta

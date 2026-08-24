@@ -4,19 +4,23 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
 import { CuentaCard } from '@/components/modules/cuentas/CuentaCard'
 import { CuentaForm } from '@/components/modules/cuentas/CuentaForm'
+import { ValorizacionForm } from '@/components/modules/cuentas/ValorizacionForm'
 import { SkeletonList } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay'
 import { useCuentas } from '@/hooks/useCuentas'
+import { useValorizaciones } from '@/hooks/useValorizaciones'
 import type { Cuenta } from '@/types/app.types'
 import { formatCLP } from '@/utils/currency'
 
 export function CuentasPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingCuenta, setEditingCuenta] = useState<Cuenta | null>(null)
+  const [valorizandoCuenta, setValorizandoCuenta] = useState<Cuenta | null>(null)
+
   const { data: cuentas, isLoading } = useCuentas()
+  const { data: valorizaciones } = useValorizaciones()
 
   const totalDisponible = (cuentas ?? [])
     .filter(c => c.tipo !== 'inversion' && c.tipo !== 'credito')
@@ -77,7 +81,13 @@ export function CuentasPage() {
           ) : (
             <div className="space-y-3">
               {cuentas.map(cuenta => (
-                <CuentaCard key={cuenta.id} cuenta={cuenta} onEdit={handleEdit} />
+                <CuentaCard
+                  key={cuenta.id}
+                  cuenta={cuenta}
+                  onEdit={handleEdit}
+                  onActualizarValor={setValorizandoCuenta}
+                  valorizaciones={valorizaciones}
+                />
               ))}
             </div>
           )}
@@ -89,6 +99,14 @@ export function CuentasPage() {
         onClose={handleClose}
         editingCuenta={editingCuenta}
       />
+
+      {valorizandoCuenta && (
+        <ValorizacionForm
+          isOpen={!!valorizandoCuenta}
+          onClose={() => setValorizandoCuenta(null)}
+          cuenta={valorizandoCuenta}
+        />
+      )}
     </AppLayout>
   )
 }
