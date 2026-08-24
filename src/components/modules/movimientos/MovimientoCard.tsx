@@ -198,7 +198,8 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
             <button
               ref={btnRef}
               onClick={() => setMenuOpen(o => !o)}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-night-3 transition-colors"
+              aria-label="Opciones del movimiento"
+              className="size-7 flex items-center justify-center rounded-full hover:bg-night-3 transition-colors"
             >
               <MoreVertical className="h-4 w-4 text-slate-400" />
             </button>

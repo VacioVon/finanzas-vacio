@@ -37,7 +37,8 @@ export function AppNav() {
           {/* FAB central */}
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center justify-center w-14 h-14 -mt-5 rounded-full bg-brand-500 text-white shadow-glow-brand hover:bg-brand-600 active:bg-brand-700 transition-colors"
+            aria-label="Nuevo movimiento"
+            className="flex items-center justify-center size-14 -mt-5 rounded-full bg-brand-500 text-white shadow-glow-brand hover:bg-brand-600 active:bg-brand-700 transition-colors"
           >
             <Plus className="h-6 w-6" />
           </button>
@@ -87,7 +88,7 @@ export function AppNav() {
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               ].join(' ')}
             >
-              <item.icon className="h-4.5 w-4.5 flex-shrink-0" />
+              <item.icon className="size-[18px] flex-shrink-0" />
               {item.label}
             </NavLink>
           ))}
