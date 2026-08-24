@@ -20,11 +20,11 @@ const tipoLabel: Record<string, string> = {
 }
 
 const tipoBadgeColor: Record<string, string> = {
-  ingreso:       'bg-success-50 text-success-700',
-  gasto:         'bg-danger-50 text-danger-700',
-  ahorro:        'bg-primary-50 text-primary-700',
-  pago_deuda:    'bg-warning-50 text-warning-700',
-  transferencia: 'bg-slate-100 text-slate-600'
+  ingreso:       'bg-ingreso-500/15 text-ingreso-400',
+  gasto:         'bg-gasto-500/15 text-gasto-400',
+  ahorro:        'bg-ahorro-500/15 text-ahorro-400',
+  pago_deuda:    'bg-xp-500/15 text-xp-400',
+  transferencia: 'bg-night-3 text-slate-400'
 }
 
 function ComprobanteIcon({ url }: { url: string }) {
@@ -35,7 +35,7 @@ function ComprobanteIcon({ url }: { url: string }) {
       target="_blank"
       rel="noopener noreferrer"
       onClick={e => e.stopPropagation()}
-      className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 hover:bg-primary-100 transition-colors"
+      className="flex items-center justify-center w-6 h-6 rounded-full bg-night-3 hover:bg-brand-500/20 transition-colors"
       title="Ver comprobante"
     >
       {isPDF
@@ -91,26 +91,26 @@ function ContextMenu({
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
         ref={menuRef}
-        className="fixed z-50 bg-white rounded-2xl shadow-card-lg border border-slate-100 py-1.5 w-44 animate-fade-in"
+        className="fixed z-50 bg-night-1 rounded-2xl shadow-card-lg border border-night-border py-1.5 w-44 animate-fade-in"
       >
         <button
           onClick={() => { onEdit(); onClose() }}
-          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-night-3/60 transition-colors"
         >
           <Pencil className="h-4 w-4 text-slate-400" />
           Editar
         </button>
         <button
           onClick={() => { onDuplicate(); onClose() }}
-          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-night-3/60 transition-colors"
         >
           <Copy className="h-4 w-4 text-slate-400" />
           Duplicar
         </button>
-        <div className="mx-3 my-1 h-px bg-slate-100" />
+        <div className="mx-3 my-1 h-px bg-night-border/60" />
         <button
           onClick={() => { onDelete(); onClose() }}
-          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger-600 hover:bg-danger-50 transition-colors"
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gasto-400 hover:bg-gasto-500/10 transition-colors"
         >
           <Trash2 className="h-4 w-4" />
           Eliminar
@@ -147,7 +147,7 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <p className="text-sm font-semibold text-slate-900 truncate">
+              <p className="text-sm font-semibold text-slate-200 truncate">
                 {mov.tipo === 'transferencia'
                   ? `${mov.cuenta?.nombre ?? '?'} → ${mov.cuenta_destino?.nombre ?? '?'}`
                   : (mov.categoria?.nombre ?? 'Sin categoría')
@@ -175,12 +175,12 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
             {(mov.para_tercero || (mov.comision > 0)) && (
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 {mov.para_tercero && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning-50 text-warning-700">
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-xp-500/15 text-xp-400">
                     👥 Para{mov.tercero_nombre ? ` ${mov.tercero_nombre}` : ' tercero'}
                   </span>
                 )}
                 {mov.comision > 0 && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-night-3 text-slate-500">
                     +${mov.comision.toLocaleString('es-CL')} comisión
                   </span>
                 )}
@@ -198,7 +198,7 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
             <button
               ref={btnRef}
               onClick={() => setMenuOpen(o => !o)}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-night-3 transition-colors"
             >
               <MoreVertical className="h-4 w-4 text-slate-400" />
             </button>

@@ -46,13 +46,13 @@ export function MovimientosPage() {
         {/* Resumen del mes */}
         {(ingresos > 0 || gastos > 0) && (
           <div className="px-4 grid grid-cols-2 gap-3">
-            <div className="bg-success-50 rounded-2xl p-3">
-              <p className="text-xs text-success-600 font-medium">Ingresos</p>
-              <p className="text-base font-bold text-success-700 mt-0.5">{formatCLP(ingresos)}</p>
+            <div className="bg-ingreso-500/10 border border-ingreso-500/20 rounded-2xl p-3">
+              <p className="text-xs text-ingreso-400 font-medium">Ingresos</p>
+              <p className="text-base font-bold text-ingreso-300 mt-0.5">{formatCLP(ingresos)}</p>
             </div>
-            <div className="bg-danger-50 rounded-2xl p-3">
-              <p className="text-xs text-danger-600 font-medium">Gastos</p>
-              <p className="text-base font-bold text-danger-700 mt-0.5">{formatCLP(gastos)}</p>
+            <div className="bg-gasto-500/10 border border-gasto-500/20 rounded-2xl p-3">
+              <p className="text-xs text-gasto-400 font-medium">Gastos</p>
+              <p className="text-base font-bold text-gasto-300 mt-0.5">{formatCLP(gastos)}</p>
             </div>
           </div>
         )}
@@ -65,7 +65,7 @@ export function MovimientosPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar en notas..."
-              className="w-full h-11 pl-9 pr-9 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full h-11 pl-9 pr-9 rounded-xl border border-night-border bg-night-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500"
             />
             {search && (
               <button

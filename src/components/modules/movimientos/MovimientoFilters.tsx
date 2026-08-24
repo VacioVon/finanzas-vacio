@@ -23,8 +23,8 @@ export function MovimientoFilters({ active, onChange }: MovimientoFiltersProps) 
           className={[
             'flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors',
             active === f.value
-              ? 'bg-primary-600 text-white'
-              : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+              ? 'bg-brand-500/20 text-brand-300 border border-brand-500/40'
+              : 'bg-night-2 text-slate-400 border border-night-border hover:border-brand-500/30 hover:text-slate-300'
           ].join(' ')}
         >
           {f.label}
