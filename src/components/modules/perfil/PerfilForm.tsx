@@ -107,7 +107,7 @@ export function PerfilForm({ isOpen, onClose }: PerfilFormProps) {
                 className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-card"
               />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center text-3xl font-bold text-primary-700 border-2 border-white shadow-card">
+              <div className="w-20 h-20 rounded-full bg-brand-500/20 flex items-center justify-center text-3xl font-bold text-brand-300 border-2 border-night-border shadow-card">
                 {inicialNombre}
               </div>
             )}
@@ -124,7 +124,7 @@ export function PerfilForm({ isOpen, onClose }: PerfilFormProps) {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={avatarIsLoading}
-              className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary-600 text-white rounded-full flex items-center justify-center shadow hover:bg-primary-700 transition-colors disabled:opacity-50"
+              className="absolute -bottom-1 -right-1 size-7 bg-brand-500 text-white rounded-full flex items-center justify-center shadow hover:bg-brand-600 transition-colors disabled:opacity-50"
             >
               <Camera className="h-3.5 w-3.5" />
             </button>
@@ -136,7 +136,7 @@ export function PerfilForm({ isOpen, onClose }: PerfilFormProps) {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={avatarIsLoading}
-              className="text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50"
+              className="text-brand-400 hover:text-brand-300 font-medium disabled:opacity-50"
             >
               {avatarUrl ? 'Cambiar foto' : 'Subir foto'}
             </button>
@@ -147,7 +147,7 @@ export function PerfilForm({ isOpen, onClose }: PerfilFormProps) {
                   type="button"
                   onClick={handleDeleteAvatar}
                   disabled={avatarIsLoading}
-                  className="text-danger-500 hover:text-danger-600 flex items-center gap-1 disabled:opacity-50"
+                  className="text-gasto-400 hover:text-gasto-300 flex items-center gap-1 disabled:opacity-50"
                 >
                   <Trash2 className="h-3 w-3" />
                   Eliminar

@@ -21,10 +21,10 @@ const tipoLabel: Record<string, string> = {
 }
 
 const tipoColor: Record<string, string> = {
-  gasto:     'bg-danger-50 text-danger-700',
-  ingreso:   'bg-success-50 text-success-700',
-  ahorro:    'bg-primary-50 text-primary-700',
-  inversion: 'bg-warning-50 text-warning-700'
+  gasto:     'bg-gasto-500/15 text-gasto-400',
+  ingreso:   'bg-ingreso-500/15 text-ingreso-400',
+  ahorro:    'bg-ahorro-500/15 text-ahorro-400',
+  inversion: 'bg-xp-500/15 text-xp-400'
 }
 
 function CategoriaItem({ categoria }: { categoria: Categoria }) {
@@ -77,9 +77,9 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
 
           <div className="flex-1 text-left">
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-semibold text-slate-900">{categoria.nombre}</p>
+              <p className="text-sm font-semibold text-slate-200">{categoria.nombre}</p>
               {isDefault && (
-                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400">
+                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-night-3 text-slate-500">
                   Sistema
                 </span>
               )}
@@ -96,13 +96,13 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
             <div className="flex items-center gap-0.5 ml-0.5" onClick={e => e.stopPropagation()}>
               <button
                 onClick={() => setEditOpen(true)}
-                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+                className="size-7 flex items-center justify-center rounded-full hover:bg-night-3 transition-colors"
               >
                 <Pencil className="h-3.5 w-3.5 text-slate-400" />
               </button>
               <button
                 onClick={handleDeleteCat}
-                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-danger-50 transition-colors"
+                className="size-7 flex items-center justify-center rounded-full hover:bg-gasto-500/10 transition-colors"
               >
                 <Trash2 className="h-3.5 w-3.5 text-danger-400" />
               </button>
@@ -118,7 +118,7 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
 
         {/* Subcategorías expandidas */}
         {expanded && (
-          <div className="mt-3 pt-3 border-t border-slate-100">
+          <div className="mt-3 pt-3 border-t border-night-border/40">
             {/* Lista de subcategorías */}
             {subcats.length > 0 && (
               <div className="grid grid-cols-2 gap-1.5 mb-3">
@@ -130,14 +130,14 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
                       className={[
                         'flex items-center justify-between text-xs rounded-lg px-2.5 py-1.5 gap-1',
                         esSistema
-                          ? 'bg-slate-50 text-slate-500'
-                          : 'bg-primary-50 text-primary-700 border border-dashed border-primary-200'
+                          ? 'bg-night-3/60 text-slate-500'
+                          : 'bg-brand-500/10 text-brand-300 border border-dashed border-brand-500/25'
                       ].join(' ')}
                     >
                       <span className="truncate">{sub.nombre}</span>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         {!esSistema && (
-                          <span className="text-[8px] font-semibold text-primary-400 uppercase">mía</span>
+                          <span className="text-[8px] font-semibold text-brand-400 uppercase">mía</span>
                         )}
                         {!esSistema && (
                           <button
@@ -164,19 +164,19 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
                   onChange={e => setNewSubNombre(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddSub()}
                   placeholder="Nombre de la subcategoría"
-                  className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
+                  className="flex-1 text-xs px-3 py-2 bg-night-3 text-white border border-night-border rounded-xl outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 placeholder:text-slate-500"
                   autoFocus
                 />
                 <button
                   onClick={handleAddSub}
                   disabled={createSubMutation.isPending || !newSubNombre.trim()}
-                  className="px-3 py-2 bg-primary-600 text-white text-xs rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-50"
+                  className="px-3 py-2 bg-brand-500 text-white text-xs rounded-xl hover:bg-brand-600 transition-colors disabled:opacity-50"
                 >
                   Agregar
                 </button>
                 <button
                   onClick={() => { setAddSubOpen(false); setNewSubNombre('') }}
-                  className="px-3 py-2 bg-slate-100 text-slate-600 text-xs rounded-xl hover:bg-slate-200 transition-colors"
+                  className="px-3 py-2 bg-night-3 text-slate-300 text-xs rounded-xl hover:bg-night-2 transition-colors"
                 >
                   Cancelar
                 </button>
@@ -184,7 +184,7 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
             ) : (
               <button
                 onClick={() => setAddSubOpen(true)}
-                className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-700 transition-colors font-medium"
+                className="flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
                 Agregar subcategoría personalizada
@@ -222,11 +222,11 @@ export function CategoriasPage() {
         {/* Leyenda */}
         <div className="flex items-center gap-3 px-4 text-xs text-slate-400">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 rounded bg-slate-100 border border-slate-200" />
+            <span className="inline-block w-3 h-3 rounded bg-night-3 border border-night-border/60" />
             Sistema
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 rounded bg-primary-50 border border-dashed border-primary-200" />
+            <span className="inline-block w-3 h-3 rounded bg-brand-500/10 border border-dashed border-brand-500/25" />
             Personalizadas (tuyas)
           </span>
         </div>
@@ -240,8 +240,8 @@ export function CategoriasPage() {
               className={[
                 'flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors capitalize',
                 filtro === t
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+                  ? 'bg-brand-500/20 text-brand-300 border border-brand-500/40'
+                  : 'bg-night-2 text-slate-400 border border-night-border hover:border-brand-500/30'
               ].join(' ')}
             >
               {t === 'todos' ? 'Todas' : tipoLabel[t] ?? t}
@@ -265,7 +265,7 @@ export function CategoriasPage() {
       {/* FAB para nueva categoría propia */}
       <button
         onClick={() => setFormOpen(true)}
-        className="fixed bottom-24 right-5 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-700 active:scale-95 transition-all z-30"
+        className="fixed bottom-24 right-5 size-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all z-30"
         aria-label="Nueva categoría"
       >
         <Plus className="h-7 w-7" />

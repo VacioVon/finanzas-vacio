@@ -701,7 +701,7 @@ export function CalendarioPage() {
         )}
 
         {eventos.length > 0 && (
-          <p className="text-center text-[10px] text-slate-700 pb-2">
+          <p className="text-center text-[10px] text-slate-500 pb-2">
             Proyección basada en compromisos conocidos · Sueldo no incluido · Toca un día para planificar
           </p>
         )}

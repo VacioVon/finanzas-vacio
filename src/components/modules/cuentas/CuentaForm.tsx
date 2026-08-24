@@ -169,7 +169,7 @@ export function CuentaForm({ isOpen, onClose, editingCuenta }: CuentaFormProps) 
 
         {/* Selector de color */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700">Color</label>
+          <label className="text-sm font-medium text-slate-300">Color</label>
           <div className="flex gap-2 flex-wrap">
             {COLORES.map(color => (
               <button

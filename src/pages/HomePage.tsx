@@ -91,7 +91,7 @@ export function HomePage() {
 function ProximoSprint({ icon, label, sprint }: { icon: string; label: string; sprint: string }) {
   return (
     <div className="mx-4">
-      <div className="flex items-center gap-3 p-3 bg-white rounded-2xl shadow-card opacity-60">
+      <div className="flex items-center gap-3 p-3 bg-night-2 rounded-2xl border border-night-border/60 opacity-60">
         <span className="text-xl">{icon}</span>
         <div className="flex-1">
           <p className="text-sm font-medium text-slate-600">{label}</p>
