@@ -80,6 +80,10 @@ export interface Cuenta {
   limite: number | null
   color: string
   activa: boolean
+  // Metadata tarjeta de crédito
+  dia_facturacion: number | null
+  dia_vencimiento: number | null
+  pago_minimo_pct: number | null
   created_at: string
   updated_at: string
 }
@@ -260,6 +264,10 @@ export interface CuentaFormData {
   saldo_inicial: number
   limite?: number
   color: string
+  // Metadata tarjeta de crédito (solo aplica cuando tipo='credito')
+  dia_facturacion?: number
+  dia_vencimiento?: number
+  pago_minimo_pct?: number
 }
 
 export interface CategoriaFormData {

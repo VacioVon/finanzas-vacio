@@ -3,12 +3,15 @@ import type { Cuenta, CuentaFormData, TipoCuenta } from '@/types/app.types'
 
 // Tipo dedicado para actualización — mapea directamente a columnas DB
 export interface CuentaUpdateData {
-  nombre?:      string
-  tipo?:        TipoCuenta
-  institucion?: string
-  saldo_actual?: number   // ← nombre exacto del campo en la tabla
-  limite?:      number | null
-  color?:       string
+  nombre?:           string
+  tipo?:             TipoCuenta
+  institucion?:      string
+  saldo_actual?:     number
+  limite?:           number | null
+  color?:            string
+  dia_facturacion?:  number | null
+  dia_vencimiento?:  number | null
+  pago_minimo_pct?:  number | null
 }
 
 export async function getCuentas(userId: string): Promise<Cuenta[]> {
@@ -27,15 +30,18 @@ export async function createCuenta(userId: string, form: CuentaFormData): Promis
   const { data, error } = await supabase
     .from('cuentas')
     .insert({
-      usuario_id:    userId,
-      nombre:        form.nombre,
-      tipo:          form.tipo,
-      institucion:   form.institucion ?? null,
-      saldo_actual:  form.saldo_inicial,
-      saldo_inicial: form.saldo_inicial,
-      limite:        form.limite ?? null,
-      color:         form.color,
-      activa:        true
+      usuario_id:       userId,
+      nombre:           form.nombre,
+      tipo:             form.tipo,
+      institucion:      form.institucion ?? null,
+      saldo_actual:     form.saldo_inicial,
+      saldo_inicial:    form.saldo_inicial,
+      limite:           form.limite ?? null,
+      color:            form.color,
+      activa:           true,
+      dia_facturacion:  form.dia_facturacion ?? null,
+      dia_vencimiento:  form.dia_vencimiento ?? null,
+      pago_minimo_pct:  form.pago_minimo_pct ?? null
     })
     .select()
     .single()

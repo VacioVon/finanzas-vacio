@@ -11,12 +11,15 @@ import { colorCuenta } from '@/utils/financial'
 import type { Cuenta, TipoCuenta } from '@/types/app.types'
 
 const schema = z.object({
-  nombre:        z.string().min(1, 'Requerido'),
-  tipo:          z.enum(['bancaria', 'digital', 'debito', 'credito', 'efectivo', 'inversion']),
-  institucion:   z.string().optional(),
-  saldo_inicial: z.coerce.number().min(0),
-  limite:        z.coerce.number().optional(),
-  color:         z.string()
+  nombre:          z.string().min(1, 'Requerido'),
+  tipo:            z.enum(['bancaria', 'digital', 'debito', 'credito', 'efectivo', 'inversion']),
+  institucion:     z.string().optional(),
+  saldo_inicial:   z.coerce.number().min(0),
+  limite:          z.coerce.number().optional(),
+  color:           z.string(),
+  dia_facturacion: z.coerce.number().int().min(1).max(31).optional(),
+  dia_vencimiento: z.coerce.number().int().min(1).max(31).optional(),
+  pago_minimo_pct: z.coerce.number().min(0).max(100).optional()
 })
 
 type FormValues = z.infer<typeof schema>
@@ -64,12 +67,15 @@ export function CuentaForm({ isOpen, onClose, editingCuenta }: CuentaFormProps) 
   useEffect(() => {
     if (editingCuenta) {
       reset({
-        nombre:        editingCuenta.nombre,
-        tipo:          editingCuenta.tipo,
-        institucion:   editingCuenta.institucion ?? '',
-        saldo_inicial: editingCuenta.saldo_actual,   // muestra el saldo actual en el campo
-        limite:        editingCuenta.limite ?? undefined,
-        color:         editingCuenta.color
+        nombre:          editingCuenta.nombre,
+        tipo:            editingCuenta.tipo,
+        institucion:     editingCuenta.institucion ?? '',
+        saldo_inicial:   editingCuenta.saldo_actual,
+        limite:          editingCuenta.limite ?? undefined,
+        color:           editingCuenta.color,
+        dia_facturacion: editingCuenta.dia_facturacion ?? undefined,
+        dia_vencimiento: editingCuenta.dia_vencimiento ?? undefined,
+        pago_minimo_pct: editingCuenta.pago_minimo_pct ?? undefined
       })
     } else {
       reset({ tipo: 'bancaria', saldo_inicial: 0, color: '#2563EB' })
@@ -85,27 +91,33 @@ export function CuentaForm({ isOpen, onClose, editingCuenta }: CuentaFormProps) 
 
   async function onSubmit(data: FormValues) {
     try {
+      const esCredito = data.tipo === 'credito'
       if (editingCuenta) {
-        // ✅ CORREGIDO: incluye saldo_actual en el payload de update
         await updateMutation.mutateAsync({
           id: editingCuenta.id,
           updates: {
-            nombre:       data.nombre,
-            tipo:         data.tipo,
-            institucion:  data.institucion || undefined,
-            saldo_actual: data.saldo_inicial,   // campo form → columna DB correcta
-            limite:       data.tipo === 'credito' ? (data.limite ?? null) : null,
-            color:        data.color
+            nombre:          data.nombre,
+            tipo:            data.tipo,
+            institucion:     data.institucion || undefined,
+            saldo_actual:    data.saldo_inicial,
+            limite:          esCredito ? (data.limite ?? null) : null,
+            color:           data.color,
+            dia_facturacion: esCredito ? (data.dia_facturacion ?? null) : null,
+            dia_vencimiento: esCredito ? (data.dia_vencimiento ?? null) : null,
+            pago_minimo_pct: esCredito ? (data.pago_minimo_pct ?? null) : null
           }
         })
       } else {
         await createMutation.mutateAsync({
-          nombre:       data.nombre,
-          tipo:         data.tipo,
-          institucion:  data.institucion,
-          saldo_inicial: data.saldo_inicial,
-          limite:       data.limite,
-          color:        data.color
+          nombre:          data.nombre,
+          tipo:            data.tipo,
+          institucion:     data.institucion,
+          saldo_inicial:   data.saldo_inicial,
+          limite:          data.limite,
+          color:           data.color,
+          dia_facturacion: esCredito ? data.dia_facturacion : undefined,
+          dia_vencimiento: esCredito ? data.dia_vencimiento : undefined,
+          pago_minimo_pct: esCredito ? data.pago_minimo_pct : undefined
         })
       }
       reset()
@@ -157,14 +169,45 @@ export function CuentaForm({ isOpen, onClose, editingCuenta }: CuentaFormProps) 
         />
 
         {tipo === 'credito' && (
-          <Input
-            label="Límite de crédito"
-            type="number"
-            inputMode="numeric"
-            prefix="$"
-            placeholder="0"
-            {...register('limite')}
-          />
+          <>
+            <Input
+              label="Límite de crédito"
+              type="number"
+              inputMode="numeric"
+              prefix="$"
+              placeholder="0"
+              {...register('limite')}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Día de facturación"
+                type="number"
+                inputMode="numeric"
+                placeholder="Ej: 20"
+                hint="Día en que cierra el ciclo"
+                {...register('dia_facturacion')}
+                error={errors.dia_facturacion?.message}
+              />
+              <Input
+                label="Día de vencimiento"
+                type="number"
+                inputMode="numeric"
+                placeholder="Ej: 5"
+                hint="Día límite de pago"
+                {...register('dia_vencimiento')}
+                error={errors.dia_vencimiento?.message}
+              />
+            </div>
+            <Input
+              label="Pago mínimo (%)"
+              type="number"
+              inputMode="decimal"
+              placeholder="Ej: 5"
+              hint="Porcentaje del saldo como pago mínimo"
+              {...register('pago_minimo_pct')}
+              error={errors.pago_minimo_pct?.message}
+            />
+          </>
         )}
 
         {/* Selector de color */}
