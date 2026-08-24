@@ -97,7 +97,7 @@ function ProximoSprint({ icon, label, sprint }: { icon: string; label: string; s
           <p className="text-sm font-medium text-slate-600">{label}</p>
           <p className="text-xs text-slate-400">Disponible en {sprint}</p>
         </div>
-        <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">
+        <span className="text-xs bg-night-3 text-slate-500 px-2 py-0.5 rounded-full font-medium">
           Próximamente
         </span>
       </div>

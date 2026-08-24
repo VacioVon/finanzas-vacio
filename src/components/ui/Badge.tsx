@@ -7,11 +7,11 @@ interface BadgeProps {
 }
 
 const colorClasses: Record<BadgeColor, string> = {
-  blue:   'bg-primary-100 text-primary-700',
-  green:  'bg-success-100 text-success-700',
-  orange: 'bg-warning-100 text-warning-700',
-  red:    'bg-danger-100 text-danger-700',
-  slate:  'bg-slate-100 text-slate-600'
+  blue:   'bg-brand-500/15 text-brand-400',
+  green:  'bg-ingreso-500/15 text-ingreso-400',
+  orange: 'bg-xp-500/15 text-xp-400',
+  red:    'bg-gasto-500/15 text-gasto-400',
+  slate:  'bg-night-3 text-slate-500'
 }
 
 export function Badge({ color = 'slate', size = 'sm', children }: BadgeProps) {

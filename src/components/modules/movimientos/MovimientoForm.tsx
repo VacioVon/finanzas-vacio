@@ -709,7 +709,7 @@ export function MovimientoForm({
             <div className={[
               'rounded-2xl border transition-all',
               paraTercero
-                ? 'border-warning-500/40 bg-warning-500/8'
+                ? 'border-xp-500/40 bg-xp-500/8'
                 : 'border-night-border bg-night-3'
             ].join(' ')}>
               <button
@@ -719,7 +719,7 @@ export function MovimientoForm({
               >
                 <div className={[
                   'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all',
-                  paraTercero ? 'bg-warning-500 border-warning-500' : 'border-slate-600'
+                  paraTercero ? 'bg-xp-500 border-xp-500' : 'border-slate-600'
                 ].join(' ')}>
                   {paraTercero && <span className="text-night-0 text-[10px] font-bold">✓</span>}
                 </div>

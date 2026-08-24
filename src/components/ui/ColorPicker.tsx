@@ -18,7 +18,7 @@ export function ColorPicker({ value, onChange, label = 'Color' }: ColorPickerPro
   return (
     <div>
       {label && (
-        <label className="block text-sm font-medium text-slate-700 mb-2">{label}</label>
+        <label className="block text-sm font-medium text-slate-300 mb-2">{label}</label>
       )}
       <div className="grid grid-cols-8 gap-2">
         {PRESET_COLORS.map(color => (

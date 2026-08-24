@@ -53,34 +53,34 @@ export function FileUploader({ value, onChange }: FileUploaderProps) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-slate-700">
+      <label className="text-sm font-medium text-slate-300">
         Comprobante (opcional)
       </label>
 
       {/* Vista previa */}
       {value && (
-        <div className="relative flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+        <div className="relative flex items-center gap-2 p-2.5 bg-night-3 rounded-xl border border-night-border/60">
           {isPDF(value) ? (
-            <FileText className="h-8 w-8 text-danger-500 flex-shrink-0" />
+            <FileText className="h-8 w-8 text-gasto-400 flex-shrink-0" />
           ) : (
             <img
               src={value}
               alt="Comprobante"
-              className="h-10 w-10 object-cover rounded-lg flex-shrink-0 border border-slate-200"
+              className="h-10 w-10 object-cover rounded-lg flex-shrink-0 border border-night-border"
             />
           )}
           <a
             href={value}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 text-xs text-primary-600 hover:underline truncate"
+            className="flex-1 text-xs text-brand-400 hover:underline truncate"
           >
             {isPDF(value) ? 'Ver PDF' : 'Ver imagen'}
           </a>
           <button
             type="button"
             onClick={handleRemove}
-            className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors text-slate-400 hover:text-danger-600"
+            className="size-6 flex items-center justify-center rounded-full hover:bg-night-2 transition-colors text-slate-400 hover:text-gasto-400"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -93,7 +93,7 @@ export function FileUploader({ value, onChange }: FileUploaderProps) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="flex items-center justify-center gap-2 h-11 rounded-xl border-2 border-dashed border-slate-200 hover:border-primary-400 hover:bg-primary-50 transition-colors text-sm text-slate-400 hover:text-primary-600 disabled:opacity-50"
+          className="flex items-center justify-center gap-2 h-11 rounded-xl border-2 border-dashed border-night-border hover:border-brand-500/60 hover:bg-brand-500/5 transition-colors text-sm text-slate-400 hover:text-brand-300 disabled:opacity-50"
         >
           {uploading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -115,7 +115,7 @@ export function FileUploader({ value, onChange }: FileUploaderProps) {
         }}
       />
 
-      {error && <p className="text-xs text-danger-600">{error}</p>}
+      {error && <p className="text-xs text-gasto-400">{error}</p>}
       <p className="text-xs text-slate-400">Imágenes o PDF · máx. {MAX_MB} MB</p>
     </div>
   )

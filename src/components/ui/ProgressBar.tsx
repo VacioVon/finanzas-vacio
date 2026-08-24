@@ -7,10 +7,10 @@ interface ProgressBarProps {
 }
 
 const colorClasses = {
-  blue:   'bg-primary-500',
-  green:  'bg-success-500',
-  orange: 'bg-warning-500',
-  red:    'bg-danger-500'
+  blue:   'bg-brand-500',
+  green:  'bg-ingreso-500',
+  orange: 'bg-xp-500',
+  red:    'bg-gasto-500'
 }
 
 function getColorByPercent(pct: number): 'green' | 'orange' | 'red' {
@@ -25,7 +25,7 @@ export function ProgressBar({ value, max = 100, color, size = 'sm', showLabel }:
 
   return (
     <div className="flex items-center gap-2">
-      <div className={`flex-1 bg-slate-100 rounded-full overflow-hidden ${size === 'sm' ? 'h-1.5' : 'h-2.5'}`}>
+      <div className={`flex-1 bg-night-3 rounded-full overflow-hidden ${size === 'sm' ? 'h-1.5' : 'h-2.5'}`}>
         <div
           className={`h-full rounded-full transition-all duration-500 ${colorClasses[resolvedColor]}`}
           style={{ width: `${pct}%` }}

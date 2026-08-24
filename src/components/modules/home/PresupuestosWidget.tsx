@@ -54,7 +54,7 @@ export function PresupuestosWidget() {
 
         <div className="h-2 bg-night-3 rounded-full overflow-hidden mb-2">
           <div
-            className={`h-full rounded-full transition-all ${excedidos > 0 ? 'bg-danger-500' : pct >= 80 ? 'bg-warning-500' : 'bg-success-500'}`}
+            className={`h-full rounded-full transition-all ${excedidos > 0 ? 'bg-gasto-500' : pct >= 80 ? 'bg-xp-500' : 'bg-ingreso-500'}`}
             style={{ width: `${pct}%` }}
           />
         </div>

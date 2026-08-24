@@ -87,7 +87,7 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
             <p className="text-xs text-slate-400">{subcats.length} subcategoría{subcats.length !== 1 ? 's' : ''}</p>
           </div>
 
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${tipoColor[categoria.tipo] ?? 'bg-slate-100 text-slate-500'}`}>
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${tipoColor[categoria.tipo] ?? 'bg-night-3 text-slate-500'}`}>
             {tipoLabel[categoria.tipo] ?? categoria.tipo}
           </span>
 
@@ -142,7 +142,7 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
                         {!esSistema && (
                           <button
                             onClick={() => deleteSubMutation.mutate(sub.id)}
-                            className="hover:text-danger-600 transition-colors"
+                            className="hover:text-gasto-400 transition-colors"
                             title="Eliminar"
                           >
                             <Trash2 className="h-3 w-3" />

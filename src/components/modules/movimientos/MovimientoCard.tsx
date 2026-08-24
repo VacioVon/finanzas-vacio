@@ -39,7 +39,7 @@ function ComprobanteIcon({ url }: { url: string }) {
       title="Ver comprobante"
     >
       {isPDF
-        ? <FileText className="h-3.5 w-3.5 text-danger-500" />
+        ? <FileText className="h-3.5 w-3.5 text-gasto-400" />
         : <Paperclip className="h-3.5 w-3.5 text-slate-500" />
       }
     </a>
@@ -153,7 +153,7 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
                   : (mov.categoria?.nombre ?? 'Sin categoría')
                 }
               </p>
-              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${tipoBadgeColor[mov.tipo] ?? 'bg-slate-100 text-slate-600'}`}>
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${tipoBadgeColor[mov.tipo] ?? 'bg-night-3 text-slate-500'}`}>
                 {tipoLabel[mov.tipo] ?? mov.tipo}
               </span>
             </div>
