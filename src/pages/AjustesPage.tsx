@@ -255,7 +255,7 @@ export function AjustesPage() {
           </Card>
         </section>
 
-        <p className="text-center text-xs text-slate-600">Finanzas Vacío v3.0 · Sprint 3</p>
+        <p className="text-center text-xs text-slate-600">QloB · Sprint 4</p>
       </div>
 
       <PerfilForm isOpen={perfilOpen} onClose={() => setPerfilOpen(false)} />

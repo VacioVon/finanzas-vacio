@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useAuthListener } from '@/hooks/useAuth'
@@ -42,8 +43,32 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return user ? <Navigate to="/" replace /> : <>{children}</>
 }
 
+function useApplyTheme() {
+  const { profile } = useAuthStore()
+  const tema = profile?.tema ?? 'dark'
+
+  useEffect(() => {
+    const root = document.documentElement
+    const mq   = window.matchMedia('(prefers-color-scheme: dark)')
+
+    function apply() {
+      if (tema === 'dark')  { root.classList.add('dark') }
+      else if (tema === 'light') { root.classList.remove('dark') }
+      else { mq.matches ? root.classList.add('dark') : root.classList.remove('dark') }
+    }
+
+    apply()
+
+    if (tema === 'auto') {
+      mq.addEventListener('change', apply)
+      return () => mq.removeEventListener('change', apply)
+    }
+  }, [tema])
+}
+
 export function App() {
   useAuthListener()
+  useApplyTheme()
 
   return (
     <Routes>
