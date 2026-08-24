@@ -16,10 +16,10 @@ export function RecentMovements() {
   return (
     <div className="px-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-700">Últimos movimientos</h3>
+        <h3 className="text-sm font-semibold text-slate-400">Últimos movimientos</h3>
         <button
           onClick={() => navigate('/movimientos')}
-          className="flex items-center gap-0.5 text-xs text-primary-600 font-medium"
+          className="flex items-center gap-0.5 text-xs text-brand-400 font-medium hover:text-brand-300 transition-colors"
         >
           Ver todos <ChevronRight className="h-3.5 w-3.5" />
         </button>
@@ -40,20 +40,17 @@ export function RecentMovements() {
             <Card key={mov.id} padding="sm">
               <div className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg flex-shrink-0"
-                  style={{ backgroundColor: `${mov.categoria?.color ?? '#6B7280'}20` }}
+                  className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg flex-shrink-0 border border-night-border/60"
+                  style={{ backgroundColor: `${mov.categoria?.color ?? '#6B7280'}18` }}
                 >
                   {mov.categoria?.emoji ?? '💸'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">
+                  <p className="text-sm font-medium text-slate-200 truncate">
                     {mov.categoria?.nombre ?? 'Sin categoría'}
                   </p>
-                  <p className="text-xs text-slate-400">
-                    {mov.subcategoria?.nombre
-                      ? `${mov.subcategoria.nombre} · `
-                      : ''
-                    }
+                  <p className="text-xs text-slate-500">
+                    {mov.subcategoria?.nombre ? `${mov.subcategoria.nombre} · ` : ''}
                     {formatDate(mov.fecha)}
                   </p>
                 </div>

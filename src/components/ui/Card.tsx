@@ -15,7 +15,7 @@ export function Card({ padding = 'md', className = '', children, ...props }: Car
   return (
     <div
       className={[
-        'bg-white rounded-2xl shadow-card',
+        'bg-night-2 rounded-2xl border border-night-border/60',
         paddingClasses[padding],
         className
       ].join(' ')}

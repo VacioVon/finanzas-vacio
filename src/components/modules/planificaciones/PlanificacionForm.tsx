@@ -254,13 +254,28 @@ export function PlanificacionForm({ isOpen, onClose, fechaInicial }: Props) {
 
         {/* Recurrencia */}
         <div className="border border-night-border rounded-xl p-3 space-y-3">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              {...register('con_recurrencia')}
-              className="w-4 h-4 rounded border-night-border bg-night-3 accent-brand-500"
-            />
+          <label className="flex items-center justify-between cursor-pointer">
             <span className="text-sm text-slate-300">Repetir</span>
+            {/* Custom toggle */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={conRecurrencia}
+              onClick={() => setValue('con_recurrencia', !conRecurrencia)}
+              className={[
+                'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-night-2',
+                conRecurrencia
+                  ? `${TIPO_THEME[tipo].accent.replace('text-', 'bg-').replace('-400', '-500')} focus:ring-brand-500`
+                  : 'bg-night-3 focus:ring-night-border'
+              ].join(' ')}
+            >
+              <span
+                className={[
+                  'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform duration-200',
+                  conRecurrencia ? 'translate-x-5' : 'translate-x-0'
+                ].join(' ')}
+              />
+            </button>
           </label>
 
           {conRecurrencia && (

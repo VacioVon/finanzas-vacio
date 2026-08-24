@@ -8,8 +8,8 @@ export function GreetingCard() {
   return (
     <div className="px-4 pt-5 pb-2">
       <p className="text-slate-500 text-sm">{greetingByHour()},</p>
-      <h2 className="text-xl font-bold text-slate-900">{nombre} 👋</h2>
-      <p className="text-slate-400 text-xs mt-0.5 capitalize">{formatMonthYearCapitalized()}</p>
+      <h2 className="text-xl font-bold text-white">{nombre} 👋</h2>
+      <p className="text-slate-500 text-xs mt-0.5 capitalize">{formatMonthYearCapitalized()}</p>
     </div>
   )
 }

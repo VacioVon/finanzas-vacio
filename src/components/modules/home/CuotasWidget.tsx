@@ -23,10 +23,10 @@ export function CuotasWidget() {
   return (
     <div className="px-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-700">Compras en cuotas</h3>
+        <h3 className="text-sm font-semibold text-slate-400">Compras en cuotas</h3>
         <button
           onClick={() => navigate('/cuotas')}
-          className="text-xs text-primary-600 font-medium flex items-center gap-0.5"
+          className="text-xs text-brand-400 font-medium flex items-center gap-0.5 hover:text-brand-300 transition-colors"
         >
           Ver todas <ChevronRight className="h-3.5 w-3.5" />
         </button>
@@ -34,14 +34,14 @@ export function CuotasWidget() {
 
       <Card padding="none">
         {/* Resumen */}
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-night-border/40 flex items-center justify-between">
           <div>
-            <p className="text-[10px] text-slate-400">Cuota mensual total</p>
-            <p className="text-sm font-bold text-slate-800">{formatCLP(compromisoMensual)}</p>
+            <p className="text-[10px] text-slate-500">Cuota mensual total</p>
+            <p className="text-sm font-bold text-white">{formatCLP(compromisoMensual)}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-slate-400">Pendiente total</p>
-            <p className="text-xs font-semibold text-danger-600">{formatCLP(totalPendiente)}</p>
+            <p className="text-[10px] text-slate-500">Pendiente total</p>
+            <p className="text-xs font-semibold text-gasto-400">{formatCLP(totalPendiente)}</p>
           </div>
         </div>
 
@@ -54,21 +54,21 @@ export function CuotasWidget() {
           return (
             <div
               key={cuota.id}
-              className={`px-4 py-3 flex items-center gap-3 ${i < Math.min(activas.length, 3) - 1 ? 'border-b border-slate-100' : ''}`}
+              className={`px-4 py-3 flex items-center gap-3 ${i < Math.min(activas.length, 3) - 1 ? 'border-b border-night-border/40' : ''}`}
             >
               <span className="text-xl flex-shrink-0">{cuota.emoji ?? '🛍️'}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-slate-800 truncate">{cuota.nombre}</p>
+                  <p className="text-xs font-semibold text-slate-300 truncate">{cuota.nombre}</p>
                   <p className="text-xs text-slate-500 flex-shrink-0 ml-2">
                     {pendientes} cuota{pendientes !== 1 ? 's' : ''}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
-                  <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-primary-400 rounded-full" style={{ width: `${pct}%` }} />
+                  <div className="flex-1 h-1 bg-night-3 rounded-full overflow-hidden">
+                    <div className="h-full bg-brand-400 rounded-full" style={{ width: `${pct}%` }} />
                   </div>
-                  <span className="text-[10px] text-slate-400 flex-shrink-0">{proxima}</span>
+                  <span className="text-[10px] text-slate-500 flex-shrink-0">{proxima}</span>
                 </div>
               </div>
             </div>
@@ -78,7 +78,7 @@ export function CuotasWidget() {
         {activas.length > 3 && (
           <button
             onClick={() => navigate('/cuotas')}
-            className="w-full py-2.5 text-xs text-primary-600 font-medium border-t border-slate-100 hover:bg-slate-50 transition-colors rounded-b-2xl"
+            className="w-full py-2.5 text-xs text-brand-400 font-medium border-t border-night-border/40 hover:bg-night-3/50 transition-colors rounded-b-2xl"
           >
             Ver {activas.length - 3} más
           </button>

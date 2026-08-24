@@ -22,13 +22,13 @@ export function SuscripcionesWidget() {
   if (proximas.length === 0) return null
 
   return (
-    <Card padding="md">
+    <Card padding="md" className="mx-4">
       <button
         onClick={() => navigate('/suscripciones')}
         className="w-full flex items-center justify-between mb-3"
       >
-        <p className="text-sm font-semibold text-slate-900">Próximos cobros</p>
-        <ChevronRight className="h-4 w-4 text-slate-300" />
+        <p className="text-sm font-semibold text-white">Próximos cobros</p>
+        <ChevronRight className="h-4 w-4 text-slate-600" />
       </button>
 
       <div className="space-y-2">
@@ -39,8 +39,8 @@ export function SuscripcionesWidget() {
             <div key={s.id} className="flex items-center gap-2">
               <span className="text-base">{s.emoji ?? '🔄'}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-800 truncate">{s.nombre}</p>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-xs font-medium text-slate-300 truncate">{s.nombre}</p>
+                <p className="text-[10px] text-slate-500">
                   {dias === 0
                     ? 'Hoy'
                     : dias < 0
@@ -50,11 +50,11 @@ export function SuscripcionesWidget() {
                 </p>
               </div>
               <div className="text-right">
-                <p className={`text-xs font-semibold ${urgente ? 'text-warning-700' : 'text-slate-700'}`}>
+                <p className={`text-xs font-semibold ${urgente ? 'text-warning-500' : 'text-slate-300'}`}>
                   {formatCLP(s.monto)}
                 </p>
                 {dias >= 0 && dias <= 7 && (
-                  <p className={`text-[10px] ${urgente ? 'text-warning-500' : 'text-slate-400'}`}>
+                  <p className={`text-[10px] ${urgente ? 'text-warning-500' : 'text-slate-500'}`}>
                     {dias === 0 ? 'hoy' : `en ${dias}d`}
                   </p>
                 )}
