@@ -127,23 +127,30 @@ export function AjustesPage() {
               <p className="text-sm font-medium text-slate-300">Tema</p>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              {TEMA_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setTema(opt.value)}
-                  className={[
-                    'flex flex-col items-center gap-1.5 py-3 rounded-xl border transition-all text-xs font-medium',
-                    temaActual === opt.value
-                      ? 'border-brand-500/60 bg-brand-500/15 text-brand-300'
-                      : 'border-night-border bg-night-3 text-slate-400 hover:border-brand-500/30 hover:text-slate-300'
-                  ].join(' ')}
-                >
-                  {opt.icon}
-                  {opt.label}
-                </button>
-              ))}
+              {TEMA_OPTIONS.map(opt => {
+                const isActive = opt.value === 'dark'
+                return (
+                  <div
+                    key={opt.value}
+                    className={[
+                      'relative flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-medium',
+                      isActive
+                        ? 'border-brand-500/60 bg-brand-500/15 text-brand-300'
+                        : 'border-night-border bg-night-3 text-slate-600 opacity-50 cursor-not-allowed'
+                    ].join(' ')}
+                  >
+                    {opt.icon}
+                    {opt.label}
+                    {!isActive && (
+                      <span className="absolute -top-1.5 -right-1 text-[8px] bg-night-3 border border-night-border text-slate-500 px-1 rounded-full">
+                        pronto
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-            <p className="text-[10px] text-slate-500 mt-2">La opción Sistema sigue la configuración de tu dispositivo.</p>
+            <p className="text-[10px] text-slate-500 mt-2">QloB es una app de tema oscuro. Tema claro próximamente.</p>
           </Card>
         </section>
 
