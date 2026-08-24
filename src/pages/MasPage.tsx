@@ -20,21 +20,21 @@ function MenuItem({ icon, label, description, onClick, badge }: MenuItemProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 py-3.5 px-4 hover:bg-slate-50 transition-colors first:rounded-t-2xl last:rounded-b-2xl"
+      className="w-full flex items-center gap-3 py-3.5 px-4 hover:bg-night-3/50 transition-colors first:rounded-t-2xl last:rounded-b-2xl"
     >
-      <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 flex-shrink-0">
+      <div className="size-9 rounded-xl bg-night-3 flex items-center justify-center text-slate-400 flex-shrink-0">
         {icon}
       </div>
       <div className="flex-1 text-left">
-        <p className="text-sm font-medium text-slate-900">{label}</p>
-        {description && <p className="text-xs text-slate-400">{description}</p>}
+        <p className="text-sm font-medium text-slate-200">{label}</p>
+        {description && <p className="text-xs text-slate-500">{description}</p>}
       </div>
       {badge ? (
-        <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">
+        <span className="text-[10px] bg-night-3 text-slate-500 px-2 py-0.5 rounded-full font-medium">
           {badge}
         </span>
       ) : (
-        <ChevronRight className="h-4 w-4 text-slate-300" />
+        <ChevronRight className="h-4 w-4 text-slate-600" />
       )}
     </button>
   )
@@ -54,32 +54,32 @@ export function MasPage() {
         <Card padding="none">
           <button
             onClick={() => navigate('/ajustes')}
-            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-slate-50 rounded-2xl transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-night-3/50 rounded-2xl transition-colors"
           >
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
                 alt="Avatar"
-                className="w-11 h-11 rounded-full object-cover border border-slate-200 flex-shrink-0"
+                className="size-11 rounded-full object-cover border border-night-border flex-shrink-0"
               />
             ) : (
-              <div className="w-11 h-11 rounded-full bg-primary-100 flex items-center justify-center text-xl font-bold text-primary-700 flex-shrink-0">
+              <div className="size-11 rounded-full bg-brand-500/20 flex items-center justify-center text-xl font-bold text-brand-300 flex-shrink-0">
                 {profile?.nombre?.[0]?.toUpperCase() ?? 'U'}
               </div>
             )}
             <div className="flex-1 text-left">
-              <p className="font-semibold text-slate-900">{profile?.nombre ?? 'Usuario'}</p>
+              <p className="font-semibold text-white">{profile?.nombre ?? 'Usuario'}</p>
               <p className="text-xs text-slate-400">
                 {profile?.moneda ?? 'CLP'}
                 {profile?.fecha_sueldo ? ` · Cobro día ${profile.fecha_sueldo}` : ''}
               </p>
             </div>
-            <ChevronRight className="h-4 w-4 text-slate-300" />
+            <ChevronRight className="h-4 w-4 text-slate-600" />
           </button>
         </Card>
 
         {/* Módulos Sprint 3 — nuevos */}
-        <div className="bg-white rounded-2xl shadow-card divide-y divide-slate-100">
+        <Card padding="none" className="divide-y divide-night-border/40">
           <MenuItem
             icon={<RefreshCw className="h-4 w-4" />}
             label="Suscripciones"
@@ -92,10 +92,10 @@ export function MasPage() {
             description="Próximos compromisos (30 días)"
             onClick={() => navigate('/calendario')}
           />
-        </div>
+        </Card>
 
         {/* Módulos Sprint 3 — existentes */}
-        <div className="bg-white rounded-2xl shadow-card divide-y divide-slate-100">
+        <Card padding="none" className="divide-y divide-night-border/40">
           <MenuItem
             icon={<ShoppingBag className="h-4 w-4" />}
             label="Compras en cuotas"
@@ -108,10 +108,10 @@ export function MasPage() {
             description="Créditos y préstamos externos"
             onClick={() => navigate('/deudas')}
           />
-        </div>
+        </Card>
 
         {/* Módulos Sprint 2 */}
-        <div className="bg-white rounded-2xl shadow-card divide-y divide-slate-100">
+        <Card padding="none" className="divide-y divide-night-border/40">
           <MenuItem
             icon={<Target className="h-4 w-4" />}
             label="Presupuestos"
@@ -124,10 +124,10 @@ export function MasPage() {
             description="Metas y progreso de ahorro"
             onClick={() => navigate('/objetivos')}
           />
-        </div>
+        </Card>
 
         {/* Configuración */}
-        <div className="bg-white rounded-2xl shadow-card divide-y divide-slate-100">
+        <Card padding="none" className="divide-y divide-night-border/40">
           <MenuItem
             icon={<Wallet className="h-4 w-4" />}
             label="Cuentas"
@@ -146,9 +146,9 @@ export function MasPage() {
             description="Perfil, tema, moneda, sueldo"
             onClick={() => navigate('/ajustes')}
           />
-        </div>
+        </Card>
 
-        <p className="text-center text-xs text-slate-300 pb-2">Finanzas Vacío v3.0 · Sprint 3</p>
+        <p className="text-center text-xs text-slate-600 pb-2">Quemen los Barcos v3.0</p>
       </div>
     </AppLayout>
   )

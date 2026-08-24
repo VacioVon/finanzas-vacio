@@ -30,7 +30,7 @@ export function SuscripcionesPage() {
         action={
           <button
             onClick={() => setFormOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+            className="size-9 flex items-center justify-center rounded-full bg-brand-500 text-white hover:bg-brand-600 transition-colors"
           >
             <Plus className="h-5 w-5" />
           </button>
@@ -41,10 +41,10 @@ export function SuscripcionesPage() {
 
         {/* Resumen */}
         {activas.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-card px-4 py-3 flex items-center justify-between">
+          <div className="bg-night-2 rounded-2xl border border-night-border/60 px-4 py-3 flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-400 font-medium">Gasto mensual estimado</p>
-              <p className="text-xl font-bold text-slate-900">{formatCLP(Math.round(totalMensual))}</p>
+              <p className="text-xl font-bold text-white tabular-nums">{formatCLP(Math.round(totalMensual))}</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-slate-400">{activas.length} activa{activas.length !== 1 ? 's' : ''}</p>

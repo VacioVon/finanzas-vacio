@@ -22,7 +22,6 @@ export function ObjetivoCard({ objetivo: obj }: ObjetivoCardProps) {
     : 0
   const completado = obj.monto_actual >= obj.monto_objetivo
 
-  // Días restantes
   let diasRestantes: number | null = null
   if (obj.fecha_objetivo) {
     const hoy = new Date()
@@ -41,34 +40,36 @@ export function ObjetivoCard({ objetivo: obj }: ObjetivoCardProps) {
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+            className="size-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
             style={{ backgroundColor: `${obj.color}20` }}
           >
             {obj.emoji ?? '🎯'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-900 truncate">{obj.nombre}</p>
+            <p className="text-sm font-semibold text-slate-200 truncate">{obj.nombre}</p>
             {obj.descripcion && (
               <p className="text-xs text-slate-400 truncate">{obj.descripcion}</p>
             )}
           </div>
           <div className="flex items-center gap-0.5 flex-shrink-0">
             {completado && (
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-success-50 text-success-700 mr-1">
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-ingreso-500/15 text-ingreso-400 mr-1">
                 ✓ Completado
               </span>
             )}
             <button
               onClick={() => setEditOpen(true)}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+              aria-label="Editar objetivo"
+              className="size-7 flex items-center justify-center rounded-full hover:bg-night-3 transition-colors"
             >
               <Pencil className="h-3.5 w-3.5 text-slate-400" />
             </button>
             <button
               onClick={handleDelete}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-danger-50 transition-colors"
+              aria-label="Eliminar objetivo"
+              className="size-7 flex items-center justify-center rounded-full hover:bg-gasto-500/10 transition-colors"
             >
-              <Trash2 className="h-3.5 w-3.5 text-danger-400" />
+              <Trash2 className="h-3.5 w-3.5 text-gasto-400" />
             </button>
           </div>
         </div>
@@ -82,30 +83,25 @@ export function ObjetivoCard({ objetivo: obj }: ObjetivoCardProps) {
         {/* Montos y botón */}
         <div className="flex items-center justify-between mt-2">
           <div>
-            <p className="text-sm font-bold text-slate-900">{formatCLP(obj.monto_actual)}</p>
-            <p className="text-xs text-slate-400">de {formatCLP(obj.monto_objetivo)}</p>
+            <p className="text-sm font-bold text-white tabular-nums">{formatCLP(obj.monto_actual)}</p>
+            <p className="text-xs text-slate-400 tabular-nums">de {formatCLP(obj.monto_objetivo)}</p>
           </div>
           <div className="flex items-center gap-2">
             {diasRestantes !== null && (
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 diasRestantes < 0
-                  ? 'bg-danger-50 text-danger-700'
+                  ? 'bg-gasto-500/15 text-gasto-400'
                   : diasRestantes <= 30
-                  ? 'bg-warning-50 text-warning-700'
-                  : 'bg-slate-100 text-slate-500'
+                  ? 'bg-xp-500/15 text-xp-400'
+                  : 'bg-night-3 text-slate-500'
               }`}>
-                {diasRestantes < 0
-                  ? 'Vencido'
-                  : diasRestantes === 0
-                  ? 'Hoy'
-                  : `${diasRestantes}d`
-                }
+                {diasRestantes < 0 ? 'Vencido' : diasRestantes === 0 ? 'Hoy' : `${diasRestantes}d`}
               </span>
             )}
             {!completado && (
               <button
                 onClick={() => setFondosOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary-50 text-primary-700 text-xs font-medium hover:bg-primary-100 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-500/15 text-brand-400 text-xs font-medium hover:bg-brand-500/25 transition-colors"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
                 Agregar

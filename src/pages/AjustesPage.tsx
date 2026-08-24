@@ -37,12 +37,12 @@ export function AjustesPage() {
   const { profile } = useAuthStore()
   const updatePerfil = useUpdatePerfil()
   const qc          = useQueryClient()
-  const [perfilOpen,    setPerfilOpen]    = useState(false)
-  const [reiniciando,   setReiniciando]   = useState(false)
+  const [perfilOpen,  setPerfilOpen]  = useState(false)
+  const [reiniciando, setReiniciando] = useState(false)
 
-  const temaActual    = (profile?.tema ?? 'auto') as Tema
-  const monedaActual  = profile?.moneda ?? 'CLP'
-  const diaSueldo     = profile?.fecha_sueldo
+  const temaActual   = (profile?.tema ?? 'auto') as Tema
+  const monedaActual = profile?.moneda ?? 'CLP'
+  const diaSueldo    = profile?.fecha_sueldo
 
   async function setTema(tema: Tema) {
     await updatePerfil.mutateAsync({ tema })
@@ -92,39 +92,39 @@ export function AjustesPage() {
 
         {/* Perfil */}
         <section>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Perfil</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Perfil</p>
           <Card padding="none">
             <button
               onClick={() => setPerfilOpen(true)}
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-slate-50 rounded-2xl transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-night-3/50 rounded-2xl transition-colors"
             >
               {profile?.avatar_url ? (
                 <img
                   src={profile.avatar_url}
                   alt="Avatar"
-                  className="w-10 h-10 rounded-full object-cover border border-slate-200 flex-shrink-0"
+                  className="size-10 rounded-full object-cover border border-night-border flex-shrink-0"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-lg font-bold text-primary-700 flex-shrink-0">
+                <div className="size-10 rounded-full bg-brand-500/20 flex items-center justify-center text-lg font-bold text-brand-300 flex-shrink-0">
                   {profile?.nombre?.[0]?.toUpperCase() ?? 'U'}
                 </div>
               )}
               <div className="flex-1 text-left">
-                <p className="text-sm font-semibold text-slate-900">{profile?.nombre ?? 'Usuario'}</p>
+                <p className="text-sm font-semibold text-white">{profile?.nombre ?? 'Usuario'}</p>
                 <p className="text-xs text-slate-400">Nombre y foto de perfil</p>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-300" />
+              <ChevronRight className="h-4 w-4 text-slate-600" />
             </button>
           </Card>
         </section>
 
         {/* Apariencia */}
         <section>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Apariencia</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Apariencia</p>
           <Card padding="md">
             <div className="flex items-center gap-2 mb-3">
               <Monitor className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-medium text-slate-700">Tema</p>
+              <p className="text-sm font-medium text-slate-300">Tema</p>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {TEMA_OPTIONS.map(opt => (
@@ -134,8 +134,8 @@ export function AjustesPage() {
                   className={[
                     'flex flex-col items-center gap-1.5 py-3 rounded-xl border transition-all text-xs font-medium',
                     temaActual === opt.value
-                      ? 'border-primary-400 bg-primary-50 text-primary-700'
-                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                      ? 'border-brand-500/60 bg-brand-500/15 text-brand-300'
+                      : 'border-night-border bg-night-3 text-slate-400 hover:border-brand-500/30 hover:text-slate-300'
                   ].join(' ')}
                 >
                   {opt.icon}
@@ -143,20 +143,20 @@ export function AjustesPage() {
                 </button>
               ))}
             </div>
-            <p className="text-[10px] text-slate-400 mt-2">La opción Sistema sigue la configuración de tu dispositivo.</p>
+            <p className="text-[10px] text-slate-500 mt-2">La opción Sistema sigue la configuración de tu dispositivo.</p>
           </Card>
         </section>
 
         {/* Preferencias financieras */}
         <section>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Finanzas</p>
-          <Card padding="none" className="divide-y divide-slate-100">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Finanzas</p>
+          <Card padding="none" className="divide-y divide-night-border/40">
 
             {/* Moneda */}
             <div className="px-4 py-3.5">
               <div className="flex items-center gap-2 mb-2">
                 <DollarSign className="h-4 w-4 text-slate-400" />
-                <p className="text-sm font-medium text-slate-700">Moneda</p>
+                <p className="text-sm font-medium text-slate-300">Moneda</p>
               </div>
               <div className="flex gap-2">
                 {MONEDAS.map(m => (
@@ -166,8 +166,8 @@ export function AjustesPage() {
                     className={[
                       'flex-1 py-2 px-2 rounded-xl border text-xs font-medium transition-all',
                       monedaActual === m.value
-                        ? 'border-primary-400 bg-primary-50 text-primary-700'
-                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                        ? 'border-brand-500/60 bg-brand-500/15 text-brand-300'
+                        : 'border-night-border bg-night-3 text-slate-400 hover:border-brand-500/30 hover:text-slate-300'
                     ].join(' ')}
                   >
                     {m.label}
@@ -181,15 +181,15 @@ export function AjustesPage() {
               <div className="flex items-center gap-2 mb-2">
                 <CalendarDays className="h-4 w-4 text-slate-400" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-700">Día de cobro del sueldo</p>
-                  <p className="text-[10px] text-slate-400">Define el inicio de tu mes presupuestario</p>
+                  <p className="text-sm font-medium text-slate-300">Día de cobro del sueldo</p>
+                  <p className="text-[10px] text-slate-500">Define el inicio de tu mes presupuestario</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <select
                   value={diaSueldo ?? ''}
                   onChange={e => setDiaSueldo(e.target.value ? Number(e.target.value) : null)}
-                  className="flex-1 h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-400"
+                  className="flex-1 h-10 px-3 rounded-xl border border-night-border bg-night-3 text-sm text-white outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500"
                 >
                   <option value="">Sin configurar</option>
                   {DIAS_SUELDO.map(d => (
@@ -206,56 +206,56 @@ export function AjustesPage() {
 
         {/* Datos */}
         <section>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Datos</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Datos</p>
           <Card padding="none">
             <button
               onClick={() => navigate('/categorias')}
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-slate-50 rounded-2xl transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-night-3/50 rounded-2xl transition-colors"
             >
-              <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
-                <Tag className="h-4 w-4 text-slate-600" />
+              <div className="size-9 rounded-xl bg-night-3 flex items-center justify-center flex-shrink-0">
+                <Tag className="h-4 w-4 text-slate-400" />
               </div>
               <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-slate-900">Categorías</p>
-                <p className="text-xs text-slate-400">Administra categorías y subcategorías</p>
+                <p className="text-sm font-medium text-slate-200">Categorías</p>
+                <p className="text-xs text-slate-500">Administra categorías y subcategorías</p>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-300" />
+              <ChevronRight className="h-4 w-4 text-slate-600" />
             </button>
           </Card>
         </section>
 
         {/* Zona de peligro */}
         <section>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Zona de peligro</p>
-          <Card padding="none" className="divide-y divide-slate-100">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Zona de peligro</p>
+          <Card padding="none" className="divide-y divide-night-border/40">
             <button
               onClick={handleReiniciar}
               disabled={reiniciando}
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-danger-50 rounded-t-2xl transition-colors disabled:opacity-50"
+              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gasto-500/10 rounded-t-2xl transition-colors disabled:opacity-50"
             >
-              <div className="w-9 h-9 rounded-xl bg-danger-50 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="h-4 w-4 text-danger-600" />
+              <div className="size-9 rounded-xl bg-gasto-500/15 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="h-4 w-4 text-gasto-400" />
               </div>
               <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-danger-600">
+                <p className="text-sm font-medium text-gasto-400">
                   {reiniciando ? 'Eliminando datos…' : 'Reiniciar todos los datos'}
                 </p>
-                <p className="text-xs text-slate-400">Elimina cuentas, movimientos, cuotas y más</p>
+                <p className="text-xs text-slate-500">Elimina cuentas, movimientos, cuotas y más</p>
               </div>
             </button>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-slate-50 rounded-b-2xl transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-night-3/50 rounded-b-2xl transition-colors"
             >
-              <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
-                <LogOut className="h-4 w-4 text-slate-600" />
+              <div className="size-9 rounded-xl bg-night-3 flex items-center justify-center flex-shrink-0">
+                <LogOut className="h-4 w-4 text-slate-400" />
               </div>
-              <p className="text-sm font-medium text-slate-700">Cerrar sesión</p>
+              <p className="text-sm font-medium text-slate-300">Cerrar sesión</p>
             </button>
           </Card>
         </section>
 
-        <p className="text-center text-xs text-slate-300">Finanzas Vacío v3.0 · Sprint 3</p>
+        <p className="text-center text-xs text-slate-600">Finanzas Vacío v3.0 · Sprint 3</p>
       </div>
 
       <PerfilForm isOpen={perfilOpen} onClose={() => setPerfilOpen(false)} />

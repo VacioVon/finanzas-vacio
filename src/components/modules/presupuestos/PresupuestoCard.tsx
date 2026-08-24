@@ -43,26 +43,28 @@ export function PresupuestoCard({ presupuesto: p, mes, anio }: PresupuestoCardPr
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-semibold text-slate-900 truncate">
+              <p className="text-sm font-semibold text-slate-200 truncate">
                 {p.categoria?.nombre ?? 'Sin categoría'}
               </p>
               <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                 {p.excedido && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-danger-50 text-danger-700">
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gasto-500/15 text-gasto-400">
                     Excedido
                   </span>
                 )}
                 <button
                   onClick={() => setEditOpen(true)}
-                  className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+                  aria-label="Editar presupuesto"
+                  className="size-6 flex items-center justify-center rounded-full hover:bg-night-3 transition-colors"
                 >
                   <Pencil className="h-3 w-3 text-slate-400" />
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-danger-50 transition-colors"
+                  aria-label="Eliminar presupuesto"
+                  className="size-6 flex items-center justify-center rounded-full hover:bg-gasto-500/10 transition-colors"
                 >
-                  <Trash2 className="h-3 w-3 text-danger-400" />
+                  <Trash2 className="h-3 w-3 text-gasto-400" />
                 </button>
               </div>
             </div>
@@ -70,7 +72,7 @@ export function PresupuestoCard({ presupuesto: p, mes, anio }: PresupuestoCardPr
             <ProgressBar value={p.porcentaje} color={colorBar} />
 
             <div className="flex items-center justify-between mt-1">
-              <span className={`text-xs font-medium ${p.excedido ? 'text-danger-600' : 'text-slate-600'}`}>
+              <span className={`text-xs font-medium tabular-nums ${p.excedido ? 'text-gasto-400' : 'text-slate-400'}`}>
                 {formatCLP(p.gastado)}
               </span>
               <span className="text-xs text-slate-400">

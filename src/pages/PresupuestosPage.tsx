@@ -23,6 +23,7 @@ export function PresupuestosPage() {
   const totalGastado       = (presupuestos ?? []).reduce((s, p) => s + p.gastado, 0)
   const pctTotal           = totalPresupuestado > 0 ? Math.min(100, (totalGastado / totalPresupuestado) * 100) : 0
   const categoriasUsadas   = (presupuestos ?? []).map(p => p.categoria_id)
+  const sobrePasado        = totalGastado > totalPresupuestado
 
   function navegar(delta: 1 | -1) {
     const { mes: nm, anio: na } = navegarMes(mes, anio, delta)
@@ -39,18 +40,18 @@ export function PresupuestosPage() {
         <div className="flex items-center justify-between">
           <button
             onClick={() => navegar(-1)}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-card hover:bg-slate-50 transition-colors"
+            className="size-9 flex items-center justify-center rounded-full bg-night-2 border border-night-border hover:bg-night-3 transition-colors"
           >
-            <ChevronLeft className="h-5 w-5 text-slate-600" />
+            <ChevronLeft className="h-5 w-5 text-slate-400" />
           </button>
-          <p className="text-base font-semibold text-slate-900 capitalize">
+          <p className="text-base font-semibold text-white capitalize">
             {labelMesAnio(mes, anio)}
           </p>
           <button
             onClick={() => navegar(1)}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-card hover:bg-slate-50 transition-colors"
+            className="size-9 flex items-center justify-center rounded-full bg-night-2 border border-night-border hover:bg-night-3 transition-colors"
           >
-            <ChevronRight className="h-5 w-5 text-slate-600" />
+            <ChevronRight className="h-5 w-5 text-slate-400" />
           </button>
         </div>
 
@@ -58,20 +59,20 @@ export function PresupuestosPage() {
         {(presupuestos?.length ?? 0) > 0 && (
           <Card padding="md">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-slate-900">Resumen del mes</p>
-              <span className={`text-sm font-bold ${totalGastado > totalPresupuestado ? 'text-danger-600' : 'text-success-600'}`}>
+              <p className="text-sm font-semibold text-slate-200">Resumen del mes</p>
+              <span className={`text-sm font-bold tabular-nums ${sobrePasado ? 'text-gasto-400' : 'text-ingreso-400'}`}>
                 {Math.round(pctTotal)}%
               </span>
             </div>
-            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-2 bg-night-3 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${totalGastado > totalPresupuestado ? 'bg-danger-500' : 'bg-success-500'}`}
+                className={`h-full rounded-full transition-all ${sobrePasado ? 'bg-gasto-500' : 'bg-ingreso-500'}`}
                 style={{ width: `${pctTotal}%` }}
               />
             </div>
             <div className="flex justify-between mt-2">
-              <span className="text-xs text-slate-500">Gastado: <strong>{formatCLP(totalGastado)}</strong></span>
-              <span className="text-xs text-slate-500">Presupuesto: <strong>{formatCLP(totalPresupuestado)}</strong></span>
+              <span className="text-xs text-slate-500">Gastado: <strong className="text-slate-300 tabular-nums">{formatCLP(totalGastado)}</strong></span>
+              <span className="text-xs text-slate-500">Presupuesto: <strong className="text-slate-300 tabular-nums">{formatCLP(totalPresupuestado)}</strong></span>
             </div>
           </Card>
         )}
@@ -97,7 +98,7 @@ export function PresupuestosPage() {
       {/* FAB */}
       <button
         onClick={() => setFormOpen(true)}
-        className="fixed bottom-24 right-5 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-700 active:scale-95 transition-all z-30"
+        className="fixed bottom-24 right-5 size-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all z-30"
         aria-label="Nuevo presupuesto"
       >
         <Plus className="h-7 w-7" />

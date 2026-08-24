@@ -54,11 +54,11 @@ export function CuentasPage() {
           <div className="px-4 grid grid-cols-2 gap-3">
             <Card padding="sm">
               <p className="text-xs text-slate-400 font-medium">Disponible</p>
-              <p className="text-base font-bold text-slate-900 mt-0.5">{formatCLP(totalDisponible)}</p>
+              <p className="text-base font-bold text-white tabular-nums mt-0.5">{formatCLP(totalDisponible)}</p>
             </Card>
             <Card padding="sm">
               <p className="text-xs text-slate-400 font-medium">Inversiones</p>
-              <p className="text-base font-bold text-success-600 mt-0.5">{formatCLP(totalInversiones)}</p>
+              <p className="text-base font-bold text-ingreso-400 tabular-nums mt-0.5">{formatCLP(totalInversiones)}</p>
             </Card>
           </div>
         )}
