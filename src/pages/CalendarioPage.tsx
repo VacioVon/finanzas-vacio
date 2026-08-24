@@ -7,6 +7,7 @@ import { useCuotas } from '@/hooks/useCuotas'
 import { useDeudas } from '@/hooks/useDeudas'
 import { useCuentas } from '@/hooks/useCuentas'
 import { useObjetivos } from '@/hooks/useObjetivos'
+import { usePlanificaciones } from '@/hooks/usePlanificaciones'
 import { useAuthStore } from '@/store/authStore'
 import {
   addDays, addMonths, differenceInDays, format, parseISO,
@@ -15,7 +16,8 @@ import {
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { AlertTriangle, TrendingDown, TrendingUp, Wallet, Target } from 'lucide-react'
-import type { TipoCuenta } from '@/types/app.types'
+import type { TipoCuenta, TipoPlanificacion } from '@/types/app.types'
+import { DiaSheet, type EventoDia } from '@/components/modules/planificaciones/DiaSheet'
 
 // ── Constantes ───────────────────────────────────────────────────
 const CUENTAS_LIQUIDEZ: TipoCuenta[] = ['bancaria', 'digital', 'debito', 'efectivo']
@@ -35,12 +37,20 @@ interface EventoCalendario {
   delta:      number          // impacto en saldo: negativo = egreso, 0 = informativo
 }
 
-// Color por tipo de evento
+// Color por tipo de evento comprometido
 const TIPO_COLOR: Record<EventoTipo, { dot: string; badge: string; icon: string; border: string }> = {
   sueldo:      { dot: 'bg-ingreso-500',  badge: 'bg-ingreso-500/15 text-ingreso-400 border-ingreso-500/30',  icon: 'text-ingreso-400',  border: 'border-ingreso-500/25' },
   suscripcion: { dot: 'bg-mover-500',    badge: 'bg-mover-500/15 text-mover-400 border-mover-500/30',        icon: 'text-mover-400',    border: 'border-mover-500/25'   },
   cuota:       { dot: 'bg-brand-500',    badge: 'bg-brand-500/15 text-brand-400 border-brand-500/30',        icon: 'text-brand-400',    border: 'border-brand-500/25'   },
   deuda:       { dot: 'bg-gasto-500',    badge: 'bg-gasto-500/15 text-gasto-400 border-gasto-500/30',        icon: 'text-gasto-400',    border: 'border-gasto-500/25'   },
+}
+
+// Color por tipo de planificación (dots outline)
+const PLAN_DOT: Record<TipoPlanificacion, string> = {
+  gasto:   'border border-gasto-500',
+  ingreso: 'border border-ingreso-500',
+  ahorro:  'border border-ahorro-500',
+  mover:   'border border-mover-500',
 }
 
 const TIPO_LABEL: Record<EventoTipo, string> = {
@@ -70,14 +80,15 @@ function groupByDate(eventos: EventoCalendario[]) {
 
 // ── Componente ProyeccionCard ────────────────────────────────────
 interface Proyeccion {
-  saldoInicial:   number
-  totalEgresos:   number
-  saldoFinal:     number
-  saldoMinimo:    number
-  fechaMinimo:    string | null
-  eventoMinimo:   string | null
-  enRojo:         boolean
-  montoNecesario: number
+  saldoInicial:      number
+  totalCompromisos:  number
+  totalPlanificado:  number
+  saldoFinal:        number
+  saldoMinimo:       number
+  fechaMinimo:       string | null
+  eventoMinimo:      string | null
+  enRojo:            boolean
+  montoNecesario:    number
 }
 
 function ProyeccionCard({ p, rango }: { p: Proyeccion; rango: Rango }) {
@@ -100,7 +111,7 @@ function ProyeccionCard({ p, rango }: { p: Proyeccion; rango: Rango }) {
         }
       </div>
 
-      {/* Filas de la proyección */}
+      {/* Filas */}
       <div className="px-4 py-3 space-y-2.5">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -115,8 +126,18 @@ function ProyeccionCard({ p, rango }: { p: Proyeccion; rango: Rango }) {
             <TrendingDown className="h-3.5 w-3.5 text-gasto-500" />
             <span className="text-xs text-slate-400">Compromisos identificados</span>
           </div>
-          <span className="text-sm font-semibold text-gasto-400">−{formatCLP(p.totalEgresos)}</span>
+          <span className="text-sm font-semibold text-gasto-400">−{formatCLP(p.totalCompromisos)}</span>
         </div>
+
+        {p.totalPlanificado > 0 && (
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <TrendingDown className="h-3.5 w-3.5 text-brand-500/60" />
+              <span className="text-xs text-slate-500">Planificado (pendiente)</span>
+            </div>
+            <span className="text-sm font-semibold text-brand-400/70">−{formatCLP(p.totalPlanificado)}</span>
+          </div>
+        )}
 
         <div className="h-px bg-night-border/60" />
 
@@ -162,7 +183,6 @@ function ProyeccionCard({ p, rango }: { p: Proyeccion; rango: Rango }) {
         </div>
       )}
 
-      {/* Aviso sueldo no incluido */}
       <p className="text-[10px] text-slate-600 text-center pb-3 px-4">
         ⚠ Sueldo no incluido en la proyección — monto no configurado
       </p>
@@ -214,24 +234,24 @@ function QueHacer({
 // ── Componente MiniCalendario ────────────────────────────────────
 function MiniCalendario({
   eventosPorFecha,
+  plansPorFecha,
   diaSeleccionado,
   onSelectDia
 }: {
   eventosPorFecha: Map<string, EventoTipo[]>
+  plansPorFecha:   Map<string, TipoPlanificacion[]>
   diaSeleccionado: string | null
   onSelectDia:     (fecha: string) => void
 }) {
   const hoy       = new Date()
   const inicio    = startOfMonth(hoy)
   const totalDias = getDaysInMonth(hoy)
-  // Lunes como primer día: getDay devuelve 0=dom, ajustamos a lunes=0
   const offsetInicio = (getDay(inicio) + 6) % 7
 
   const celdas: (Date | null)[] = [
     ...Array(offsetInicio).fill(null),
     ...Array.from({ length: totalDias }, (_, i) => addDays(inicio, i))
   ]
-  // Completar hasta múltiplo de 7
   while (celdas.length % 7 !== 0) celdas.push(null)
 
   const semanas: (Date | null)[][] = []
@@ -245,32 +265,30 @@ function MiniCalendario({
         {format(hoy, 'MMMM yyyy', { locale: es })}
       </p>
 
-      {/* Cabecera días semana */}
       <div className="grid grid-cols-7 mb-1">
         {DIAS_SEMANA.map(d => (
           <div key={d} className="text-center text-[10px] font-semibold text-slate-600">{d}</div>
         ))}
       </div>
 
-      {/* Grilla */}
       {semanas.map((semana, si) => (
         <div key={si} className="grid grid-cols-7">
           {semana.map((dia, di) => {
             if (!dia) return <div key={di} />
-            const key      = format(dia, 'yyyy-MM-dd')
-            const tipos    = eventosPorFecha.get(key) ?? []
-            const esHoy    = isToday(dia)
-            const esMes    = isSameMonth(dia, hoy)
-            const selec    = diaSeleccionado === key
-            const tieneEv  = tipos.length > 0
+            const key       = format(dia, 'yyyy-MM-dd')
+            const tipos     = eventosPorFecha.get(key) ?? []
+            const plans     = plansPorFecha.get(key) ?? []
+            const esHoy     = isToday(dia)
+            const esMes     = isSameMonth(dia, hoy)
+            const selec     = diaSeleccionado === key
+            const tieneAlgo = tipos.length > 0 || plans.length > 0
 
             return (
               <button
                 key={di}
-                onClick={() => tieneEv && onSelectDia(key)}
+                onClick={() => onSelectDia(key)}
                 className={[
-                  'flex flex-col items-center py-1 rounded-lg transition-all',
-                  tieneEv ? 'cursor-pointer hover:bg-white/5' : 'cursor-default',
+                  'flex flex-col items-center py-1 rounded-lg transition-all cursor-pointer hover:bg-white/5',
                   selec   ? 'bg-brand-500/20 ring-1 ring-brand-500/50' : '',
                   !esMes  ? 'opacity-30' : ''
                 ].join(' ')}
@@ -283,10 +301,13 @@ function MiniCalendario({
                 ].join(' ')}>
                   {format(dia, 'd')}
                 </span>
-                {/* Puntos de eventos */}
+                {/* Dots: sólidos = comprometido, outline = planificado */}
                 <div className="flex gap-0.5 h-2 items-center mt-0.5">
-                  {tipos.slice(0, 3).map((t, ti) => (
-                    <div key={ti} className={`w-1 h-1 rounded-full ${TIPO_COLOR[t].dot}`} />
+                  {tipos.slice(0, 2).map((t, ti) => (
+                    <div key={`ev-${ti}`} className={`w-1 h-1 rounded-full ${TIPO_COLOR[t].dot}`} />
+                  ))}
+                  {plans.slice(0, tieneAlgo ? 1 : 2).map((p, pi) => (
+                    <div key={`pl-${pi}`} className={`w-1 h-1 rounded-full bg-transparent ${PLAN_DOT[p]}`} style={{ boxSizing: 'border-box' }} />
                   ))}
                 </div>
               </button>
@@ -296,7 +317,8 @@ function MiniCalendario({
       ))}
 
       {/* Leyenda */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 px-1">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 px-1 border-t border-night-border/40 pt-2">
+        <p className="w-full text-[9px] text-slate-600 mb-0.5">● comprometido · ○ planificado</p>
         {(Object.entries(TIPO_COLOR) as [EventoTipo, typeof TIPO_COLOR[EventoTipo]][]).map(([tipo, c]) => (
           <div key={tipo} className="flex items-center gap-1">
             <div className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
@@ -310,17 +332,18 @@ function MiniCalendario({
 
 // ── Página principal ─────────────────────────────────────────────
 export function CalendarioPage() {
-  const { profile }                  = useAuthStore()
-  const { data: suscripciones = [] } = useSuscripciones()
-  const { data: cuotas        = [] } = useCuotas()
-  const { data: deudas        = [] } = useDeudas()
-  const { data: cuentas       = [] } = useCuentas()
-  const { data: objetivos     = [] } = useObjetivos()
+  const { profile }                        = useAuthStore()
+  const { data: suscripciones = [] }       = useSuscripciones()
+  const { data: cuotas        = [] }       = useCuotas()
+  const { data: deudas        = [] }       = useDeudas()
+  const { data: cuentas       = [] }       = useCuentas()
+  const { data: objetivos     = [] }       = useObjetivos()
+  const { planificaciones }                = usePlanificaciones()
 
-  const [rango,         setRango]         = useState<Rango>(30)
-  const [diaSeleccionado, setDiaSelec]    = useState<string | null>(null)
+  const [rango,           setRango]        = useState<Rango>(30)
+  const [diaSeleccionado, setDiaSelec]     = useState<string | null>(null)
+  const [diaSheetFecha,   setDiaSheetFecha] = useState<string | null>(null)
 
-  // Refs para scroll a grupos
   const grupoRefs = useRef<Map<string, HTMLElement>>(new Map())
   const setGrupoRef = useCallback((fecha: string) => (el: HTMLElement | null) => {
     if (el) grupoRefs.current.set(fecha, el)
@@ -338,11 +361,10 @@ export function CalendarioPage() {
     [cuentas]
   )
 
-  // ── Construir eventos ─────────────────────────────────────────
+  // ── Eventos comprometidos ─────────────────────────────────────
   const eventos = useMemo<EventoCalendario[]>(() => {
     const lista: EventoCalendario[] = []
 
-    // Sueldo (solo día, monto desconocido)
     if (profile?.fecha_sueldo) {
       let fechaSueldo = setDate(hoy, profile.fecha_sueldo)
       if (fechaSueldo <= hoy) fechaSueldo = addMonths(fechaSueldo, 1)
@@ -354,12 +376,11 @@ export function CalendarioPage() {
           titulo:    'Día de sueldo',
           subtitulo: `Día ${profile.fecha_sueldo} de cada mes · monto no configurado`,
           monto:     null,
-          delta:     0   // no sumamos: monto desconocido
+          delta:     0
         })
       }
     }
 
-    // Suscripciones activas
     for (const s of suscripciones) {
       if (!s.activa || !s.proxima_fecha) continue
       const fecha = parseISO(s.proxima_fecha)
@@ -376,7 +397,6 @@ export function CalendarioPage() {
       }
     }
 
-    // Cuotas activas — estimación fecha próximo pago
     for (const c of cuotas) {
       if (c.estado !== 'activa') continue
       const fechaBase   = parseISO(c.fecha_inicio)
@@ -394,7 +414,6 @@ export function CalendarioPage() {
       }
     }
 
-    // Deudas activas
     for (const d of deudas) {
       if (d.estado !== 'activa' || !d.fecha_prox_pago) continue
       const fecha = parseISO(d.fecha_prox_pago)
@@ -415,38 +434,85 @@ export function CalendarioPage() {
     return lista
   }, [profile, suscripciones, cuotas, deudas, hoy, limite])
 
-  // ── Proyección cronológica ────────────────────────────────────
+  // ── Planificaciones en el rango ───────────────────────────────
+  // Solo pendientes dentro del rango de proyección.
+  // Delta de liquidez:
+  //   gasto:   -monto
+  //   ingreso: +monto
+  //   ahorro:  -monto (disponible baja; patrimonio sube via objetivo)
+  //   mover:   delta neto según tipos de cuenta (liquidez→liquidez = 0, liquidez→inversion = -monto)
+  const planificacionesEnRango = useMemo(() => {
+    return planificaciones.filter(p => {
+      const f = parseISO(p.fecha)
+      return f > hoy && f <= limite
+    })
+  }, [planificaciones, hoy, limite])
+
+  const planificacionesDelta = useMemo(() => {
+    return planificacionesEnRango.map(p => {
+      let delta = 0
+      if (p.tipo === 'gasto' || p.tipo === 'ahorro') {
+        delta = -p.monto
+      } else if (p.tipo === 'ingreso') {
+        delta = p.monto
+      } else if (p.tipo === 'mover') {
+        // Delta neto sobre liquidez según tipo de cuentas involucradas
+        const origenEsLiquidez  = p.cuenta?.tipo && CUENTAS_LIQUIDEZ.includes(p.cuenta.tipo)
+        const destinoEsLiquidez = p.cuenta_destino?.tipo && CUENTAS_LIQUIDEZ.includes(p.cuenta_destino.tipo)
+        if (origenEsLiquidez && !destinoEsLiquidez) delta = -p.monto   // sale de liquidez
+        else if (!origenEsLiquidez && destinoEsLiquidez) delta = p.monto  // entra a liquidez
+        else delta = 0  // transferencia interna entre cuentas del mismo pool
+      }
+      return { plan: p, delta }
+    })
+  }, [planificacionesEnRango])
+
+  // ── Proyección cronológica (compromisos + planificaciones) ────
   const proyeccion = useMemo<Proyeccion>(() => {
-    const ordenados    = [...eventos].sort((a, b) => a.fecha.localeCompare(b.fecha))
+    // Fuente 1: eventos comprometidos
+    const items = [
+      ...eventos.map(ev => ({ fecha: ev.fecha, titulo: ev.titulo, delta: ev.delta, esCompromiso: true })),
+      ...planificacionesDelta.map(({ plan, delta }) => ({
+        fecha: plan.fecha,
+        titulo: plan.comercio || plan.descripcion || plan.tipo,
+        delta,
+        esCompromiso: false
+      }))
+    ].sort((a, b) => a.fecha.localeCompare(b.fecha))
+
     let saldo          = saldoLiquidez
     let minSaldo       = saldoLiquidez
     let fechaMinimo:   string | null = null
     let eventoMinimo:  string | null = null
-    let totalEgresos   = 0
+    let totalCompromisos  = 0
+    let totalPlanificado  = 0
 
-    for (const ev of ordenados) {
-      if (ev.delta === 0) continue   // eventos informativos (sueldo sin monto)
-      saldo        += ev.delta
-      totalEgresos += Math.abs(ev.delta)
+    for (const item of items) {
+      if (item.delta === 0) continue
+      saldo += item.delta
+
+      if (item.esCompromiso && item.delta < 0) totalCompromisos  += Math.abs(item.delta)
+      if (!item.esCompromiso && item.delta < 0) totalPlanificado += Math.abs(item.delta)
 
       if (saldo < minSaldo) {
         minSaldo     = saldo
-        fechaMinimo  = ev.fecha
-        eventoMinimo = ev.titulo
+        fechaMinimo  = item.fecha
+        eventoMinimo = item.titulo
       }
     }
 
     return {
-      saldoInicial:   saldoLiquidez,
-      totalEgresos,
-      saldoFinal:     saldo,
-      saldoMinimo:    minSaldo,
+      saldoInicial:     saldoLiquidez,
+      totalCompromisos,
+      totalPlanificado,
+      saldoFinal:       saldo,
+      saldoMinimo:      minSaldo,
       fechaMinimo,
       eventoMinimo,
-      enRojo:         minSaldo < 0,
-      montoNecesario: minSaldo < 0 ? Math.abs(minSaldo) : 0
+      enRojo:           minSaldo < 0,
+      montoNecesario:   minSaldo < 0 ? Math.abs(minSaldo) : 0
     }
-  }, [eventos, saldoLiquidez])
+  }, [eventos, planificacionesDelta, saldoLiquidez])
 
   // ── ¿Qué puedo hacer? ────────────────────────────────────────
   const disponible = proyeccion.saldoFinal
@@ -461,7 +527,7 @@ export function CalendarioPage() {
     [objetivos]
   )
 
-  // ── Mini calendario — mapa fecha → tipos ─────────────────────
+  // ── Mapas para MiniCalendario ─────────────────────────────────
   const eventosPorFecha = useMemo(() => {
     const map = new Map<string, EventoTipo[]>()
     for (const ev of eventos) {
@@ -472,15 +538,47 @@ export function CalendarioPage() {
     return map
   }, [eventos])
 
-  // ── Grupos para timeline ──────────────────────────────────────
+  const plansPorFecha = useMemo(() => {
+    const map = new Map<string, TipoPlanificacion[]>()
+    for (const p of planificaciones) {
+      const list = map.get(p.fecha) ?? []
+      list.push(p.tipo)
+      map.set(p.fecha, list)
+    }
+    return map
+  }, [planificaciones])
+
+  // ── Timeline de compromisos ───────────────────────────────────
   const grupos = groupByDate(eventos)
 
-  // ── Scroll a día seleccionado ─────────────────────────────────
-  function selectDia(fecha: string) {
+  function abrirDiaSheet(fecha: string) {
     setDiaSelec(fecha)
+    setDiaSheetFecha(fecha)
+  }
+
+  function selectDiaCalendario(fecha: string) {
+    setDiaSelec(fecha)
+    // Si hay eventos comprometidos en esa fecha, también hace scroll
     const el = grupoRefs.current.get(fecha)
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // Siempre abre el sheet
+    setDiaSheetFecha(fecha)
   }
+
+  // Construir EventoDia[] para el DiaSheet de la fecha seleccionada
+  const eventosDiaSheet: EventoDia[] = useMemo(() => {
+    if (!diaSheetFecha) return []
+    return eventos
+      .filter(ev => ev.fecha === diaSheetFecha)
+      .map(ev => ({
+        id:        `${ev.tipo}-${ev.fecha}-${ev.titulo}`,
+        tipo:      ev.tipo,
+        titulo:    ev.titulo,
+        subtitulo: ev.subtitulo,
+        emoji:     ev.emoji,
+        monto:     ev.monto,
+      }))
+  }, [eventos, diaSheetFecha])
 
   return (
     <AppLayout>
@@ -517,17 +615,18 @@ export function CalendarioPage() {
         {/* Mini calendario */}
         <MiniCalendario
           eventosPorFecha={eventosPorFecha}
+          plansPorFecha={plansPorFecha}
           diaSeleccionado={diaSeleccionado}
-          onSelectDia={selectDia}
+          onSelectDia={selectDiaCalendario}
         />
 
-        {/* Timeline */}
+        {/* Timeline de compromisos */}
         {grupos.length === 0 ? (
           <div className="rounded-2xl border border-night-border bg-night-1 px-4 py-10 text-center">
             <p className="text-3xl mb-3">📅</p>
             <p className="text-sm font-semibold text-slate-400">Sin compromisos en {rango} días</p>
             <p className="text-xs text-slate-600 mt-1">
-              Aquí aparecerán cuotas, suscripciones y pagos de deudas programados.
+              Toca cualquier día del calendario para planificar.
             </p>
           </div>
         ) : (
@@ -539,11 +638,12 @@ export function CalendarioPage() {
                   key={fecha}
                   ref={setGrupoRef(fecha)}
                   className={[
-                    'scroll-mt-4 rounded-2xl border overflow-hidden transition-all',
+                    'scroll-mt-4 rounded-2xl border overflow-hidden transition-all cursor-pointer',
                     diaSeleccionado === fecha
                       ? 'border-brand-500/40 shadow-glow-brand'
                       : 'border-night-border'
                   ].join(' ')}
+                  onClick={() => abrirDiaSheet(fecha)}
                 >
                   {/* Header del grupo */}
                   <div className="flex items-center justify-between px-4 py-2.5 bg-night-2 border-b border-night-border/60">
@@ -602,10 +702,18 @@ export function CalendarioPage() {
 
         {eventos.length > 0 && (
           <p className="text-center text-[10px] text-slate-700 pb-2">
-            Proyección basada en compromisos conocidos · Sueldo no incluido
+            Proyección basada en compromisos conocidos · Sueldo no incluido · Toca un día para planificar
           </p>
         )}
       </div>
+
+      {/* Sheet de día */}
+      <DiaSheet
+        isOpen={diaSheetFecha !== null}
+        onClose={() => { setDiaSheetFecha(null); setDiaSelec(null) }}
+        fecha={diaSheetFecha ?? format(hoy, 'yyyy-MM-dd')}
+        eventos={eventosDiaSheet}
+      />
     </AppLayout>
   )
 }

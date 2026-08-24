@@ -5,6 +5,59 @@ export type EstadoDeuda = 'activa' | 'pagada' | 'en_mora'
 export type EstadoObjetivo = 'activo' | 'completado' | 'pausado'
 export type FrecuenciaSuscripcion = 'semanal' | 'mensual' | 'anual'
 
+// ── Planificaciones ───────────────────────────────────────────
+export type TipoPlanificacion = 'gasto' | 'ingreso' | 'ahorro' | 'mover'
+export type EstadoPlanificacion = 'pendiente' | 'realizado' | 'cancelado'
+
+// recurrencia = configuración estática (no incluye ocurrencias — eso va en ocurrencias_restantes)
+export interface RecurrenciaPlan {
+  frecuencia: 'semanal' | 'quincenal' | 'mensual' | 'personalizada'
+  intervalo_dias?: number   // solo para frecuencia='personalizada'
+  fin?: string | null       // DATE 'YYYY-MM-DD' o null = sin límite de fecha
+}
+
+export interface Planificacion {
+  id: string
+  user_id: string
+  tipo: TipoPlanificacion
+  monto: number
+  fecha: string
+  categoria_id: string | null
+  subcategoria_id: string | null
+  descripcion: string | null
+  comercio: string | null
+  cuenta_id: string | null
+  cuenta_destino_id: string | null
+  objetivo_id: string | null
+  nota: string | null
+  recurrencia: RecurrenciaPlan | null
+  ocurrencias_restantes: number | null  // countdown; null = sin límite
+  estado: EstadoPlanificacion
+  movimiento_id: string | null
+  created_at: string
+  updated_at: string
+  cuenta?: Cuenta
+  cuenta_destino?: Cuenta
+  categoria?: Categoria
+  objetivo?: ObjetivoAhorro
+}
+
+export interface PlanificacionFormData {
+  tipo: TipoPlanificacion
+  monto: number
+  fecha: string
+  categoria_id?: string
+  subcategoria_id?: string
+  descripcion?: string
+  comercio?: string
+  cuenta_id?: string
+  cuenta_destino_id?: string    // para 'mover'
+  objetivo_id?: string          // para 'ahorro'
+  nota?: string
+  recurrencia?: RecurrenciaPlan
+  ocurrencias_restantes?: number | null
+}
+
 export interface Profile {
   id: string
   nombre: string
