@@ -88,181 +88,188 @@ export function AjustesPage() {
     <AppLayout>
       <Header title="Ajustes" />
 
-      <div className="px-4 pt-4 space-y-5 pb-6">
+      <div className="px-4 lg:px-0 pt-4 pb-8">
 
-        {/* Perfil */}
-        <section>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Perfil</p>
-          <Card padding="none">
-            <button
-              onClick={() => setPerfilOpen(true)}
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-night-3/50 rounded-2xl transition-colors"
-            >
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Avatar"
-                  className="size-10 rounded-full object-cover border border-night-border flex-shrink-0"
-                />
-              ) : (
-                <div className="size-10 rounded-full bg-brand-500/20 flex items-center justify-center text-lg font-bold text-brand-300 flex-shrink-0">
-                  {profile?.nombre?.[0]?.toUpperCase() ?? 'U'}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+
+          {/* Columna izquierda: Perfil + Apariencia + Finanzas */}
+          <div className="space-y-5">
+
+            {/* Perfil */}
+            <section>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Perfil</p>
+              <Card padding="none">
+                <button
+                  onClick={() => setPerfilOpen(true)}
+                  className="w-full flex items-center gap-3 px-4 py-4 hover:bg-night-3/50 rounded-2xl transition-colors"
+                >
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt="Avatar"
+                      className="size-10 rounded-full object-cover border border-night-border flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="size-10 rounded-full bg-brand-500/20 flex items-center justify-center text-lg font-bold text-brand-300 flex-shrink-0">
+                      {profile?.nombre?.[0]?.toUpperCase() ?? 'U'}
+                    </div>
+                  )}
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-white">{profile?.nombre ?? 'Usuario'}</p>
+                    <p className="text-xs text-slate-400">Nombre y foto de perfil</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-600" />
+                </button>
+              </Card>
+            </section>
+
+            {/* Apariencia */}
+            <section>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Apariencia</p>
+              <Card padding="md">
+                <div className="flex items-center gap-2 mb-3">
+                  <Monitor className="h-4 w-4 text-slate-400" />
+                  <p className="text-sm font-medium text-slate-300">Tema</p>
                 </div>
-              )}
-              <div className="flex-1 text-left">
-                <p className="text-sm font-semibold text-white">{profile?.nombre ?? 'Usuario'}</p>
-                <p className="text-xs text-slate-400">Nombre y foto de perfil</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-600" />
-            </button>
-          </Card>
-        </section>
+                <div className="grid grid-cols-3 gap-2">
+                  {TEMA_OPTIONS.map(opt => {
+                    const isActive = opt.value === 'dark'
+                    return (
+                      <div
+                        key={opt.value}
+                        className={[
+                          'relative flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-medium',
+                          isActive
+                            ? 'border-brand-500/60 bg-brand-500/15 text-brand-300'
+                            : 'border-night-border bg-night-3 text-slate-600 opacity-50 cursor-not-allowed'
+                        ].join(' ')}
+                      >
+                        {opt.icon}
+                        {opt.label}
+                        {!isActive && (
+                          <span className="absolute -top-1.5 -right-1 text-[8px] bg-night-3 border border-night-border text-slate-500 px-1 rounded-full">
+                            pronto
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                <p className="text-[10px] text-slate-500 mt-2">QloB es una app de tema oscuro. Tema claro próximamente.</p>
+              </Card>
+            </section>
 
-        {/* Apariencia */}
-        <section>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Apariencia</p>
-          <Card padding="md">
-            <div className="flex items-center gap-2 mb-3">
-              <Monitor className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-medium text-slate-300">Tema</p>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {TEMA_OPTIONS.map(opt => {
-                const isActive = opt.value === 'dark'
-                return (
-                  <div
-                    key={opt.value}
-                    className={[
-                      'relative flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-medium',
-                      isActive
-                        ? 'border-brand-500/60 bg-brand-500/15 text-brand-300'
-                        : 'border-night-border bg-night-3 text-slate-600 opacity-50 cursor-not-allowed'
-                    ].join(' ')}
-                  >
-                    {opt.icon}
-                    {opt.label}
-                    {!isActive && (
-                      <span className="absolute -top-1.5 -right-1 text-[8px] bg-night-3 border border-night-border text-slate-500 px-1 rounded-full">
-                        pronto
-                      </span>
+            {/* Preferencias financieras */}
+            <section>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Finanzas</p>
+              <Card padding="none" className="divide-y divide-night-border/40">
+                <div className="px-4 py-3.5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="h-4 w-4 text-slate-400" />
+                    <p className="text-sm font-medium text-slate-300">Moneda</p>
+                  </div>
+                  <div className="flex gap-2">
+                    {MONEDAS.map(m => (
+                      <button
+                        key={m.value}
+                        onClick={() => setMoneda(m.value)}
+                        className={[
+                          'flex-1 py-2 px-2 rounded-xl border text-xs font-medium transition-all',
+                          monedaActual === m.value
+                            ? 'border-brand-500/60 bg-brand-500/15 text-brand-300'
+                            : 'border-night-border bg-night-3 text-slate-400 hover:border-brand-500/30 hover:text-slate-300'
+                        ].join(' ')}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="px-4 py-3.5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CalendarDays className="h-4 w-4 text-slate-400" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-300">Día de cobro del sueldo</p>
+                      <p className="text-[10px] text-slate-500">Define el inicio de tu mes presupuestario</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={diaSueldo ?? ''}
+                      onChange={e => setDiaSueldo(e.target.value ? Number(e.target.value) : null)}
+                      className="flex-1 h-10 px-3 rounded-xl border border-night-border bg-night-3 text-sm text-white outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500"
+                    >
+                      <option value="">Sin configurar</option>
+                      {DIAS_SUELDO.map(d => (
+                        <option key={d.value} value={d.value}>{d.label}</option>
+                      ))}
+                    </select>
+                    {diaSueldo && (
+                      <p className="text-xs text-slate-500">= día {diaSueldo} de c/mes</p>
                     )}
                   </div>
-                )
-              })}
-            </div>
-            <p className="text-[10px] text-slate-500 mt-2">QloB es una app de tema oscuro. Tema claro próximamente.</p>
-          </Card>
-        </section>
-
-        {/* Preferencias financieras */}
-        <section>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Finanzas</p>
-          <Card padding="none" className="divide-y divide-night-border/40">
-
-            {/* Moneda */}
-            <div className="px-4 py-3.5">
-              <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="h-4 w-4 text-slate-400" />
-                <p className="text-sm font-medium text-slate-300">Moneda</p>
-              </div>
-              <div className="flex gap-2">
-                {MONEDAS.map(m => (
-                  <button
-                    key={m.value}
-                    onClick={() => setMoneda(m.value)}
-                    className={[
-                      'flex-1 py-2 px-2 rounded-xl border text-xs font-medium transition-all',
-                      monedaActual === m.value
-                        ? 'border-brand-500/60 bg-brand-500/15 text-brand-300'
-                        : 'border-night-border bg-night-3 text-slate-400 hover:border-brand-500/30 hover:text-slate-300'
-                    ].join(' ')}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Día de sueldo */}
-            <div className="px-4 py-3.5">
-              <div className="flex items-center gap-2 mb-2">
-                <CalendarDays className="h-4 w-4 text-slate-400" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-300">Día de cobro del sueldo</p>
-                  <p className="text-[10px] text-slate-500">Define el inicio de tu mes presupuestario</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <select
-                  value={diaSueldo ?? ''}
-                  onChange={e => setDiaSueldo(e.target.value ? Number(e.target.value) : null)}
-                  className="flex-1 h-10 px-3 rounded-xl border border-night-border bg-night-3 text-sm text-white outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500"
+              </Card>
+            </section>
+          </div>
+
+          {/* Columna derecha: Datos + Zona de peligro */}
+          <div className="space-y-5">
+
+            {/* Datos */}
+            <section>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Datos</p>
+              <Card padding="none">
+                <button
+                  onClick={() => navigate('/categorias')}
+                  className="w-full flex items-center gap-3 px-4 py-4 hover:bg-night-3/50 rounded-2xl transition-colors"
                 >
-                  <option value="">Sin configurar</option>
-                  {DIAS_SUELDO.map(d => (
-                    <option key={d.value} value={d.value}>{d.label}</option>
-                  ))}
-                </select>
-                {diaSueldo && (
-                  <p className="text-xs text-slate-500">= día {diaSueldo} de c/mes</p>
-                )}
-              </div>
-            </div>
-          </Card>
-        </section>
+                  <div className="size-9 rounded-xl bg-night-3 flex items-center justify-center flex-shrink-0">
+                    <Tag className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-slate-200">Categorías</p>
+                    <p className="text-xs text-slate-500">Administra categorías y subcategorías</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-600" />
+                </button>
+              </Card>
+            </section>
 
-        {/* Datos */}
-        <section>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Datos</p>
-          <Card padding="none">
-            <button
-              onClick={() => navigate('/categorias')}
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-night-3/50 rounded-2xl transition-colors"
-            >
-              <div className="size-9 rounded-xl bg-night-3 flex items-center justify-center flex-shrink-0">
-                <Tag className="h-4 w-4 text-slate-400" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-slate-200">Categorías</p>
-                <p className="text-xs text-slate-500">Administra categorías y subcategorías</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-600" />
-            </button>
-          </Card>
-        </section>
+            {/* Zona de peligro */}
+            <section>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Zona de peligro</p>
+              <Card padding="none" className="divide-y divide-night-border/40">
+                <button
+                  onClick={handleReiniciar}
+                  disabled={reiniciando}
+                  className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gasto-500/10 rounded-t-2xl transition-colors disabled:opacity-50"
+                >
+                  <div className="size-9 rounded-xl bg-gasto-500/15 flex items-center justify-center flex-shrink-0">
+                    <Trash2 className="h-4 w-4 text-gasto-400" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-gasto-400">
+                      {reiniciando ? 'Eliminando datos…' : 'Reiniciar todos los datos'}
+                    </p>
+                    <p className="text-xs text-slate-500">Elimina cuentas, movimientos, cuotas y más</p>
+                  </div>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-4 hover:bg-night-3/50 rounded-b-2xl transition-colors"
+                >
+                  <div className="size-9 rounded-xl bg-night-3 flex items-center justify-center flex-shrink-0">
+                    <LogOut className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-300">Cerrar sesión</p>
+                </button>
+              </Card>
+            </section>
 
-        {/* Zona de peligro */}
-        <section>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">Zona de peligro</p>
-          <Card padding="none" className="divide-y divide-night-border/40">
-            <button
-              onClick={handleReiniciar}
-              disabled={reiniciando}
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gasto-500/10 rounded-t-2xl transition-colors disabled:opacity-50"
-            >
-              <div className="size-9 rounded-xl bg-gasto-500/15 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="h-4 w-4 text-gasto-400" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-gasto-400">
-                  {reiniciando ? 'Eliminando datos…' : 'Reiniciar todos los datos'}
-                </p>
-                <p className="text-xs text-slate-500">Elimina cuentas, movimientos, cuotas y más</p>
-              </div>
-            </button>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-night-3/50 rounded-b-2xl transition-colors"
-            >
-              <div className="size-9 rounded-xl bg-night-3 flex items-center justify-center flex-shrink-0">
-                <LogOut className="h-4 w-4 text-slate-400" />
-              </div>
-              <p className="text-sm font-medium text-slate-300">Cerrar sesión</p>
-            </button>
-          </Card>
-        </section>
-
-        <p className="text-center text-xs text-slate-600">QloB · Sprint 4</p>
+            <p className="text-xs text-slate-600 text-center lg:text-left">QloB · Quemen los Barcos</p>
+          </div>
+        </div>
       </div>
 
       <PerfilForm isOpen={perfilOpen} onClose={() => setPerfilOpen(false)} />

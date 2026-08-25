@@ -48,7 +48,7 @@ export function MasPage() {
     <AppLayout>
       <Header title="Más" />
 
-      <div className="space-y-4 pt-4 px-4 pb-6">
+      <div className="space-y-4 pt-4 px-4 lg:px-0 pb-8">
 
         {/* Perfil — acceso rápido */}
         <Card padding="none">
@@ -78,83 +78,87 @@ export function MasPage() {
           </button>
         </Card>
 
-        {/* Módulos Sprint 3–4 */}
-        <Card padding="none" className="divide-y divide-night-border/40">
-          <MenuItem
-            icon={<HandCoins className="h-4 w-4" />}
-            label="Por cobrar"
-            description="Gastos que hiciste para otros"
-            onClick={() => navigate('/cobros')}
-          />
-          <MenuItem
-            icon={<RefreshCw className="h-4 w-4" />}
-            label="Suscripciones"
-            description="Servicios y cobros recurrentes"
-            onClick={() => navigate('/suscripciones')}
-          />
-          <MenuItem
-            icon={<CalendarDays className="h-4 w-4" />}
-            label="Calendario"
-            description="Próximos compromisos (30 días)"
-            onClick={() => navigate('/calendario')}
-          />
-        </Card>
+        {/* Módulos — en desktop grid 2×N */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        {/* Módulos Sprint 3 — existentes */}
-        <Card padding="none" className="divide-y divide-night-border/40">
-          <MenuItem
-            icon={<ShoppingBag className="h-4 w-4" />}
-            label="Compras en cuotas"
-            description="Seguimiento de cuotas en tarjeta"
-            onClick={() => navigate('/cuotas')}
-          />
-          <MenuItem
-            icon={<CreditCard className="h-4 w-4" />}
-            label="Deudas"
-            description="Créditos y préstamos externos"
-            onClick={() => navigate('/deudas')}
-          />
-        </Card>
+          {/* Herramientas */}
+          <Card padding="none" className="divide-y divide-night-border/40">
+            <MenuItem
+              icon={<HandCoins className="h-4 w-4" />}
+              label="Por cobrar"
+              description="Gastos que hiciste para otros"
+              onClick={() => navigate('/cobros')}
+            />
+            <MenuItem
+              icon={<RefreshCw className="h-4 w-4" />}
+              label="Suscripciones"
+              description="Servicios y cobros recurrentes"
+              onClick={() => navigate('/suscripciones')}
+            />
+            <MenuItem
+              icon={<CalendarDays className="h-4 w-4" />}
+              label="Calendario"
+              description="Próximos compromisos"
+              onClick={() => navigate('/calendario')}
+            />
+          </Card>
 
-        {/* Módulos Sprint 2 */}
-        <Card padding="none" className="divide-y divide-night-border/40">
-          <MenuItem
-            icon={<Target className="h-4 w-4" />}
-            label="Presupuestos"
-            description="Controla tus gastos por categoría"
-            onClick={() => navigate('/presupuestos')}
-          />
-          <MenuItem
-            icon={<PiggyBank className="h-4 w-4" />}
-            label="Objetivos de Ahorro"
-            description="Metas y progreso de ahorro"
-            onClick={() => navigate('/objetivos')}
-          />
-        </Card>
+          {/* Compromisos */}
+          <Card padding="none" className="divide-y divide-night-border/40">
+            <MenuItem
+              icon={<ShoppingBag className="h-4 w-4" />}
+              label="Compras en cuotas"
+              description="Seguimiento de cuotas en tarjeta"
+              onClick={() => navigate('/cuotas')}
+            />
+            <MenuItem
+              icon={<CreditCard className="h-4 w-4" />}
+              label="Deudas"
+              description="Créditos y préstamos externos"
+              onClick={() => navigate('/deudas')}
+            />
+            <MenuItem
+              icon={<Target className="h-4 w-4" />}
+              label="Presupuestos"
+              description="Controla tus gastos por categoría"
+              onClick={() => navigate('/presupuestos')}
+            />
+          </Card>
 
-        {/* Configuración */}
-        <Card padding="none" className="divide-y divide-night-border/40">
-          <MenuItem
-            icon={<Wallet className="h-4 w-4" />}
-            label="Cuentas"
-            description="Administra tus cuentas"
-            onClick={() => navigate('/cuentas')}
-          />
-          <MenuItem
-            icon={<Tag className="h-4 w-4" />}
-            label="Categorías"
-            description="Categorías y subcategorías"
-            onClick={() => navigate('/categorias')}
-          />
-          <MenuItem
-            icon={<Settings className="h-4 w-4" />}
-            label="Ajustes"
-            description="Perfil, tema, moneda, sueldo"
-            onClick={() => navigate('/ajustes')}
-          />
-        </Card>
+          {/* Ahorro */}
+          <Card padding="none" className="divide-y divide-night-border/40">
+            <MenuItem
+              icon={<PiggyBank className="h-4 w-4" />}
+              label="Objetivos de Ahorro"
+              description="Metas y progreso de ahorro"
+              onClick={() => navigate('/objetivos')}
+            />
+          </Card>
 
-        <p className="text-center text-xs text-slate-600 pb-2">Quemen los Barcos v3.0</p>
+          {/* Config */}
+          <Card padding="none" className="divide-y divide-night-border/40">
+            <MenuItem
+              icon={<Wallet className="h-4 w-4" />}
+              label="Cuentas"
+              description="Administra tus cuentas"
+              onClick={() => navigate('/cuentas')}
+            />
+            <MenuItem
+              icon={<Tag className="h-4 w-4" />}
+              label="Categorías"
+              description="Categorías y subcategorías"
+              onClick={() => navigate('/categorias')}
+            />
+            <MenuItem
+              icon={<Settings className="h-4 w-4" />}
+              label="Ajustes"
+              description="Perfil, tema, moneda, sueldo"
+              onClick={() => navigate('/ajustes')}
+            />
+          </Card>
+        </div>
+
+        <p className="text-center lg:text-left text-xs text-slate-600">Quemen los Barcos</p>
       </div>
     </AppLayout>
   )
