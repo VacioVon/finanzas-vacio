@@ -19,7 +19,7 @@ import {
 } from '@/utils/periodo'
 import type { Movimiento } from '@/types/app.types'
 
-// ─── Tooltip oscuro para Recharts ────────────────────────────────────────────
+// ─── Tooltip Deep Ocean para Recharts ────────────────────────────────────────
 
 function DarkTooltip({ active, payload, label }: {
   active?: boolean
@@ -28,7 +28,7 @@ function DarkTooltip({ active, payload, label }: {
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-night-1 border border-night-border rounded-xl px-3 py-2 shadow-xl text-xs">
+    <div className="bg-ocean-1 border border-ocean-border/70 rounded-xl px-3 py-2 shadow-xl text-xs">
       {label && <p className="text-slate-400 mb-1 font-medium">{label}</p>}
       {payload.map((p, i) => (
         <p key={i} className="tabular-nums" style={{ color: p.color }}>
@@ -39,7 +39,7 @@ function DarkTooltip({ active, payload, label }: {
   )
 }
 
-// ─── Stat card ───────────────────────────────────────────────────────────────
+// ─── Stat card con superficie ocean ──────────────────────────────────────────
 
 function StatCard({ label, monto, color }: {
   label: string
@@ -58,7 +58,7 @@ function StatCard({ label, monto, color }: {
     Minus
 
   return (
-    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-night-3 border border-night-border/60">
+    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-ocean-1 border border-ocean-border/50">
       <div className="flex items-center gap-1.5">
         <Icon className={`h-3.5 w-3.5 ${colorMap[color]}`} />
         <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">{label}</p>
@@ -137,10 +137,10 @@ export function AnalisisPage() {
       <Header title="Análisis" />
 
       {/* Navegación por mes */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+      <div className="flex items-center justify-between px-4 lg:px-0 pt-4 pb-2">
         <button
           onClick={() => navegar(-1)}
-          className="size-9 flex items-center justify-center rounded-full hover:bg-night-3 transition-colors"
+          className="size-9 flex items-center justify-center rounded-full hover:bg-ocean-1 transition-colors"
           aria-label="Mes anterior"
         >
           <ChevronLeft className="h-5 w-5 text-slate-400" />
@@ -149,21 +149,21 @@ export function AnalisisPage() {
         <button
           onClick={() => navegar(1)}
           disabled={esMesActual}
-          className="size-9 flex items-center justify-center rounded-full hover:bg-night-3 transition-colors disabled:opacity-30"
+          className="size-9 flex items-center justify-center rounded-full hover:bg-ocean-1 transition-colors disabled:opacity-30"
           aria-label="Mes siguiente"
         >
           <ChevronRight className="h-5 w-5 text-slate-400" />
         </button>
       </div>
 
-      <div className="space-y-4 px-4 pb-24">
+      <div className="space-y-4 px-4 lg:px-0 pb-24">
 
         {isLoading ? (
           <SkeletonList count={4} />
         ) : (
           <>
-            {/* Stat cards */}
-            <div className="grid grid-cols-3 gap-2">
+            {/* Stat cards — 3 col siempre */}
+            <div className="grid grid-cols-3 gap-2 lg:gap-3">
               <StatCard label="Ingresos" monto={ingresos} color="ingreso" />
               <StatCard label="Gastos"   monto={gastos}   color="gasto"   />
               <StatCard
@@ -173,42 +173,68 @@ export function AnalisisPage() {
               />
             </div>
 
-            {/* Tasa de ahorro */}
-            <Card>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold text-slate-200">Tasa de ahorro</p>
-                <span className={`text-lg font-bold tabular-nums ${tasaAhorro >= 20 ? 'text-ingreso-400' : tasaAhorro >= 10 ? 'text-xp-400' : 'text-gasto-400'}`}>
-                  {tasaAhorro}%
-                </span>
-              </div>
-              <div className="h-2 bg-night-3 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${tasaAhorro >= 20 ? 'bg-ingreso-500' : tasaAhorro >= 10 ? 'bg-xp-500' : 'bg-gasto-500'}`}
-                  style={{ width: `${Math.min(tasaAhorro, 100)}%` }}
-                />
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                {ingresos === 0
-                  ? 'Sin ingresos registrados este período'
-                  : tasaAhorro >= 20
-                    ? 'Excelente — estás ahorrando más del 20%'
-                    : tasaAhorro >= 10
-                      ? 'Bien — intenta llegar al 20%'
-                      : 'Ajusta tus gastos para ahorrar más'
-                }
-              </p>
-            </Card>
+            {/* Desktop: tasa de ahorro + donut en 2 col / Móvil: stack */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-            {/* Gastos por categoría */}
-            <Card>
-              <p className="text-sm font-semibold text-slate-200 mb-4">Gastos por categoría</p>
-              {catData.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-6">Sin gastos este período</p>
-              ) : (
-                <div className="flex gap-4 items-center">
-                  {/* Donut */}
-                  <div className="flex-shrink-0">
-                    <ResponsiveContainer width={130} height={130}>
+              {/* Tasa de ahorro */}
+              <Card variant="ocean">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-semibold text-slate-200">Tasa de ahorro</p>
+                  <span className={`text-lg font-bold tabular-nums ${tasaAhorro >= 20 ? 'text-ingreso-400' : tasaAhorro >= 10 ? 'text-xp-400' : 'text-gasto-400'}`}>
+                    {tasaAhorro}%
+                  </span>
+                </div>
+                <div className="h-2 bg-ocean-2 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${tasaAhorro >= 20 ? 'bg-ingreso-500' : tasaAhorro >= 10 ? 'bg-xp-500' : 'bg-gasto-500'}`}
+                    style={{ width: `${Math.min(tasaAhorro, 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  {ingresos === 0
+                    ? 'Sin ingresos registrados este período'
+                    : tasaAhorro >= 20
+                      ? 'Excelente — estás ahorrando más del 20%'
+                      : tasaAhorro >= 10
+                        ? 'Bien — intenta llegar al 20%'
+                        : 'Ajusta tus gastos para ahorrar más'
+                  }
+                </p>
+
+                {/* Top categorías compacto dentro del mismo card en desktop */}
+                {catData.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-ocean-border/50 space-y-3">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Top categorías</p>
+                    {catData.slice(0, 5).map((cat, i) => {
+                      const pct = totalGastos > 0 ? cat.monto / totalGastos * 100 : 0
+                      const clr = cat.color && cat.color !== '#6B7280' ? cat.color : PIE_COLORS[i % PIE_COLORS.length]
+                      return (
+                        <div key={cat.id}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-slate-300">{cat.emoji} {cat.nombre}</span>
+                            <span className="text-xs text-slate-400 tabular-nums">{formatCLP(cat.monto)}</span>
+                          </div>
+                          <div className="h-1.5 bg-ocean-2 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ width: `${pct}%`, backgroundColor: clr }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </Card>
+
+              {/* Gastos por categoría — donut */}
+              <Card variant="ocean">
+                <p className="text-sm font-semibold text-slate-200 mb-4">Gastos por categoría</p>
+                {catData.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-6">Sin gastos este período</p>
+                ) : (
+                  <div className="flex flex-col items-center gap-4">
+                    <ResponsiveContainer width="100%" height={160}>
                       <PieChart>
                         <Pie
                           data={catData}
@@ -216,8 +242,8 @@ export function AnalisisPage() {
                           nameKey="nombre"
                           cx="50%"
                           cy="50%"
-                          innerRadius={38}
-                          outerRadius={58}
+                          innerRadius={50}
+                          outerRadius={72}
                           strokeWidth={0}
                         >
                           {catData.map((entry, i) => (
@@ -230,41 +256,34 @@ export function AnalisisPage() {
                         <Tooltip content={<DarkTooltip />} />
                       </PieChart>
                     </ResponsiveContainer>
+                    {/* Leyenda */}
+                    <div className="w-full grid grid-cols-2 gap-x-4 gap-y-1.5">
+                      {catData.map((cat, i) => {
+                        const pct = totalGastos > 0 ? Math.round(cat.monto / totalGastos * 100) : 0
+                        const clr = cat.color && cat.color !== '#6B7280' ? cat.color : PIE_COLORS[i % PIE_COLORS.length]
+                        return (
+                          <div key={cat.id} className="flex items-center gap-2 min-w-0">
+                            <span className="inline-block size-2 rounded-full flex-shrink-0" style={{ backgroundColor: clr }} />
+                            <span className="text-xs text-slate-300 truncate flex-1">{cat.emoji} {cat.nombre}</span>
+                            <span className="text-xs text-slate-500 tabular-nums flex-shrink-0">{pct}%</span>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
-                  {/* Leyenda */}
-                  <div className="flex-1 space-y-2 min-w-0">
-                    {catData.map((cat, i) => {
-                      const pct = totalGastos > 0 ? Math.round(cat.monto / totalGastos * 100) : 0
-                      const clr = cat.color && cat.color !== '#6B7280' ? cat.color : PIE_COLORS[i % PIE_COLORS.length]
-                      return (
-                        <div key={cat.id} className="flex items-center gap-2">
-                          <span
-                            className="inline-block size-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: clr }}
-                          />
-                          <span className="text-xs text-slate-300 truncate flex-1">{cat.emoji} {cat.nombre}</span>
-                          <span className="text-xs text-slate-500 tabular-nums flex-shrink-0">{pct}%</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </Card>
+                )}
+              </Card>
+            </div>
 
-            {/* Evolución 6 meses */}
-            <Card>
+            {/* Evolución 6 meses — full width, gráfico más alto en desktop */}
+            <Card variant="ocean">
               <p className="text-sm font-semibold text-slate-200 mb-4">Últimos 6 meses</p>
               {!evolucion || evolucion.every(e => e.ingresos === 0 && e.gastos === 0) ? (
                 <p className="text-sm text-slate-500 text-center py-6">Sin datos históricos aún</p>
               ) : (
-                <ResponsiveContainer width="100%" height={180}>
+                <ResponsiveContainer width="100%" height={220} className="lg:!h-[280px]">
                   <BarChart data={evolucion} barCategoryGap="30%" barGap={2}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#3D3B50"
-                      vertical={false}
-                    />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2E6070" vertical={false} />
                     <XAxis
                       dataKey="mes"
                       tick={{ fill: '#64748b', fontSize: 11 }}
@@ -278,51 +297,21 @@ export function AnalisisPage() {
                       tickFormatter={v => v >= 1000000 ? `${(v/1000000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)}
                       width={42}
                     />
-                    <Tooltip content={<DarkTooltip />} cursor={{ fill: '#353344', radius: 6 }} />
+                    <Tooltip content={<DarkTooltip />} cursor={{ fill: '#1F3A45', radius: 6 }} />
                     <Bar dataKey="ingresos" name="Ingresos" fill="#10D97F" radius={[4,4,0,0]} />
                     <Bar dataKey="gastos"   name="Gastos"   fill="#F4645F" radius={[4,4,0,0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
-              {/* Mini leyenda */}
-              <div className="flex items-center gap-4 mt-2 justify-center">
+              <div className="flex items-center gap-4 mt-3 justify-center">
                 <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <span className="inline-block size-2 rounded-full bg-ingreso-500" />
-                  Ingresos
+                  <span className="inline-block size-2 rounded-full bg-ingreso-500" />Ingresos
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <span className="inline-block size-2 rounded-full bg-gasto-500" />
-                  Gastos
+                  <span className="inline-block size-2 rounded-full bg-gasto-500" />Gastos
                 </span>
               </div>
             </Card>
-
-            {/* Top gastos del mes */}
-            {catData.length > 0 && (
-              <Card>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Top categorías</p>
-                <div className="space-y-3">
-                  {catData.slice(0, 5).map((cat, i) => {
-                    const pct = totalGastos > 0 ? cat.monto / totalGastos * 100 : 0
-                    const clr = cat.color && cat.color !== '#6B7280' ? cat.color : PIE_COLORS[i % PIE_COLORS.length]
-                    return (
-                      <div key={cat.id}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-slate-300">{cat.emoji} {cat.nombre}</span>
-                          <span className="text-xs text-slate-400 tabular-nums">{formatCLP(cat.monto)}</span>
-                        </div>
-                        <div className="h-1.5 bg-night-3 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${pct}%`, backgroundColor: clr }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </Card>
-            )}
           </>
         )}
       </div>
