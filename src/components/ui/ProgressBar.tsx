@@ -1,16 +1,18 @@
 interface ProgressBarProps {
   value: number
   max?: number
-  color?: 'blue' | 'green' | 'orange' | 'red'
+  color?: 'blue' | 'green' | 'orange' | 'red' | 'gold'
   size?: 'sm' | 'md'
   showLabel?: boolean
+  trackColor?: 'night' | 'ocean'
 }
 
 const colorClasses = {
   blue:   'bg-brand-500',
   green:  'bg-ingreso-500',
   orange: 'bg-xp-500',
-  red:    'bg-gasto-500'
+  red:    'bg-gasto-500',
+  gold:   'bg-gold-500',
 }
 
 function getColorByPercent(pct: number): 'green' | 'orange' | 'red' {
@@ -19,13 +21,14 @@ function getColorByPercent(pct: number): 'green' | 'orange' | 'red' {
   return 'red'
 }
 
-export function ProgressBar({ value, max = 100, color, size = 'sm', showLabel }: ProgressBarProps) {
+export function ProgressBar({ value, max = 100, color, size = 'sm', showLabel, trackColor = 'night' }: ProgressBarProps) {
   const pct = Math.min((value / max) * 100, 100)
   const resolvedColor = color ?? getColorByPercent(pct)
+  const trackClass = trackColor === 'ocean' ? 'bg-ocean-2' : 'bg-night-3'
 
   return (
     <div className="flex items-center gap-2">
-      <div className={`flex-1 bg-night-3 rounded-full overflow-hidden ${size === 'sm' ? 'h-1.5' : 'h-2.5'}`}>
+      <div className={`flex-1 ${trackClass} rounded-full overflow-hidden ${size === 'sm' ? 'h-1.5' : 'h-2.5'}`}>
         <div
           className={`h-full rounded-full transition-all duration-500 ${colorClasses[resolvedColor]}`}
           style={{ width: `${pct}%` }}

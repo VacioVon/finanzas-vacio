@@ -24,14 +24,14 @@ export function ObjetivosPage() {
     <AppLayout>
       <Header title="Objetivos de Ahorro" />
 
-      <div className="space-y-4 pt-4 px-4">
+      <div className="space-y-4 pt-4 px-4 lg:px-0 pb-8">
         {/* Resumen global */}
         {activos.length > 0 && (
-          <Card padding="md">
-            <div className="flex items-center justify-between">
+          <Card variant="gold" padding="md">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="text-xs text-slate-500 font-medium">Total ahorrado</p>
-                <p className="text-xl font-bold text-ahorro-400 tabular-nums">{formatCLP(totalAhorrado)}</p>
+                <p className="text-xl font-bold text-gold-500 tabular-nums">{formatCLP(totalAhorrado)}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-slate-500 font-medium">Meta total</p>
@@ -39,17 +39,17 @@ export function ObjetivosPage() {
               </div>
             </div>
             {totalMeta > 0 && (
-              <div className="mt-3">
+              <>
                 <div className="h-2 bg-night-3 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-ahorro-500 rounded-full transition-all"
+                    className="h-full bg-gold-500 rounded-full transition-all duration-500"
                     style={{ width: `${Math.min(100, (totalAhorrado / totalMeta) * 100)}%` }}
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-1 text-right tabular-nums">
-                  {Math.round((totalAhorrado / totalMeta) * 100)}% alcanzado
+                <p className="text-xs text-slate-500 mt-1.5 text-right tabular-nums">
+                  {Math.round((totalAhorrado / totalMeta) * 100)}% del total
                 </p>
-              </div>
+              </>
             )}
           </Card>
         )}
@@ -66,7 +66,7 @@ export function ObjetivosPage() {
         ) : (
           <>
             {activos.length > 0 && (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {activos.map(o => (
                   <ObjetivoCard key={o.id} objetivo={o} />
                 ))}
@@ -78,7 +78,7 @@ export function ObjetivosPage() {
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
                   Completados
                 </p>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                   {completados.map(o => (
                     <ObjetivoCard key={o.id} objetivo={o} />
                   ))}
@@ -89,10 +89,10 @@ export function ObjetivosPage() {
         )}
       </div>
 
-      {/* FAB */}
+      {/* FAB mobile — desktop usa "Nuevo objetivo" en sidebar si se agrega, por ahora visible en ambos */}
       <button
         onClick={() => setFormOpen(true)}
-        className="fixed bottom-24 right-5 size-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all z-30"
+        className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 size-14 bg-gold-500 text-night-0 rounded-full shadow-glow-gold flex items-center justify-center hover:bg-gold-400 active:scale-95 transition-all z-30"
         aria-label="Nuevo objetivo"
       >
         <Plus className="h-7 w-7" />
