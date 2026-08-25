@@ -220,7 +220,7 @@ export function CategoriasPage() {
 
       <div className="space-y-4 pt-4">
         {/* Leyenda */}
-        <div className="flex items-center gap-3 px-4 text-xs text-slate-400">
+        <div className="flex items-center gap-3 px-4 lg:px-0 text-xs text-slate-400">
           <span className="flex items-center gap-1.5">
             <span className="inline-block w-3 h-3 rounded bg-night-3 border border-night-border/60" />
             Sistema
@@ -232,7 +232,7 @@ export function CategoriasPage() {
         </div>
 
         {/* Filtros */}
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar px-4">
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar px-4 lg:px-0">
           {tiposDisponibles.map(t => (
             <button
               key={t}
@@ -249,11 +249,11 @@ export function CategoriasPage() {
           ))}
         </div>
 
-        <div className="px-4">
+        <div className="px-4 lg:px-0 pb-8">
           {isLoading ? (
             <SkeletonList count={5} />
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
               {categoriasFiltradas.map(cat => (
                 <CategoriaItem key={cat.id} categoria={cat} />
               ))}
@@ -265,7 +265,7 @@ export function CategoriasPage() {
       {/* FAB para nueva categoría propia */}
       <button
         onClick={() => setFormOpen(true)}
-        className="fixed bottom-24 right-5 size-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all z-30"
+        className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 size-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all z-30"
         aria-label="Nueva categoría"
       >
         <Plus className="h-7 w-7" />

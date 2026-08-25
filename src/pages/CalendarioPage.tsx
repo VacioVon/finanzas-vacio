@@ -606,10 +606,10 @@ export function CalendarioPage() {
     <AppLayout>
       <Header title="Calendario financiero" />
 
-      <div className="px-4 pt-4 space-y-4 pb-8">
+      <div className="px-4 lg:px-0 pt-4 pb-8 space-y-4">
 
         {/* Toggle de rango */}
-        <div className="flex gap-1.5 p-1 bg-night-1 rounded-2xl border border-night-border w-fit mx-auto">
+        <div className="flex gap-1.5 p-1 bg-night-1 rounded-2xl border border-night-border w-fit mx-auto lg:mx-0">
           {RANGOS.map(r => (
             <button
               key={r}
@@ -626,107 +626,112 @@ export function CalendarioPage() {
           ))}
         </div>
 
-        {/* Proyección financiera */}
-        <ProyeccionCard p={proyeccion} rango={rango} />
+        {/* Desktop: 2 columnas — panel izquierdo (resumen) + panel derecho (timeline) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-5 items-start">
 
-        {/* ¿Qué puedo hacer? */}
-        {disponible > 0 && objetivosActivos.length > 0 && (
-          <QueHacer disponible={disponible} objetivos={objetivosActivos} />
-        )}
+          {/* Columna izquierda: Proyección + ¿Qué puedo hacer? + Mini calendario */}
+          <div className="space-y-4">
+            <ProyeccionCard p={proyeccion} rango={rango} />
 
-        {/* Mini calendario */}
-        <MiniCalendario
-          eventosPorFecha={eventosPorFecha}
-          plansPorFecha={plansPorFecha}
-          diaSeleccionado={diaSeleccionado}
-          onSelectDia={selectDiaCalendario}
-        />
+            {disponible > 0 && objetivosActivos.length > 0 && (
+              <QueHacer disponible={disponible} objetivos={objetivosActivos} />
+            )}
 
-        {/* Timeline de compromisos */}
-        {grupos.length === 0 ? (
-          <div className="rounded-2xl border border-night-border bg-night-1 px-4 py-10 text-center">
-            <p className="text-3xl mb-3">📅</p>
-            <p className="text-sm font-semibold text-slate-400">Sin compromisos en {rango} días</p>
-            <p className="text-xs text-slate-600 mt-1">
-              Toca cualquier día del calendario para planificar.
-            </p>
+            <MiniCalendario
+              eventosPorFecha={eventosPorFecha}
+              plansPorFecha={plansPorFecha}
+              diaSeleccionado={diaSeleccionado}
+              onSelectDia={selectDiaCalendario}
+            />
           </div>
-        ) : (
-          <div className="space-y-5">
-            {grupos.map(([fecha, items]) => {
-              const th = TIPO_COLOR[items[0].tipo]
-              return (
-                <div
-                  key={fecha}
-                  ref={setGrupoRef(fecha)}
-                  className={[
-                    'scroll-mt-4 rounded-2xl border overflow-hidden transition-all cursor-pointer',
-                    diaSeleccionado === fecha
-                      ? 'border-brand-500/40 shadow-glow-brand'
-                      : 'border-night-border'
-                  ].join(' ')}
-                  onClick={() => abrirDiaSheet(fecha)}
-                >
-                  {/* Header del grupo */}
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-night-2 border-b border-night-border/60">
-                    <div>
-                      <span className="text-xs font-bold text-white capitalize">
-                        {fechaRelativa(fecha)}
-                      </span>
-                      <span className="text-[10px] text-slate-500 ml-2">
-                        {format(parseISO(fecha), "d 'de' MMMM", { locale: es })}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-600">
-                      {items.filter(i => i.monto !== null).reduce((s, i) => s + (i.monto ?? 0), 0) > 0
-                        ? formatCLP(items.filter(i => i.monto !== null).reduce((s, i) => s + (i.monto ?? 0), 0))
-                        : ''
-                      }
-                    </span>
-                  </div>
 
-                  {/* Eventos del día */}
-                  <div className="bg-night-1 divide-y divide-night-border/40">
-                    {items.map((ev, i) => {
-                      const c = TIPO_COLOR[ev.tipo]
-                      return (
-                        <div key={i} className="flex items-center gap-3 px-4 py-3">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0 bg-night-2 border ${c.border}`}>
-                            {ev.emoji}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">{ev.titulo}</p>
-                            {ev.subtitulo && (
-                              <p className="text-[11px] text-slate-500 truncate">{ev.subtitulo}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {ev.monto !== null ? (
-                              <span className={`text-sm font-bold ${ev.delta > 0 ? 'text-ingreso-400' : 'text-gasto-400'}`}>
-                                {ev.delta > 0 ? '+' : '−'}{formatCLP(ev.monto)}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-slate-600 italic">monto ?</span>
-                            )}
-                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${c.badge}`}>
-                              {TIPO_LABEL[ev.tipo]}
-                            </span>
-                          </div>
+          {/* Columna derecha: Timeline de compromisos */}
+          <div className="space-y-4">
+            {grupos.length === 0 ? (
+              <div className="rounded-2xl border border-night-border bg-night-1 px-4 py-10 text-center">
+                <p className="text-3xl mb-3">📅</p>
+                <p className="text-sm font-semibold text-slate-400">Sin compromisos en {rango} días</p>
+                <p className="text-xs text-slate-600 mt-1">
+                  Toca cualquier día del calendario para planificar.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {grupos.map(([fecha, items]) => (
+                    <div
+                      key={fecha}
+                      ref={setGrupoRef(fecha)}
+                      className={[
+                        'scroll-mt-4 rounded-2xl border overflow-hidden transition-all cursor-pointer',
+                        diaSeleccionado === fecha
+                          ? 'border-brand-500/40 shadow-glow-brand'
+                          : 'border-night-border'
+                      ].join(' ')}
+                      onClick={() => abrirDiaSheet(fecha)}
+                    >
+                      {/* Header del grupo */}
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-night-2 border-b border-night-border/60">
+                        <div>
+                          <span className="text-xs font-bold text-white capitalize">
+                            {fechaRelativa(fecha)}
+                          </span>
+                          <span className="text-[10px] text-slate-500 ml-2">
+                            {format(parseISO(fecha), "d 'de' MMMM", { locale: es })}
+                          </span>
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+                        <span className="text-[10px] text-slate-600">
+                          {items.filter(i => i.monto !== null).reduce((s, i) => s + (i.monto ?? 0), 0) > 0
+                            ? formatCLP(items.filter(i => i.monto !== null).reduce((s, i) => s + (i.monto ?? 0), 0))
+                            : ''
+                          }
+                        </span>
+                      </div>
 
-        {eventos.length > 0 && (
-          <p className="text-center text-[10px] text-slate-500 pb-2">
-            Proyección basada en compromisos conocidos · Sueldo no incluido · Toca un día para planificar
-          </p>
-        )}
+                      {/* Eventos del día */}
+                      <div className="bg-night-1 divide-y divide-night-border/40">
+                        {items.map((ev, i) => {
+                          const c = TIPO_COLOR[ev.tipo]
+                          return (
+                            <div key={i} className="flex items-center gap-3 px-4 py-3">
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0 bg-night-2 border ${c.border}`}>
+                                {ev.emoji}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-white truncate">{ev.titulo}</p>
+                                {ev.subtitulo && (
+                                  <p className="text-[11px] text-slate-500 truncate">{ev.subtitulo}</p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {ev.monto !== null ? (
+                                  <span className={`text-sm font-bold tabular-nums ${ev.delta > 0 ? 'text-ingreso-400' : 'text-gasto-400'}`}>
+                                    {ev.delta > 0 ? '+' : '−'}{formatCLP(ev.monto)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-slate-600 italic">monto ?</span>
+                                )}
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${c.badge}`}>
+                                  {TIPO_LABEL[ev.tipo]}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {eventos.length > 0 && (
+                  <p className="text-[10px] text-slate-500 text-center lg:text-left pb-2">
+                    Proyección basada en compromisos conocidos · Sueldo no incluido
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Sheet de día */}
