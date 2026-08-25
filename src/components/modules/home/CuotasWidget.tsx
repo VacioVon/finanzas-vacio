@@ -10,7 +10,7 @@ export function CuotasWidget() {
   const navigate = useNavigate()
   const { data: cuotas, isLoading } = useCuotas()
 
-  if (isLoading) return <div className="px-4"><SkeletonCard /></div>
+  if (isLoading) return <div className="px-4 lg:px-0"><SkeletonCard /></div>
 
   const activas = (cuotas ?? []).filter(c => c.estado === 'activa')
 
@@ -21,7 +21,7 @@ export function CuotasWidget() {
   if (activas.length === 0) return null   // no mostrar widget si no hay cuotas
 
   return (
-    <div className="px-4">
+    <div className="px-4 lg:px-0">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-slate-400">Compras en cuotas</h3>
         <button

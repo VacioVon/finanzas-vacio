@@ -16,7 +16,7 @@ export function PresupuestosWidget() {
 
   if (total === 0) {
     return (
-      <Card padding="md" className="mx-4">
+      <Card padding="md" className="mx-4 lg:mx-0">
         <button className="w-full flex items-center gap-3" onClick={() => navigate('/presupuestos')}>
           <span className="text-2xl">🎯</span>
           <div className="flex-1 text-left">

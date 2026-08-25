@@ -11,7 +11,7 @@ interface PatrimonioNetoProps {
 export function PatrimonioNeto({ totalDeudas }: PatrimonioNetoProps) {
   const { data: cuentas, isLoading } = useCuentas()
 
-  if (isLoading) return <div className="px-4"><SkeletonCard /></div>
+  if (isLoading) return <div className="px-4 lg:px-0"><SkeletonCard /></div>
 
   const totalCuentas = (cuentas ?? [])
     .filter(c => c.activa && c.tipo !== 'inversion' && c.tipo !== 'credito')
@@ -29,7 +29,7 @@ export function PatrimonioNeto({ totalDeudas }: PatrimonioNetoProps) {
   const tieneCredito    = (cuentas ?? []).some(c => c.activa && c.tipo === 'credito')
 
   return (
-    <div className="px-4">
+    <div className="px-4 lg:px-0">
       <Card>
         <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-3">Patrimonio Neto</p>
         <CurrencyDisplay

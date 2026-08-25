@@ -11,10 +11,10 @@ export function RecentMovements() {
   const navigate = useNavigate()
   const { data: movimientos, isLoading } = useMovimientos({ limit: 5 })
 
-  if (isLoading) return <div className="px-4"><SkeletonList count={3} /></div>
+  if (isLoading) return <div className="px-4 lg:px-0"><SkeletonList count={3} /></div>
 
   return (
-    <div className="px-4">
+    <div className="px-4 lg:px-0">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-slate-400">Últimos movimientos</h3>
         <button

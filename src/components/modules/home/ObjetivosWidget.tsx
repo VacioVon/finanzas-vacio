@@ -14,7 +14,7 @@ export function ObjetivosWidget() {
 
   if (activos.length === 0) {
     return (
-      <Card padding="md" className="mx-4">
+      <Card padding="md" className="mx-4 lg:mx-0">
         <button className="w-full flex items-center gap-3" onClick={() => navigate('/objetivos')}>
           <span className="text-2xl">🏆</span>
           <div className="flex-1 text-left">
@@ -30,12 +30,19 @@ export function ObjetivosWidget() {
   const preview = activos.slice(0, 3)
 
   return (
-    <Card padding="md" className="mx-4">
+    <Card
+      padding="md"
+      className="mx-4 lg:mx-0"
+      style={{
+        background: 'linear-gradient(135deg, rgba(201,162,39,0.07) 0%, transparent 60%)',
+        borderColor: 'rgba(201,162,39,0.25)'
+      }}
+    >
       <button className="w-full mb-3" onClick={() => navigate('/objetivos')}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-lg">🏆</span>
-            <p className="text-sm font-semibold text-white">Objetivos de Ahorro</p>
+            <p className="text-sm font-semibold text-gold-500">Objetivos de Ahorro</p>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-slate-500">{activos.length} activos</span>

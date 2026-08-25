@@ -10,7 +10,7 @@ export function DeudasWidget() {
   const { data: deudas, isLoading } = useDeudas()
 
   if (isLoading) {
-    return <div className="px-4"><SkeletonCard /></div>
+    return <div className="px-4 lg:px-0"><SkeletonCard /></div>
   }
 
   const activas = (deudas ?? []).filter(d => d.estado === 'activa')
@@ -21,7 +21,7 @@ export function DeudasWidget() {
 
   if (todas.length === 0) {
     return (
-      <div className="px-4">
+      <div className="px-4 lg:px-0">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-slate-400">Deudas</h3>
           <button

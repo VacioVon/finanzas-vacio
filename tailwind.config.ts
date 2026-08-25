@@ -130,16 +130,32 @@ const config: Config = {
 
         // ── Superficies nocturnas (dark-first) ───────────────────
         night: {
-          0:      '#1A1822',   // fondo base — cosmic profundo
-          1:      '#23212C',   // modal / cards — cosmic
-          2:      '#2C2A38',   // cards elevadas
-          3:      '#353344',   // inputs, interactivos
-          border: '#3D3B50',   // bordes sutiles
+          0:      '#1A1822',   // cards principales / sidebar
+          1:      '#23212C',   // cards elevadas / modales
+          2:      '#2C2A38',   // inputs, interactivos
+          3:      '#353344',   // hover, seleccionados
+          border: '#3D3B50',   // bordes cósmicos
+        },
+
+        // ── Deep Ocean — módulos analíticos ──────────────────────
+        ocean: {
+          bg:     '#0E1E25',   // fondo alternativo analítico
+          0:      '#162A32',   // cards en contexto ocean
+          1:      '#1F3A45',   // cards elevadas ocean
+          2:      '#2A4E5C',   // inputs en ocean
+          border: '#2E6070',   // bordes ocean — más visibles
+        },
+
+        // ── Regal Gold — objetivos / logros / progreso ───────────
+        gold: {
+          400:    '#D4B347',
+          500:    '#C9A227',   // Regal Gold — objetivos completados
+          600:    '#A8851F',
         },
 
         // ── Superficie light ──────────────────────────────────────
         surface: '#FFFFFF',
-        background: '#F1F5F9',
+        background: '#0D0B14', // Space Black — fondo real de la app
       },
       borderRadius: {
         '2xl': '1rem',
@@ -150,12 +166,13 @@ const config: Config = {
         'card-lg':  '0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
         nav:        '0 -1px 3px 0 rgb(0 0 0 / 0.06)',
         // Glows QloB — solo donde aportan jerarquía
-        'glow-brand':   '0 0 14px rgba(41,121,255,0.20)',
-        'glow-gasto':   '0 0 14px rgba(244,100,95,0.22)',
-        'glow-ingreso': '0 0 14px rgba(16,217,127,0.20)',
-        'glow-ahorro':  '0 0 14px rgba(155,93,229,0.22)',
-        'glow-mover':   '0 0 14px rgba(0,194,203,0.20)',
-        'glow-xp':      '0 0 14px rgba(255,183,3,0.25)',
+        'glow-brand':   '0 0 18px rgba(41,121,255,0.22)',
+        'glow-gasto':   '0 0 18px rgba(244,100,95,0.22)',
+        'glow-ingreso': '0 0 18px rgba(16,217,127,0.20)',
+        'glow-ahorro':  '0 0 18px rgba(155,93,229,0.22)',
+        'glow-mover':   '0 0 18px rgba(0,194,203,0.20)',
+        'glow-xp':      '0 0 18px rgba(255,183,3,0.25)',
+        'glow-gold':    '0 0 22px rgba(201,162,39,0.30)',
       },
       animation: {
         'fade-in':  'fadeIn 0.2s ease-in-out',

@@ -22,7 +22,7 @@ export function SuscripcionesWidget() {
   if (proximas.length === 0) return null
 
   return (
-    <Card padding="md" className="mx-4">
+    <Card padding="md" className="mx-4 lg:mx-0">
       <button
         onClick={() => navigate('/suscripciones')}
         className="w-full flex items-center justify-between mb-3"

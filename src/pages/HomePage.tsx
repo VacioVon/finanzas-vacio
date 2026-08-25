@@ -35,26 +35,38 @@ export function HomePage() {
   const ahorrosObjetivos  = Math.max(0, aportesMes?.neto ?? 0)   // solo neto positivo
   const ahorros           = ahorrosContables + ahorrosObjetivos
 
+  const puntajeSalud = (ingresos > 0 || gastos > 0)
+    ? Math.min(100, Math.round(60 + (ahorros > 0 ? 15 : 0) + (ingresos > gastos ? 25 : 0)))
+    : null
+
   return (
     <AppLayout>
-      <GreetingCard />
+      {/* Saludo solo en móvil — en desktop el sidebar ya identifica al usuario */}
+      <div className="lg:hidden">
+        <GreetingCard />
+      </div>
 
-      <div className="space-y-4 mt-2">
-        {/* 1. Dinero Disponible */}
+      {/* ── Título desktop ── */}
+      <div className="hidden lg:flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-white">Inicio</h1>
+        {puntajeSalud !== null && (
+          <span className="text-sm text-slate-400">
+            Salud financiera:&nbsp;
+            <span className={puntajeSalud >= 75 ? 'text-ingreso-400 font-semibold' : puntajeSalud >= 50 ? 'text-xp-400 font-semibold' : 'text-gasto-400 font-semibold'}>
+              {puntajeSalud}/100
+            </span>
+          </span>
+        )}
+      </div>
+
+      {/* ══ HERO — protagonista visual único ══════════════════════ */}
+      <div className="mb-4">
         <AvailableBalance />
+      </div>
 
-        {/* 2. Salud Financiera */}
-        <FinancialHealthWidget
-          puntaje={ingresos > 0 || gastos > 0
-            ? Math.min(100, Math.round(60 + (ahorros > 0 ? 15 : 0) + (ingresos > gastos ? 25 : 0)))
-            : null
-          }
-        />
-
-        {/* 3. Patrimonio Neto */}
+      {/* ══ FILA 1 — Patrimonio + Resumen del mes ════════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <PatrimonioNeto totalDeudas={totalDeudas} />
-
-        {/* 4. Resumen del mes */}
         {(ingresos > 0 || gastos > 0 || ahorros > 0) && (
           <MesSummary
             ingresos={ingresos}
@@ -63,25 +75,30 @@ export function HomePage() {
             ahorrosObjetivos={ahorrosObjetivos}
           />
         )}
-
-        {/* 5. Presupuestos — Sprint 2 */}
-        <PresupuestosWidget />
-
-        {/* 6. Objetivos de Ahorro — Sprint 2 */}
-        <ObjetivosWidget />
-
-        {/* 7. Compras en cuotas — Sprint 3.1 */}
-        <CuotasWidget />
-
-        {/* 8. Deudas externas — Sprint 3 */}
-        <DeudasWidget />
-
-        {/* 9. Próximos cobros de suscripciones — Sprint 3 */}
-        <SuscripcionesWidget />
-
-        {/* Últimos movimientos */}
-        <RecentMovements />
       </div>
+
+      {/* ══ FILA 2 — Objetivos (gold) + Presupuestos ═════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <ObjetivosWidget />
+        <PresupuestosWidget />
+      </div>
+
+      {/* ══ FILA 3 — Deudas + Cuotas + Suscripciones ════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <DeudasWidget />
+        <CuotasWidget />
+        <SuscripcionesWidget />
+      </div>
+
+      {/* ══ Últimos movimientos — full width ══════════════════════ */}
+      <RecentMovements />
+
+      {/* Salud financiera solo en móvil (en desktop va en header) */}
+      {puntajeSalud !== null && (
+        <div className="lg:hidden mt-4">
+          <FinancialHealthWidget puntaje={puntajeSalud} />
+        </div>
+      )}
 
       <div className="h-4" />
     </AppLayout>

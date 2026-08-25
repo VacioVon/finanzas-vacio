@@ -14,7 +14,7 @@ export function MesSummary({ ingresos, gastos, ahorros, ahorrosObjetivos = 0 }: 
   const mostrarDesglose  = ahorrosObjetivos > 0 && ahorrosContables > 0
 
   return (
-    <div className="px-4">
+    <div className="px-4 lg:px-0">
       <h3 className="text-sm font-semibold text-slate-400 mb-3">Resumen del mes</h3>
       <Card padding="none">
         <div className="grid grid-cols-3 divide-x divide-night-border/40">
