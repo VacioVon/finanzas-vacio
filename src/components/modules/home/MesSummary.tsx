@@ -24,7 +24,7 @@ export function MesSummary({ ingresos, gastos, ahorros, ahorrosObjetivos = 0 }: 
               <TrendingUp className="h-4 w-4 text-ingreso-400" />
             </div>
             <p className="text-xs text-slate-500 mb-0.5">Ingresos</p>
-            <p className="text-sm font-bold text-ingreso-400">{formatCLP(ingresos)}</p>
+            <p className="text-sm font-bold text-ingreso-400 tabular-nums">{formatCLP(ingresos)}</p>
           </div>
 
           {/* Gastos */}
@@ -33,7 +33,7 @@ export function MesSummary({ ingresos, gastos, ahorros, ahorrosObjetivos = 0 }: 
               <TrendingDown className="h-4 w-4 text-gasto-400" />
             </div>
             <p className="text-xs text-slate-500 mb-0.5">Gastos</p>
-            <p className="text-sm font-bold text-gasto-400">{formatCLP(gastos)}</p>
+            <p className="text-sm font-bold text-gasto-400 tabular-nums">{formatCLP(gastos)}</p>
           </div>
 
           {/* Ahorros */}
@@ -42,7 +42,7 @@ export function MesSummary({ ingresos, gastos, ahorros, ahorrosObjetivos = 0 }: 
               <PiggyBank className="h-4 w-4 text-ahorro-400" />
             </div>
             <p className="text-xs text-slate-500 mb-0.5">Ahorros</p>
-            <p className="text-sm font-bold text-ahorro-400">{formatCLP(ahorros)}</p>
+            <p className="text-sm font-bold text-ahorro-400 tabular-nums">{formatCLP(ahorros)}</p>
           </div>
         </div>
 

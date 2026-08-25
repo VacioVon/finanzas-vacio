@@ -40,16 +40,16 @@ export function PatrimonioNeto({ totalDeudas }: PatrimonioNetoProps) {
         <div className={`mt-3 grid gap-2 pt-3 border-t border-night-border/40 ${tieneCredito ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <div>
             <p className="text-[10px] text-slate-500">Cuentas</p>
-            <p className="text-xs font-semibold text-slate-300 mt-0.5">{formatCLP(totalCuentas)}</p>
+            <p className="text-xs font-semibold text-slate-300 mt-0.5 tabular-nums">{formatCLP(totalCuentas)}</p>
           </div>
           <div>
             <p className="text-[10px] text-slate-500">Inversiones</p>
-            <p className="text-xs font-semibold text-ingreso-400 mt-0.5">{formatCLP(totalInversiones)}</p>
+            <p className="text-xs font-semibold text-ingreso-400 mt-0.5 tabular-nums">{formatCLP(totalInversiones)}</p>
           </div>
           {tieneCredito && (
             <div>
               <p className="text-[10px] text-slate-500">Tarjetas</p>
-              <p className={`text-xs font-semibold mt-0.5 ${totalTarjetas < 0 ? 'text-gasto-400' : 'text-slate-300'}`}>
+              <p className={`text-xs font-semibold mt-0.5 tabular-nums ${totalTarjetas < 0 ? 'text-gasto-400' : 'text-slate-300'}`}>
                 {formatCLP(totalTarjetas)}
               </p>
             </div>

@@ -30,14 +30,7 @@ export function ObjetivosWidget() {
   const preview = activos.slice(0, 3)
 
   return (
-    <Card
-      padding="md"
-      className="mx-4 lg:mx-0"
-      style={{
-        background: 'linear-gradient(135deg, rgba(201,162,39,0.07) 0%, transparent 60%)',
-        borderColor: 'rgba(201,162,39,0.25)'
-      }}
-    >
+    <Card variant="gold" padding="md" className="mx-4 lg:mx-0">
       <button className="w-full mb-3" onClick={() => navigate('/objetivos')}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

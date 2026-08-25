@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Pencil, Copy, Trash2, MoreVertical, Paperclip, FileText } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
 import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay'
 import { MovimientoForm } from './MovimientoForm'
 import type { Movimiento } from '@/types/app.types'
@@ -19,13 +20,6 @@ const tipoLabel: Record<string, string> = {
   transferencia: 'Transferencia'
 }
 
-const tipoBadgeColor: Record<string, string> = {
-  ingreso:       'bg-ingreso-500/15 text-ingreso-400',
-  gasto:         'bg-gasto-500/15 text-gasto-400',
-  ahorro:        'bg-ahorro-500/15 text-ahorro-400',
-  pago_deuda:    'bg-xp-500/15 text-xp-400',
-  transferencia: 'bg-night-3 text-slate-400'
-}
 
 function ComprobanteIcon({ url }: { url: string }) {
   const isPDF = url.toLowerCase().includes('.pdf')
@@ -44,6 +38,14 @@ function ComprobanteIcon({ url }: { url: string }) {
       }
     </a>
   )
+}
+
+const tipoBadgeVariant: Record<string, 'ingreso' | 'gasto' | 'ahorro' | 'mover' | 'xp' | 'muted'> = {
+  ingreso:       'ingreso',
+  gasto:         'gasto',
+  ahorro:        'ahorro',
+  pago_deuda:    'xp',
+  transferencia: 'muted',
 }
 
 // Menú flotante con posición fija para evitar clipping en listas
@@ -153,9 +155,9 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
                   : (mov.categoria?.nombre ?? 'Sin categoría')
                 }
               </p>
-              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${tipoBadgeColor[mov.tipo] ?? 'bg-night-3 text-slate-500'}`}>
+              <Badge variant={tipoBadgeVariant[mov.tipo] ?? 'muted'} className="flex-shrink-0">
                 {tipoLabel[mov.tipo] ?? mov.tipo}
-              </span>
+              </Badge>
             </div>
             <div className="flex items-center gap-1.5 flex-wrap">
               {mov.subcategoria && (
@@ -175,14 +177,14 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
             {(mov.para_tercero || (mov.comision > 0)) && (
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 {mov.para_tercero && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-xp-500/15 text-xp-400">
+                  <Badge variant="xp">
                     👥 Para{mov.tercero_nombre ? ` ${mov.tercero_nombre}` : ' tercero'}
-                  </span>
+                  </Badge>
                 )}
                 {mov.comision > 0 && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-night-3 text-slate-500">
+                  <Badge variant="muted" className="tabular-nums">
                     +${mov.comision.toLocaleString('es-CL')} comisión
-                  </span>
+                  </Badge>
                 )}
               </div>
             )}
