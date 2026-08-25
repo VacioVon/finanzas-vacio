@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Home, ArrowLeftRight, BarChart2, MoreHorizontal, Plus,
-  Wallet, CalendarDays, HandCoins, Settings
+  Wallet, CalendarDays, HandCoins, Settings, ClipboardList
 } from 'lucide-react'
 import { useState } from 'react'
 import { MovimientoForm } from '@/components/modules/movimientos/MovimientoForm'
@@ -24,10 +24,11 @@ const desktopNavPrimary = [
 ]
 
 const desktopNavSecondary = [
-  { to: '/cuentas',  icon: Wallet,    label: 'Cuentas'    },
-  { to: '/cobros',   icon: HandCoins, label: 'Por cobrar' },
-  { to: '/mas',      icon: MoreHorizontal, label: 'Más'   },
-  { to: '/ajustes',  icon: Settings,  label: 'Ajustes'    },
+  { to: '/cuentas',      icon: Wallet,         label: 'Cuentas'      },
+  { to: '/compromisos',  icon: ClipboardList,  label: 'Compromisos'  },
+  { to: '/cobros',       icon: HandCoins,      label: 'Por cobrar'   },
+  { to: '/mas',          icon: MoreHorizontal, label: 'Más'          },
+  { to: '/ajustes',      icon: Settings,       label: 'Ajustes'      },
 ]
 
 function SidebarNavLink({ to, icon: Icon, label, end }: { to: string; icon: React.ElementType; label: string; end?: boolean }) {

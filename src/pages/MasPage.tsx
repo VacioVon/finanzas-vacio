@@ -91,9 +91,9 @@ export function MasPage() {
             />
             <MenuItem
               icon={<RefreshCw className="h-4 w-4" />}
-              label="Suscripciones"
-              description="Servicios y cobros recurrentes"
-              onClick={() => navigate('/suscripciones')}
+              label="Compromisos"
+              description="Servicios y gastos fijos recurrentes"
+              onClick={() => navigate('/compromisos')}
             />
             <MenuItem
               icon={<CalendarDays className="h-4 w-4" />}

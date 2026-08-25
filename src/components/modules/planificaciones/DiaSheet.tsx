@@ -9,10 +9,10 @@ import { usePlanificaciones } from '@/hooks/usePlanificaciones'
 import { formatCLP } from '@/utils/currency'
 import type { Planificacion } from '@/types/app.types'
 
-// ── Tipos para eventos comprometidos (suscripciones/cuotas/deudas/sueldo) ──
+// ── Tipos para eventos comprometidos (compromisos/cuotas/deudas/sueldo) ──
 export interface EventoDia {
   id:        string
-  tipo:      'suscripcion' | 'cuota' | 'deuda' | 'sueldo' | 'cobro_esperado'
+  tipo:      'compromiso' | 'cuota' | 'deuda' | 'sueldo' | 'cobro_esperado'
   titulo:    string
   subtitulo?: string
   emoji?:    string
@@ -20,10 +20,10 @@ export interface EventoDia {
 }
 
 const TIPO_COLOR = {
-  sueldo:      { dot: 'bg-ingreso-500',  text: 'text-ingreso-400',  badge: 'bg-ingreso-500/15 border-ingreso-500/30'  },
-  suscripcion: { dot: 'bg-mover-500',    text: 'text-mover-400',    badge: 'bg-mover-500/15 border-mover-500/30'      },
-  cuota:       { dot: 'bg-brand-500',    text: 'text-brand-400',    badge: 'bg-brand-500/15 border-brand-500/30'      },
-  deuda:          { dot: 'bg-gasto-500',          text: 'text-gasto-400',    badge: 'bg-gasto-500/15 border-gasto-500/30'      },
+  sueldo:         { dot: 'bg-ingreso-500',           text: 'text-ingreso-400',  badge: 'bg-ingreso-500/15 border-ingreso-500/30'  },
+  compromiso:     { dot: 'bg-mover-500',             text: 'text-mover-400',    badge: 'bg-mover-500/15 border-mover-500/30'      },
+  cuota:          { dot: 'bg-brand-500',             text: 'text-brand-400',    badge: 'bg-brand-500/15 border-brand-500/30'      },
+  deuda:          { dot: 'bg-gasto-500',             text: 'text-gasto-400',    badge: 'bg-gasto-500/15 border-gasto-500/30'      },
   cobro_esperado: { dot: 'border border-ingreso-500', text: 'text-ingreso-400', badge: 'bg-ingreso-500/10 border-ingreso-500/30'  },
 }
 

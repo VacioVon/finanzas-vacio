@@ -21,17 +21,11 @@ interface PresupuestoFormProps {
   mes:       number
   anio:      number
   editing?:  PresupuestoConProgreso | null
-  // IDs ya asignados para excluirlos de la lista
   categoriasUsadas?: string[]
 }
 
 export function PresupuestoForm({
-  isOpen,
-  onClose,
-  mes,
-  anio,
-  editing,
-  categoriasUsadas = []
+  isOpen, onClose, mes, anio, editing, categoriasUsadas = []
 }: PresupuestoFormProps) {
   const { data: categorias } = useCategoriasByTipo('gasto')
   const createMutation = useCreatePresupuesto()
@@ -58,7 +52,6 @@ export function PresupuestoForm({
     }
   }, [isOpen, editing])  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Categorías disponibles: excluye las que ya tienen presupuesto este mes
   const disponibles = (categorias ?? []).filter(
     c => editing ? true : !categoriasUsadas.includes(c.id)
   )
@@ -71,10 +64,7 @@ export function PresupuestoForm({
   async function onSubmit(data: FormValues) {
     try {
       if (editing) {
-        await updateMutation.mutateAsync({
-          id:    editing.id,
-          monto: data.monto_presupuestado
-        })
+        await updateMutation.mutateAsync({ id: editing.id, monto: data.monto_presupuestado })
       } else {
         await createMutation.mutateAsync({
           categoria_id:        data.categoria_id,
@@ -104,14 +94,14 @@ export function PresupuestoForm({
           />
         )}
         {editing && (
-          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
+          <div className="flex items-center gap-3 p-3 bg-night-3 rounded-2xl border border-night-border/60">
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+              className="size-10 rounded-xl flex items-center justify-center text-lg"
               style={{ backgroundColor: `${editing.categoria?.color ?? '#6B7280'}20` }}
             >
               {editing.categoria?.emoji ?? '📁'}
             </div>
-            <p className="text-sm font-semibold text-slate-900">{editing.categoria?.nombre}</p>
+            <p className="text-sm font-semibold text-slate-200">{editing.categoria?.nombre}</p>
           </div>
         )}
 
@@ -125,14 +115,14 @@ export function PresupuestoForm({
               inputMode="numeric"
               placeholder="0"
               className={[
-                'w-full h-14 pl-8 pr-4 text-center text-2xl font-bold rounded-2xl border bg-white',
-                'outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-                errors.monto_presupuestado ? 'border-danger-400' : 'border-slate-200'
+                'w-full h-14 pl-8 pr-4 text-center text-2xl font-bold tabular-nums rounded-2xl border bg-night-3 text-white',
+                'outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 placeholder:text-slate-500',
+                errors.monto_presupuestado ? 'border-gasto-500' : 'border-night-border hover:border-brand-500/40'
               ].join(' ')}
             />
           </div>
           {errors.monto_presupuestado && (
-            <p className="text-xs text-danger-600 mt-1">{errors.monto_presupuestado.message}</p>
+            <p className="text-xs text-gasto-400 mt-1">{errors.monto_presupuestado.message}</p>
           )}
         </div>
 

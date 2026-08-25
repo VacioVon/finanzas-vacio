@@ -27,6 +27,10 @@ interface PagarDeudaFormProps {
   deuda:   Deuda
 }
 
+const inputBase   = 'w-full rounded-xl border bg-night-3 text-white outline-none transition-colors placeholder:text-slate-500'
+const inputRing   = 'focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500'
+const inputBorder = 'border-night-border hover:border-brand-500/40'
+
 export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) {
   const { data: cuentas } = useCuentas()
   const createMov         = useCreateMovimiento()
@@ -47,7 +51,6 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
     }
   })
 
-  // Actualizar monto default cuando cambia la deuda o se abre el modal
   useEffect(() => {
     if (isOpen) {
       reset({
@@ -79,15 +82,15 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
     <Modal isOpen={isOpen} onClose={onClose} title="Registrar pago">
 
       {/* Cabecera de la deuda */}
-      <div className="flex items-center gap-3 mb-5 p-3 rounded-2xl bg-slate-50">
+      <div className="flex items-center gap-3 mb-5 p-3 rounded-2xl bg-night-3 border border-night-border/60">
         <div
-          className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg flex-shrink-0"
+          className="size-10 rounded-2xl flex items-center justify-center text-lg flex-shrink-0"
           style={{ backgroundColor: `${deuda.categoria?.color ?? '#6B7280'}20` }}
         >
           {deuda.categoria?.emoji ?? '💳'}
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-slate-900">{deuda.nombre}</p>
+          <p className="text-sm font-semibold text-slate-200">{deuda.nombre}</p>
           <div className="flex items-center gap-2 mt-1">
             <div className="flex-1">
               <ProgressBar
@@ -97,17 +100,17 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
                 size="sm"
               />
             </div>
-            <span className="text-xs text-slate-500 flex-shrink-0">
+            <span className="text-xs text-slate-400 flex-shrink-0 tabular-nums">
               {formatCLP(deuda.monto_pendiente)} pendiente
             </span>
           </div>
         </div>
       </div>
 
-      {/* Aviso informativo */}
-      <div className="flex items-start gap-2 p-3 bg-primary-50 rounded-xl mb-5">
-        <Info className="h-4 w-4 text-primary-500 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-primary-700 leading-relaxed">
+      {/* Aviso */}
+      <div className="flex items-start gap-2 p-3 bg-brand-500/10 border border-brand-500/20 rounded-xl mb-5">
+        <Info className="h-4 w-4 text-brand-400 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-brand-300 leading-relaxed">
           El pago se descontará de la cuenta seleccionada y reducirá el saldo pendiente de la deuda.
           {deuda.cuota_mensual
             ? ` Cuota sugerida: ${formatCLP(deuda.cuota_mensual)}.`
@@ -130,28 +133,27 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
               inputMode="numeric"
               placeholder="0"
               className={[
-                'w-full h-14 pl-8 pr-4 text-center text-2xl font-bold rounded-2xl border bg-white',
-                'outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-                errors.monto ? 'border-danger-400' : 'border-slate-200'
+                inputBase, inputRing,
+                'h-14 pl-8 pr-4 text-center text-2xl font-bold tabular-nums',
+                errors.monto ? 'border-gasto-500 focus:ring-gasto-500/50' : inputBorder
               ].join(' ')}
             />
           </div>
-          {errors.monto && <p className="text-xs text-danger-600 mt-1">{errors.monto.message}</p>}
+          {errors.monto && <p className="text-xs text-gasto-400 mt-1">{errors.monto.message}</p>}
 
-          {/* Accesos rápidos */}
           {deuda.cuota_mensual && deuda.cuota_mensual !== deuda.monto_pendiente && (
             <div className="flex gap-2 mt-2">
               <button
                 type="button"
                 onClick={() => reset(v => ({ ...v, monto: deuda.cuota_mensual! }))}
-                className="flex-1 py-1.5 text-xs bg-slate-100 rounded-xl text-slate-600 hover:bg-slate-200 transition-colors"
+                className="flex-1 py-1.5 text-xs bg-night-3 text-slate-300 rounded-xl border border-night-border hover:bg-night-2 transition-colors tabular-nums"
               >
                 Cuota: {formatCLP(deuda.cuota_mensual)}
               </button>
               <button
                 type="button"
                 onClick={() => reset(v => ({ ...v, monto: deuda.monto_pendiente }))}
-                className="flex-1 py-1.5 text-xs bg-slate-100 rounded-xl text-slate-600 hover:bg-slate-200 transition-colors"
+                className="flex-1 py-1.5 text-xs bg-night-3 text-slate-300 rounded-xl border border-night-border hover:bg-night-2 transition-colors tabular-nums"
               >
                 Total: {formatCLP(deuda.monto_pendiente)}
               </button>
@@ -159,7 +161,6 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
           )}
         </div>
 
-        {/* Cuenta de origen */}
         <Select
           label="Pagar desde"
           options={cuentaOptions}
@@ -174,7 +175,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
           <input
             {...register('fecha')}
             type="date"
-            className="w-full mt-1 h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-500"
+            className={[inputBase, inputRing, 'mt-1 h-11 px-3 text-sm', inputBorder].join(' ')}
           />
         </div>
 
@@ -187,7 +188,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
             {...register('nota')}
             type="text"
             placeholder="Cuota 3, pago anticipado…"
-            className="w-full mt-1 h-10 px-3 text-sm rounded-xl border border-slate-200 bg-white outline-none focus:ring-2 focus:ring-primary-500 placeholder:text-slate-300"
+            className={[inputBase, inputRing, 'mt-1 h-10 px-3 text-sm', inputBorder].join(' ')}
           />
         </div>
 

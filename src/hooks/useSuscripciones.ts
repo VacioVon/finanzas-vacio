@@ -6,7 +6,9 @@ import {
   updateSuscripcion,
   toggleSuscripcion,
   deleteSuscripcion,
-  avanzarProximaFecha
+  avanzarProximaFecha,
+  registrarPagoCompromiso,
+  type PagoCompromisoData
 } from '@/services/suscripciones.service'
 import type { Suscripcion, SuscripcionFormData } from '@/types/app.types'
 
@@ -22,8 +24,8 @@ export function useSuscripciones() {
 }
 
 export function useCreateSuscripcion() {
-  const { user }  = useAuthStore()
-  const qc        = useQueryClient()
+  const { user } = useAuthStore()
+  const qc       = useQueryClient()
   return useMutation({
     mutationFn: (form: SuscripcionFormData) => createSuscripcion(user!.id, form),
     onSuccess:  () => qc.invalidateQueries({ queryKey: KEY })
@@ -61,5 +63,19 @@ export function useAvanzarProximaFecha() {
   return useMutation({
     mutationFn: (suscripcion: Suscripcion) => avanzarProximaFecha(suscripcion),
     onSuccess:  () => qc.invalidateQueries({ queryKey: KEY })
+  })
+}
+
+export function useRegistrarPagoCompromiso() {
+  const { user } = useAuthStore()
+  const qc       = useQueryClient()
+  return useMutation({
+    mutationFn: ({ compromiso, pago }: { compromiso: Suscripcion; pago: PagoCompromisoData }) =>
+      registrarPagoCompromiso(user!.id, compromiso, pago),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY })
+      qc.invalidateQueries({ queryKey: ['movimientos'] })
+      qc.invalidateQueries({ queryKey: ['cuentas'] })
+    }
   })
 }

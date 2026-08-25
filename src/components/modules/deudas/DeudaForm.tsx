@@ -31,6 +31,10 @@ interface DeudaFormProps {
   editing?: Deuda | null
 }
 
+const inputBase   = 'w-full rounded-xl border bg-night-3 text-white text-sm outline-none transition-colors placeholder:text-slate-500'
+const inputRing   = 'focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500'
+const inputBorder = 'border-night-border hover:border-brand-500/40'
+
 export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
   const createMutation = useCreateDeuda()
   const updateMutation = useUpdateDeuda()
@@ -100,7 +104,6 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-        {/* Nombre */}
         <Input
           label="Nombre de la deuda"
           placeholder="Ej: Crédito de consumo BCI, Cuotas TV…"
@@ -108,7 +111,6 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
           {...register('nombre')}
         />
 
-        {/* Categoría */}
         <Select
           label="Categoría (opcional)"
           options={catOptions}
@@ -129,13 +131,12 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
               inputMode="numeric"
               placeholder="0"
               className={[
-                'w-full h-11 pl-7 pr-4 rounded-xl border bg-white text-sm outline-none',
-                'focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-                errors.monto_total ? 'border-danger-400' : 'border-slate-200'
+                inputBase, inputRing, 'h-11 pl-7 pr-4',
+                errors.monto_total ? 'border-gasto-500 focus:ring-gasto-500/50' : inputBorder
               ].join(' ')}
             />
           </div>
-          {errors.monto_total && <p className="text-xs text-danger-600 mt-1">{errors.monto_total.message}</p>}
+          {errors.monto_total && <p className="text-xs text-gasto-400 mt-1">{errors.monto_total.message}</p>}
         </div>
 
         {/* Cuotas + Cuota mensual */}
@@ -150,9 +151,9 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
               inputMode="numeric"
               min={1}
               placeholder="1"
-              className="w-full mt-1 h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className={[inputBase, inputRing, 'mt-1 h-11 px-3', inputBorder].join(' ')}
             />
-            <p className="text-[10px] text-slate-400 mt-0.5">1 = pago único</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">1 = pago único</p>
           </div>
           <div>
             <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
@@ -165,10 +166,10 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
                 type="number"
                 inputMode="numeric"
                 placeholder="Opcional"
-                className="w-full h-11 pl-7 pr-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className={[inputBase, inputRing, 'h-11 pl-7 pr-3', inputBorder].join(' ')}
               />
             </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">Vacío = pago libre</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">Vacío = pago libre</p>
           </div>
         </div>
 
@@ -183,9 +184,9 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
             inputMode="decimal"
             step="0.01"
             placeholder="0"
-            className="w-full mt-1 h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className={[inputBase, inputRing, 'mt-1 h-11 px-3', inputBorder].join(' ')}
           />
-          <p className="text-[10px] text-slate-400 mt-0.5">0 = sin interés (préstamo familiar, cuotas sin cargo)</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">0 = sin interés (préstamo familiar, cuotas sin cargo)</p>
         </div>
 
         {/* Fechas */}
@@ -209,14 +210,12 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
           {...register('fecha_vencimiento')}
         />
 
-        {/* Nota */}
         <Input
           label="Nota (opcional)"
           placeholder="Condiciones, acuerdos, detalles…"
           {...register('nota')}
         />
 
-        {/* Botones */}
         <div className="flex gap-2 pt-2">
           <Button type="button" variant="secondary" fullWidth onClick={onClose}>
             Cancelar

@@ -113,14 +113,14 @@ export function ObjetivoForm({ isOpen, onClose, editing }: ObjetivoFormProps) {
               inputMode="numeric"
               placeholder="0"
               className={[
-                'w-full h-14 pl-8 pr-4 text-center text-2xl font-bold rounded-2xl border bg-white',
-                'outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-                errors.monto_objetivo ? 'border-danger-400' : 'border-slate-200'
+                'w-full h-14 pl-8 pr-4 text-center text-2xl font-bold tabular-nums rounded-2xl border bg-night-3 text-white',
+                'outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 placeholder:text-slate-500',
+                errors.monto_objetivo ? 'border-gasto-500' : 'border-night-border hover:border-brand-500/40'
               ].join(' ')}
             />
           </div>
           {errors.monto_objetivo && (
-            <p className="text-xs text-danger-600 mt-1">{errors.monto_objetivo.message}</p>
+            <p className="text-xs text-gasto-400 mt-1">{errors.monto_objetivo.message}</p>
           )}
         </div>
 

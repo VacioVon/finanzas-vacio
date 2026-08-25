@@ -3,7 +3,9 @@ export type TipoMovimiento = 'ingreso' | 'gasto' | 'ahorro' | 'pago_deuda' | 'tr
 export type TipoCategoria = 'gasto' | 'ingreso' | 'ahorro' | 'inversion'
 export type EstadoDeuda = 'activa' | 'pagada' | 'en_mora'
 export type EstadoObjetivo = 'activo' | 'completado' | 'pausado'
-export type FrecuenciaSuscripcion = 'semanal' | 'mensual' | 'anual'
+export type FrecuenciaSuscripcion = 'semanal' | 'quincenal' | 'mensual' | 'bimestral' | 'trimestral' | 'semestral' | 'anual'
+export type TipoCompromiso = 'servicio' | 'gasto_fijo'
+export type MontoTipoCompromiso = 'fijo' | 'estimado'
 
 // ── Planificaciones ───────────────────────────────────────────
 export type TipoPlanificacion = 'gasto' | 'ingreso' | 'ahorro' | 'mover'
@@ -124,6 +126,7 @@ export interface Movimiento {
   cuenta_destino_id: string | null
   objetivo_ahorro_id: string | null
   deuda_id: string | null
+  compromiso_id: string | null
   monto: number
   comercio: string | null
   nota: string | null
@@ -219,6 +222,9 @@ export interface Suscripcion {
   activa: boolean
   proxima_fecha: string | null
   nota: string | null
+  tipo: TipoCompromiso
+  monto_tipo: MontoTipoCompromiso
+  fecha_fin: string | null
   created_at: string
   updated_at: string
   cuenta?: Cuenta
@@ -363,6 +369,9 @@ export interface SuscripcionFormData {
   subcategoria_id?: string
   proxima_fecha?:  string
   nota?:           string
+  tipo?:           TipoCompromiso
+  monto_tipo?:     MontoTipoCompromiso
+  fecha_fin?:      string
 }
 
 export type TipoAporteObjetivo = 'aporte' | 'retiro' | 'ajuste'

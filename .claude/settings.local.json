@@ -13,7 +13,31 @@
       "Bash(npm list *)",
       "Bash(npm audit *)",
       "Bash(npx npm-check-updates *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git commit -m ' *)",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "Bash(objetivo\")",
+      "Bash(python \"C:/Users/rojas/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/590a4abe-6dad-4384-a7cc-94583a2d8e37/d65d617a-2a19-4c85-a54c-af6298c361ee/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"personal finance PWA dark mobile dashboard\" --design-system -p \"QloB\" --variance 5 --motion 3 --density 7)",
+      "Bash(find \"C:/Users/rojas/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/590a4abe-6dad-4384-a7cc-94583a2d8e37/d65d617a-2a19-4c85-a54c-af6298c361ee\" -name \"*.py\" 2>/dev/null | head -10; ls \"C:/Users/rojas/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/590a4abe-6dad-4384-a7cc-94583a2d8e37/d65d617a-2a19-4c85-a54c-af6298c361ee/skills/ui-ux-pro-max/\" 2>/dev/null || echo \"DIR NOT FOUND\")",
+      "Bash(find \"C:/Users/rojas/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/590a4abe-6dad-4384-a7cc-94583a2d8e37\" -name \"search.py\" 2>/dev/null)",
+      "Bash(xargs grep -l \"format\")",
+      "Bash(npx vite *)",
+      "Bash(timeout 8 npx vite --host --cwd \"C:\\\\Users\\\\rojas\\\\OneDrive\\\\Escritorio\\\\Claude\\\\App Finanzas\")",
+      "PowerShell(Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch \"^127\\\\.\" -and $_.IPAddress -notmatch \"^169\\\\.\" } | Select-Object IPAddress, InterfaceAlias)",
+      "Bash(vercel --version)",
+      "Bash(npx supabase *)",
+      "Bash(node supabase/scripts/*.mjs)",
+      "Bash(node supabase/scripts/_*.mjs)",
+      "Bash(node \"C:/Users/rojas/OneDrive/Escritorio/Claude/App Finanzas/supabase/scripts/*.mjs\")",
+      "Bash(node -e \"require('@supabase/supabase-js')\")",
+      "Bash(curl -s *fcysoelztnopggrtiraq*)",
+      "Bash(node -e \"const s = require\\('@supabase/supabase-js'\\); console.log\\('✅ supabase-js:', require\\('./node_modules/@supabase/supabase-js/package.json'\\).version\\)\")",
+      "Bash(node --input-type=module)",
+      "Bash(node supabase/scripts/inspect.mjs)"
     ]
   }
 }

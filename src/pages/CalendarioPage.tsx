@@ -26,24 +26,25 @@ const RANGOS = [15, 30, 60] as const
 type Rango = typeof RANGOS[number]
 
 // ── Tipos internos ───────────────────────────────────────────────
-type EventoTipo = 'suscripcion' | 'cuota' | 'deuda' | 'sueldo' | 'cobro_esperado'
+type EventoTipo = 'compromiso' | 'cuota' | 'deuda' | 'sueldo' | 'cobro_esperado'
 
 interface EventoCalendario {
-  fecha:      string
-  tipo:       EventoTipo
-  emoji:      string
-  titulo:     string
-  subtitulo?: string
-  monto:      number | null   // null = sueldo (monto desconocido)
-  delta:      number          // impacto en saldo: negativo = egreso, 0 = informativo
+  fecha:       string
+  tipo:        EventoTipo
+  emoji:       string
+  titulo:      string
+  subtitulo?:  string
+  monto:       number | null   // null = sueldo (monto desconocido)
+  delta:       number          // impacto en saldo: negativo = egreso, 0 = informativo
+  esEstimado?: boolean         // true = monto_tipo 'estimado', mostrar ~ y tratar distinto en proyección
 }
 
 // Color por tipo de evento comprometido
 const TIPO_COLOR: Record<EventoTipo, { dot: string; badge: string; icon: string; border: string }> = {
-  sueldo:      { dot: 'bg-ingreso-500',  badge: 'bg-ingreso-500/15 text-ingreso-400 border-ingreso-500/30',  icon: 'text-ingreso-400',  border: 'border-ingreso-500/25' },
-  suscripcion: { dot: 'bg-mover-500',    badge: 'bg-mover-500/15 text-mover-400 border-mover-500/30',        icon: 'text-mover-400',    border: 'border-mover-500/25'   },
-  cuota:       { dot: 'bg-brand-500',    badge: 'bg-brand-500/15 text-brand-400 border-brand-500/30',        icon: 'text-brand-400',    border: 'border-brand-500/25'   },
-  deuda:          { dot: 'bg-gasto-500',    badge: 'bg-gasto-500/15 text-gasto-400 border-gasto-500/30',          icon: 'text-gasto-400',    border: 'border-gasto-500/25'   },
+  sueldo:         { dot: 'bg-ingreso-500',  badge: 'bg-ingreso-500/15 text-ingreso-400 border-ingreso-500/30',  icon: 'text-ingreso-400',  border: 'border-ingreso-500/25' },
+  compromiso:     { dot: 'bg-mover-500',    badge: 'bg-mover-500/15 text-mover-400 border-mover-500/30',        icon: 'text-mover-400',    border: 'border-mover-500/25'   },
+  cuota:          { dot: 'bg-brand-500',    badge: 'bg-brand-500/15 text-brand-400 border-brand-500/30',        icon: 'text-brand-400',    border: 'border-brand-500/25'   },
+  deuda:          { dot: 'bg-gasto-500',    badge: 'bg-gasto-500/15 text-gasto-400 border-gasto-500/30',        icon: 'text-gasto-400',    border: 'border-gasto-500/25'   },
   cobro_esperado: { dot: 'border border-ingreso-500', badge: 'bg-ingreso-500/10 text-ingreso-400 border-ingreso-500/30', icon: 'text-ingreso-400',  border: 'border-ingreso-500/30' },
 }
 
@@ -56,7 +57,7 @@ const PLAN_DOT: Record<TipoPlanificacion, string> = {
 }
 
 const TIPO_LABEL: Record<EventoTipo, string> = {
-  sueldo: 'Sueldo', suscripcion: 'Suscripción', cuota: 'Cuota', deuda: 'Deuda',
+  sueldo: 'Sueldo', compromiso: 'Compromiso', cuota: 'Cuota', deuda: 'Deuda',
   cobro_esperado: 'Cobro esperado'
 }
 
@@ -83,15 +84,16 @@ function groupByDate(eventos: EventoCalendario[]) {
 
 // ── Componente ProyeccionCard ────────────────────────────────────
 interface Proyeccion {
-  saldoInicial:      number
-  totalCompromisos:  number
-  totalPlanificado:  number
-  saldoFinal:        number
-  saldoMinimo:       number
-  fechaMinimo:       string | null
-  eventoMinimo:      string | null
-  enRojo:            boolean
-  montoNecesario:    number
+  saldoInicial:         number
+  totalCompromisos:     number
+  totalCompromisosEstimados: number
+  totalPlanificado:     number
+  saldoFinal:           number
+  saldoMinimo:          number
+  fechaMinimo:          string | null
+  eventoMinimo:         string | null
+  enRojo:               boolean
+  montoNecesario:       number
 }
 
 function ProyeccionCard({ p, rango }: { p: Proyeccion; rango: Rango }) {
@@ -127,10 +129,20 @@ function ProyeccionCard({ p, rango }: { p: Proyeccion; rango: Rango }) {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <TrendingDown className="h-3.5 w-3.5 text-gasto-500" />
-            <span className="text-xs text-slate-400">Compromisos identificados</span>
+            <span className="text-xs text-slate-400">Compromisos confirmados</span>
           </div>
           <span className="text-sm font-semibold text-gasto-400">−{formatCLP(p.totalCompromisos)}</span>
         </div>
+
+        {p.totalCompromisosEstimados > 0 && (
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <TrendingDown className="h-3.5 w-3.5 text-slate-500" />
+              <span className="text-xs text-slate-500">Compromisos estimados (~)</span>
+            </div>
+            <span className="text-sm font-semibold text-slate-400">≈−{formatCLP(p.totalCompromisosEstimados)}</span>
+          </div>
+        )}
 
         {p.totalPlanificado > 0 && (
           <div className="flex justify-between items-center">
@@ -390,13 +402,14 @@ export function CalendarioPage() {
       const fecha = parseISO(s.proxima_fecha)
       if (fecha > hoy && fecha <= limite) {
         lista.push({
-          fecha:     s.proxima_fecha,
-          tipo:      'suscripcion',
-          emoji:     s.emoji ?? '🔄',
-          titulo:    s.nombre,
-          subtitulo: s.cuenta?.nombre,
-          monto:     s.monto,
-          delta:     -s.monto
+          fecha:      s.proxima_fecha,
+          tipo:       'compromiso',
+          emoji:      s.emoji ?? '🔄',
+          titulo:     s.nombre,
+          subtitulo:  s.cuenta?.nombre,
+          monto:      s.monto,
+          delta:      -s.monto,
+          esEstimado: s.monto_tipo === 'estimado',
         })
       }
     }
@@ -493,12 +506,13 @@ export function CalendarioPage() {
   const proyeccion = useMemo<Proyeccion>(() => {
     // Fuente 1: eventos comprometidos
     const items = [
-      ...eventos.map(ev => ({ fecha: ev.fecha, titulo: ev.titulo, delta: ev.delta, esCompromiso: true })),
+      ...eventos.map(ev => ({ fecha: ev.fecha, titulo: ev.titulo, delta: ev.delta, esCompromiso: true, esEstimado: ev.esEstimado ?? false })),
       ...planificacionesDelta.map(({ plan, delta }) => ({
         fecha: plan.fecha,
         titulo: plan.comercio || plan.descripcion || plan.tipo,
         delta,
-        esCompromiso: false
+        esCompromiso: false,
+        esEstimado: false,
       }))
     ].sort((a, b) => a.fecha.localeCompare(b.fecha))
 
@@ -506,14 +520,18 @@ export function CalendarioPage() {
     let minSaldo       = saldoLiquidez
     let fechaMinimo:   string | null = null
     let eventoMinimo:  string | null = null
-    let totalCompromisos  = 0
-    let totalPlanificado  = 0
+    let totalCompromisos          = 0
+    let totalCompromisosEstimados = 0
+    let totalPlanificado          = 0
 
     for (const item of items) {
       if (item.delta === 0) continue
       saldo += item.delta
 
-      if (item.esCompromiso && item.delta < 0) totalCompromisos  += Math.abs(item.delta)
+      if (item.esCompromiso && item.delta < 0) {
+        if (item.esEstimado) totalCompromisosEstimados += Math.abs(item.delta)
+        else                 totalCompromisos          += Math.abs(item.delta)
+      }
       if (!item.esCompromiso && item.delta < 0) totalPlanificado += Math.abs(item.delta)
 
       if (saldo < minSaldo) {
@@ -524,10 +542,11 @@ export function CalendarioPage() {
     }
 
     return {
-      saldoInicial:     saldoLiquidez,
+      saldoInicial:              saldoLiquidez,
       totalCompromisos,
+      totalCompromisosEstimados,
       totalPlanificado,
-      saldoFinal:       saldo,
+      saldoFinal:                saldo,
       saldoMinimo:      minSaldo,
       fechaMinimo,
       eventoMinimo,
@@ -705,8 +724,10 @@ export function CalendarioPage() {
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 {ev.monto !== null ? (
-                                  <span className={`text-sm font-bold tabular-nums ${ev.delta > 0 ? 'text-ingreso-400' : 'text-gasto-400'}`}>
-                                    {ev.delta > 0 ? '+' : '−'}{formatCLP(ev.monto)}
+                                  <span className={`text-sm font-bold tabular-nums ${ev.delta > 0 ? 'text-ingreso-400' : ev.esEstimado ? 'text-slate-400' : 'text-gasto-400'}`}>
+                                    {ev.delta > 0 ? '+' : '−'}
+                                    {ev.esEstimado && <span className="font-normal">~</span>}
+                                    {formatCLP(ev.monto)}
                                   </span>
                                 ) : (
                                   <span className="text-xs text-slate-600 italic">monto ?</span>

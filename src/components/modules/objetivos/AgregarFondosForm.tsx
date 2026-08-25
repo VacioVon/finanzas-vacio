@@ -16,10 +16,14 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 interface AgregarFondosFormProps {
-  isOpen:    boolean
-  onClose:   () => void
-  objetivo:  ObjetivoAhorro
+  isOpen:   boolean
+  onClose:  () => void
+  objetivo: ObjetivoAhorro
 }
+
+const inputBase   = 'w-full rounded-2xl border bg-night-3 text-white outline-none transition-colors placeholder:text-slate-500'
+const inputRing   = 'focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500'
+const inputBorder = 'border-night-border hover:border-brand-500/40'
 
 export function AgregarFondosForm({ isOpen, onClose, objetivo }: AgregarFondosFormProps) {
   const asignarMutation = useAsignarFondosObjetivo()
@@ -60,19 +64,19 @@ export function AgregarFondosForm({ isOpen, onClose, objetivo }: AgregarFondosFo
       {/* Header del objetivo */}
       <div
         className="flex items-center gap-3 mb-5 p-3 rounded-2xl"
-        style={{ backgroundColor: `${objetivo.color}15` }}
+        style={{ backgroundColor: `${objetivo.color}20` }}
       >
         <span className="text-2xl">{objetivo.emoji ?? '🎯'}</span>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-slate-900">{objetivo.nombre}</p>
+          <p className="text-sm font-semibold text-white">{objetivo.nombre}</p>
           <div className="flex items-center gap-2 mt-0.5">
-            <div className="flex-1 h-1.5 bg-white/60 rounded-full overflow-hidden">
+            <div className="flex-1 h-1.5 bg-black/20 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all"
                 style={{ width: `${porcentaje}%`, backgroundColor: objetivo.color }}
               />
             </div>
-            <span className="text-xs font-medium text-slate-600">
+            <span className="text-xs font-medium text-white/70 tabular-nums">
               {formatCLP(objetivo.monto_actual)} / {formatCLP(objetivo.monto_objetivo)}
             </span>
           </div>
@@ -80,9 +84,9 @@ export function AgregarFondosForm({ isOpen, onClose, objetivo }: AgregarFondosFo
       </div>
 
       {/* Nota informativa */}
-      <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl mb-5">
-        <Info className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-blue-700 leading-relaxed">
+      <div className="flex items-start gap-2 p-3 bg-brand-500/10 border border-brand-500/20 rounded-xl mb-5">
+        <Info className="h-4 w-4 text-brand-400 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-brand-300 leading-relaxed">
           Registrar progreso <strong>no mueve ni descuenta dinero</strong> de ninguna cuenta.
           Solo actualiza el avance hacia tu meta. El dinero sigue donde está físicamente.
         </p>
@@ -90,15 +94,15 @@ export function AgregarFondosForm({ isOpen, onClose, objetivo }: AgregarFondosFo
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Selector agregar / restar */}
-        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+        <div className="grid grid-cols-2 gap-2 p-1 bg-night-3 rounded-2xl">
           <button
             type="button"
             onClick={() => setModo('agregar')}
             className={[
               'py-2 rounded-xl text-sm font-medium transition-all',
               modo === 'agregar'
-                ? 'bg-white text-slate-900 shadow-card'
-                : 'text-slate-500'
+                ? 'bg-night-1 text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-300'
             ].join(' ')}
           >
             ➕ Agregar
@@ -109,8 +113,8 @@ export function AgregarFondosForm({ isOpen, onClose, objetivo }: AgregarFondosFo
             className={[
               'py-2 rounded-xl text-sm font-medium transition-all',
               modo === 'restar'
-                ? 'bg-white text-slate-900 shadow-card'
-                : 'text-slate-500'
+                ? 'bg-night-1 text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-300'
             ].join(' ')}
           >
             ➖ Restar
@@ -130,13 +134,13 @@ export function AgregarFondosForm({ isOpen, onClose, objetivo }: AgregarFondosFo
               inputMode="numeric"
               placeholder="0"
               className={[
-                'w-full h-14 pl-8 pr-4 text-center text-2xl font-bold rounded-2xl border bg-white',
-                'outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-                errors.monto ? 'border-danger-400' : 'border-slate-200'
+                inputBase, inputRing,
+                'h-14 pl-8 pr-4 text-center text-2xl font-bold tabular-nums',
+                errors.monto ? 'border-gasto-500 focus:ring-gasto-500/50' : inputBorder
               ].join(' ')}
             />
           </div>
-          {errors.monto && <p className="text-xs text-danger-600 mt-1">{errors.monto.message}</p>}
+          {errors.monto && <p className="text-xs text-gasto-400 mt-1">{errors.monto.message}</p>}
         </div>
 
         {/* Nota opcional */}
@@ -148,7 +152,7 @@ export function AgregarFondosForm({ isOpen, onClose, objetivo }: AgregarFondosFo
             {...register('nota')}
             type="text"
             placeholder="Ej: Depósito de junio, transferencia desde sueldo…"
-            className="w-full mt-1 h-10 px-3 text-sm rounded-xl border border-slate-200 bg-white outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-slate-300"
+            className={[inputBase, inputRing, 'mt-1 h-10 px-3 text-sm rounded-xl', inputBorder].join(' ')}
           />
         </div>
 

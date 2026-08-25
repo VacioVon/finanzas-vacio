@@ -51,6 +51,7 @@ export function SuscripcionesWidget() {
               </div>
               <div className="text-right">
                 <p className={`text-xs font-semibold ${urgente ? 'text-warning-500' : 'text-slate-300'}`}>
+                  {s.monto_tipo === 'estimado' && <span className="font-normal text-slate-400">~</span>}
                   {formatCLP(s.monto)}
                 </p>
                 {dias >= 0 && dias <= 7 && (

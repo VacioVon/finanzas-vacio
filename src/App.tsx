@@ -93,6 +93,7 @@ export function App() {
       <Route path="/cuotas"  element={<PrivateRoute><CuotasPage /></PrivateRoute>} />
 
       {/* Rutas privadas — Sprint 3 cierre */}
+      <Route path="/compromisos"   element={<PrivateRoute><SuscripcionesPage /></PrivateRoute>} />
       <Route path="/suscripciones" element={<PrivateRoute><SuscripcionesPage /></PrivateRoute>} />
       <Route path="/calendario"    element={<PrivateRoute><CalendarioPage /></PrivateRoute>} />
       <Route path="/ajustes"       element={<PrivateRoute><AjustesPage /></PrivateRoute>} />
