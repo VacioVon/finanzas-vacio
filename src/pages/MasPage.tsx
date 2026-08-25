@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import {
   Wallet, Tag, Target, PiggyBank, CreditCard, ShoppingBag,
-  RefreshCw, CalendarDays, Settings, ChevronRight
+  RefreshCw, CalendarDays, Settings, ChevronRight, HandCoins
 } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -78,8 +78,14 @@ export function MasPage() {
           </button>
         </Card>
 
-        {/* Módulos Sprint 3 — nuevos */}
+        {/* Módulos Sprint 3–4 */}
         <Card padding="none" className="divide-y divide-night-border/40">
+          <MenuItem
+            icon={<HandCoins className="h-4 w-4" />}
+            label="Por cobrar"
+            description="Gastos que hiciste para otros"
+            onClick={() => navigate('/cobros')}
+          />
           <MenuItem
             icon={<RefreshCw className="h-4 w-4" />}
             label="Suscripciones"

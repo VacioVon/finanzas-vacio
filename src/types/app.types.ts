@@ -379,6 +379,33 @@ export interface AporteObjetivo {
 }
 
 // Resumen financiero calculado
+export interface CuentaPorCobrar {
+  id:                   string
+  usuario_id:           string
+  movimiento_origen_id: string | null
+  persona:              string
+  descripcion:          string | null
+  monto_original:       number
+  monto_pagado:         number
+  fecha:                string
+  fecha_vencimiento:    string | null
+  estado:               'pendiente' | 'pagado' | 'cancelado'
+  nota:                 string | null
+  created_at:           string
+  updated_at:           string
+  pagos_cobrar?:        PagoCobrar[]
+}
+
+export interface PagoCobrar {
+  id:                   string
+  cuenta_por_cobrar_id: string
+  movimiento_id:        string | null
+  monto:                number
+  fecha:                string
+  nota:                 string | null
+  created_at:           string
+}
+
 export interface ResumenFinanciero {
   totalCuentas: number
   totalInversiones: number

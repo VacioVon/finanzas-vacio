@@ -5,6 +5,7 @@ import { formatCLP } from '@/utils/currency'
 import { useSuscripciones } from '@/hooks/useSuscripciones'
 import { useCuotas } from '@/hooks/useCuotas'
 import { useDeudas } from '@/hooks/useDeudas'
+import { useCuentasPorCobrar } from '@/hooks/useCobros'
 import { useCuentas } from '@/hooks/useCuentas'
 import { useObjetivos } from '@/hooks/useObjetivos'
 import { usePlanificaciones } from '@/hooks/usePlanificaciones'
@@ -25,7 +26,7 @@ const RANGOS = [15, 30, 60] as const
 type Rango = typeof RANGOS[number]
 
 // ── Tipos internos ───────────────────────────────────────────────
-type EventoTipo = 'suscripcion' | 'cuota' | 'deuda' | 'sueldo'
+type EventoTipo = 'suscripcion' | 'cuota' | 'deuda' | 'sueldo' | 'cobro_esperado'
 
 interface EventoCalendario {
   fecha:      string
@@ -42,7 +43,8 @@ const TIPO_COLOR: Record<EventoTipo, { dot: string; badge: string; icon: string;
   sueldo:      { dot: 'bg-ingreso-500',  badge: 'bg-ingreso-500/15 text-ingreso-400 border-ingreso-500/30',  icon: 'text-ingreso-400',  border: 'border-ingreso-500/25' },
   suscripcion: { dot: 'bg-mover-500',    badge: 'bg-mover-500/15 text-mover-400 border-mover-500/30',        icon: 'text-mover-400',    border: 'border-mover-500/25'   },
   cuota:       { dot: 'bg-brand-500',    badge: 'bg-brand-500/15 text-brand-400 border-brand-500/30',        icon: 'text-brand-400',    border: 'border-brand-500/25'   },
-  deuda:       { dot: 'bg-gasto-500',    badge: 'bg-gasto-500/15 text-gasto-400 border-gasto-500/30',        icon: 'text-gasto-400',    border: 'border-gasto-500/25'   },
+  deuda:          { dot: 'bg-gasto-500',    badge: 'bg-gasto-500/15 text-gasto-400 border-gasto-500/30',          icon: 'text-gasto-400',    border: 'border-gasto-500/25'   },
+  cobro_esperado: { dot: 'border border-ingreso-500', badge: 'bg-ingreso-500/10 text-ingreso-400 border-ingreso-500/30', icon: 'text-ingreso-400',  border: 'border-ingreso-500/30' },
 }
 
 // Color por tipo de planificación (dots outline)
@@ -54,7 +56,8 @@ const PLAN_DOT: Record<TipoPlanificacion, string> = {
 }
 
 const TIPO_LABEL: Record<EventoTipo, string> = {
-  sueldo: 'Sueldo', suscripcion: 'Suscripción', cuota: 'Cuota', deuda: 'Deuda'
+  sueldo: 'Sueldo', suscripcion: 'Suscripción', cuota: 'Cuota', deuda: 'Deuda',
+  cobro_esperado: 'Cobro esperado'
 }
 
 // ── Utilidades ───────────────────────────────────────────────────
@@ -339,6 +342,7 @@ export function CalendarioPage() {
   const { data: cuentas       = [] }       = useCuentas()
   const { data: objetivos     = [] }       = useObjetivos()
   const { planificaciones }                = usePlanificaciones()
+  const { data: cobros         = [] }       = useCuentasPorCobrar()
 
   const [rango,           setRango]        = useState<Rango>(30)
   const [diaSeleccionado, setDiaSelec]     = useState<string | null>(null)
@@ -431,8 +435,26 @@ export function CalendarioPage() {
       }
     }
 
+    // Cobros esperados (fecha_vencimiento de cuentas_por_cobrar pendientes)
+    for (const c of cobros) {
+      if (c.estado !== 'pendiente' || !c.fecha_vencimiento) continue
+      const fecha = parseISO(c.fecha_vencimiento)
+      if (fecha > hoy && fecha <= limite) {
+        const monto = c.monto_original - c.monto_pagado
+        lista.push({
+          fecha:     c.fecha_vencimiento,
+          tipo:      'cobro_esperado',
+          emoji:     '💸',
+          titulo:    c.persona,
+          subtitulo: c.descripcion ?? undefined,
+          monto,
+          delta:     monto   // ingreso esperado
+        })
+      }
+    }
+
     return lista
-  }, [profile, suscripciones, cuotas, deudas, hoy, limite])
+  }, [profile, suscripciones, cuotas, deudas, cobros, hoy, limite])
 
   // ── Planificaciones en el rango ───────────────────────────────
   // Solo pendientes dentro del rango de proyección.
@@ -680,8 +702,8 @@ export function CalendarioPage() {
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {ev.monto !== null ? (
-                              <span className="text-sm font-bold text-gasto-400">
-                                −{formatCLP(ev.monto)}
+                              <span className={`text-sm font-bold ${ev.delta > 0 ? 'text-ingreso-400' : 'text-gasto-400'}`}>
+                                {ev.delta > 0 ? '+' : '−'}{formatCLP(ev.monto)}
                               </span>
                             ) : (
                               <span className="text-xs text-slate-600 italic">monto ?</span>

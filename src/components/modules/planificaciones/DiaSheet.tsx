@@ -12,7 +12,7 @@ import type { Planificacion } from '@/types/app.types'
 // ── Tipos para eventos comprometidos (suscripciones/cuotas/deudas/sueldo) ──
 export interface EventoDia {
   id:        string
-  tipo:      'suscripcion' | 'cuota' | 'deuda' | 'sueldo'
+  tipo:      'suscripcion' | 'cuota' | 'deuda' | 'sueldo' | 'cobro_esperado'
   titulo:    string
   subtitulo?: string
   emoji?:    string
@@ -23,7 +23,8 @@ const TIPO_COLOR = {
   sueldo:      { dot: 'bg-ingreso-500',  text: 'text-ingreso-400',  badge: 'bg-ingreso-500/15 border-ingreso-500/30'  },
   suscripcion: { dot: 'bg-mover-500',    text: 'text-mover-400',    badge: 'bg-mover-500/15 border-mover-500/30'      },
   cuota:       { dot: 'bg-brand-500',    text: 'text-brand-400',    badge: 'bg-brand-500/15 border-brand-500/30'      },
-  deuda:       { dot: 'bg-gasto-500',    text: 'text-gasto-400',    badge: 'bg-gasto-500/15 border-gasto-500/30'      },
+  deuda:          { dot: 'bg-gasto-500',          text: 'text-gasto-400',    badge: 'bg-gasto-500/15 border-gasto-500/30'      },
+  cobro_esperado: { dot: 'border border-ingreso-500', text: 'text-ingreso-400', badge: 'bg-ingreso-500/10 border-ingreso-500/30'  },
 }
 
 const PLAN_COLOR: Record<Planificacion['tipo'], { dot: string; text: string; label: string }> = {

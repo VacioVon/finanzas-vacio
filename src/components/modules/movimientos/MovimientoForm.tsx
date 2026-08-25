@@ -12,6 +12,7 @@ import { useCuentas } from '@/hooks/useCuentas'
 import { useCategoriasByTipo } from '@/hooks/useCategorias'
 import { useCreateMovimiento, useUpdateMovimiento } from '@/hooks/useMovimientos'
 import { useCreateCuota } from '@/hooks/useCuotas'
+import { useCrearGastoTercero } from '@/hooks/useCobros'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
 import type { Movimiento, TipoMovimiento } from '@/types/app.types'
@@ -145,15 +146,17 @@ export function MovimientoForm({
   const [cuotasTotal,     setCuotasTotal]     = useState(1)
   const [primeraYaPagada, setPrimeraYaPagada] = useState(false)
   const [comisionCuota,   setComisionCuota]   = useState(0)
-  const [paraTercero,     setParaTercero]     = useState(false)
-  const [terceroNombre,   setTerceroNombre]   = useState('')
+  const [paraTercero,           setParaTercero]           = useState(false)
+  const [terceroNombre,         setTerceroNombre]         = useState('')
+  const [fechaVencimientoCobro, setFechaVencimientoCobro] = useState('')
   const [comprobanteUrl,  setComprobante]     = useState<string | null>(null)
 
   const { data: cuentas }    = useCuentas()
   const { data: categorias } = useCategoriasByTipo(tipoToCategoriaTipo(tipo))
-  const createMutation       = useCreateMovimiento()
-  const updateMutation       = useUpdateMovimiento()
-  const createCuotaMutation  = useCreateCuota()
+  const createMutation            = useCreateMovimiento()
+  const updateMutation            = useUpdateMovimiento()
+  const createCuotaMutation       = useCreateCuota()
+  const crearGastoTerceroMutation = useCrearGastoTercero()
 
   const {
     register, handleSubmit, watch, reset, setValue,
@@ -270,27 +273,44 @@ export function MovimientoForm({
         : undefined)
     }
 
+    const cuotaPayload = {
+      cuenta_id:              data.cuenta_id,
+      nombre:                 data.comercio?.trim() || data.nota?.trim() || selectedCategoria?.nombre || 'Compra',
+      emoji:                  selectedCategoria?.emoji ?? undefined,
+      monto_total:            data.monto,
+      cuotas_total:           cuotasTotal,
+      cuotas_pagadas_inicial: primeraYaPagada ? 1 : 0,
+      monto_cuota:            montoCuota,
+      comision:               comisionCuota,
+      para_tercero:           skipDetalles ? false : paraTercero,
+      tercero_nombre:         !skipDetalles && paraTercero && terceroNombre.trim() ? terceroNombre.trim() : undefined,
+      interes:                0,
+      fecha_inicio:           data.fecha
+    }
+
     try {
       if (editingMovimiento) {
         await updateMutation.mutateAsync({ id: editingMovimiento.id, original: editingMovimiento, form: formData })
+      } else if (tipoReal === 'gasto' && !skipDetalles && paraTercero) {
+        // Ruta atómica: crea movimiento + saldo + cuenta_por_cobrar en una transacción
+        await crearGastoTerceroMutation.mutateAsync({
+          fecha:            data.fecha,
+          categoria_id:     formData.categoria_id || null,
+          subcategoria_id:  formData.subcategoria_id || null,
+          cuenta_id:        data.cuenta_id,
+          monto:            data.monto,
+          comercio:         formData.comercio || null,
+          nota:             formData.nota || null,
+          comprobante_url:  comprobanteUrl,
+          comision:         mostrarCuotas ? comisionCuota : 0,
+          persona:          terceroNombre.trim() || 'Sin nombre',
+          descripcion:      formData.comercio?.trim() || formData.nota?.trim() || null,
+          fecha_vencimiento: fechaVencimientoCobro || null
+        })
+        if (registrarCuota) await createCuotaMutation.mutateAsync(cuotaPayload)
       } else {
         await createMutation.mutateAsync(formData)
-        if (registrarCuota) {
-          await createCuotaMutation.mutateAsync({
-            cuenta_id:              data.cuenta_id,
-            nombre:                 data.comercio?.trim() || data.nota?.trim() || selectedCategoria?.nombre || 'Compra',
-            emoji:                  selectedCategoria?.emoji ?? undefined,
-            monto_total:            data.monto,
-            cuotas_total:           cuotasTotal,
-            cuotas_pagadas_inicial: primeraYaPagada ? 1 : 0,
-            monto_cuota:            montoCuota,
-            comision:               comisionCuota,
-            para_tercero:           skipDetalles ? false : paraTercero,
-            tercero_nombre:         !skipDetalles && paraTercero && terceroNombre.trim() ? terceroNombre.trim() : undefined,
-            interes:                0,
-            fecha_inicio:           data.fecha
-          })
-        }
+        if (registrarCuota) await createCuotaMutation.mutateAsync(cuotaPayload)
       }
       handleClose()
       onSuccess?.()
@@ -309,12 +329,13 @@ export function MovimientoForm({
     setComisionCuota(0)
     setParaTercero(false)
     setTerceroNombre('')
+    setFechaVencimientoCobro('')
     setPagoDeuda(false)
     setPaso('principal')
     onClose()
   }
 
-  const isLoading = createMutation.isPending || updateMutation.isPending || createCuotaMutation.isPending
+  const isLoading = createMutation.isPending || updateMutation.isPending || createCuotaMutation.isPending || crearGastoTerceroMutation.isPending
 
   const title = editingMovimiento ? 'Editar movimiento'
     : duplicateFrom ? 'Duplicar movimiento'
@@ -736,16 +757,30 @@ export function MovimientoForm({
                 </div>
               </button>
               {paraTercero && (
-                <div className="px-4 pb-4 border-t border-warning-500/20 pt-3">
-                  <label className={labelDark}>¿Para quién? (opcional)</label>
-                  <input
-                    type="text"
-                    value={terceroNombre}
-                    onChange={e => setTerceroNombre(e.target.value)}
-                    placeholder="Ej: Mamá, Pareja, Juan…"
-                    maxLength={60}
-                    className={`w-full mt-1 h-10 px-3 rounded-xl border border-warning-500/30 text-sm outline-none ${inputDark}`}
-                  />
+                <div className="px-4 pb-4 border-t border-warning-500/20 pt-3 space-y-3">
+                  <div>
+                    <label className={labelDark}>¿Para quién?</label>
+                    <input
+                      type="text"
+                      value={terceroNombre}
+                      onChange={e => setTerceroNombre(e.target.value)}
+                      placeholder="Ej: Mamá, Pareja, Juan…"
+                      maxLength={60}
+                      className={`w-full mt-1 h-10 px-3 rounded-xl border border-warning-500/30 text-sm outline-none ${inputDark}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelDark}>
+                      ¿Cuándo te devuelve?{' '}
+                      <span className="text-slate-600 font-normal normal-case">(opcional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={fechaVencimientoCobro}
+                      onChange={e => setFechaVencimientoCobro(e.target.value)}
+                      className={`w-full mt-1 h-10 px-3 rounded-xl border border-warning-500/30 text-sm outline-none ${inputDark}`}
+                    />
+                  </div>
                 </div>
               )}
             </div>
