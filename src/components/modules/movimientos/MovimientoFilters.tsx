@@ -15,7 +15,7 @@ const FILTROS: { value: FiltroTipo; label: string }[] = [
 
 export function MovimientoFilters({ active, onChange }: MovimientoFiltersProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar px-4">
+    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar px-4 lg:px-0">
       {FILTROS.map(f => (
         <button
           key={f.value}

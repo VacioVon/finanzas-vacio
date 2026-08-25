@@ -42,7 +42,7 @@ export function DeudasPage() {
 
         {/* Resumen global */}
         {activas.length > 0 && (
-          <div className="px-4">
+          <div className="px-4 lg:px-0">
             <Card padding="none">
               <div className="grid grid-cols-3 divide-x divide-night-border/40">
                 <div className="flex flex-col items-center py-4 px-2">
@@ -63,7 +63,7 @@ export function DeudasPage() {
         )}
 
         {/* Filtros */}
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar px-4">
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar px-4 lg:px-0">
           {filtros.map(f => (
             <button
               key={f.value}
@@ -71,8 +71,8 @@ export function DeudasPage() {
               className={[
                 'flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors',
                 filtro === f.value
-                  ? 'bg-brand-500/20 text-brand-300 border border-brand-500/40'
-                  : 'bg-night-2 text-slate-400 border border-night-border hover:border-brand-500/30 hover:text-slate-300'
+                  ? 'bg-gasto-500/20 text-gasto-300 border border-gasto-500/40'
+                  : 'bg-night-2 text-slate-400 border border-night-border hover:border-gasto-500/30 hover:text-slate-300'
               ].join(' ')}
             >
               {f.label}
@@ -81,7 +81,7 @@ export function DeudasPage() {
         </div>
 
         {/* Lista */}
-        <div className="px-4">
+        <div className="px-4 lg:px-0 pb-8">
           {isLoading ? (
             <SkeletonList count={3} />
           ) : lista.length === 0 ? (
@@ -97,7 +97,7 @@ export function DeudasPage() {
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               {lista.map(deuda => (
                 <DeudaCard
                   key={deuda.id}
@@ -114,13 +114,11 @@ export function DeudasPage() {
       {/* FAB */}
       <button
         onClick={() => { setEditing(null); setFormOpen(true) }}
-        className="fixed bottom-24 right-5 size-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all z-30"
+        className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 size-14 bg-gasto-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-gasto-600 active:scale-95 transition-all z-30"
         aria-label="Nueva deuda"
       >
         <Plus className="h-7 w-7" />
       </button>
-
-      <div className="h-4" />
 
       <DeudaForm
         isOpen={formOpen || !!editing}

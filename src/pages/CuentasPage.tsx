@@ -55,7 +55,7 @@ export function CuentasPage() {
       <div className="space-y-4 pt-4">
         {/* Resumen */}
         {(cuentas?.length ?? 0) > 0 && (
-          <div className="px-4 grid grid-cols-2 gap-3">
+          <div className="px-4 lg:px-0 grid grid-cols-2 gap-3">
             <Card padding="sm">
               <p className="text-xs text-slate-400 font-medium">Disponible</p>
               <p className="text-base font-bold text-white tabular-nums mt-0.5">{formatCLP(totalDisponible)}</p>
@@ -68,7 +68,7 @@ export function CuentasPage() {
         )}
 
         {/* Lista */}
-        <div className="px-4">
+        <div className="px-4 lg:px-0 pb-8">
           {isLoading ? (
             <SkeletonList count={3} />
           ) : !cuentas?.length ? (
@@ -79,7 +79,7 @@ export function CuentasPage() {
               action={{ label: 'Agregar cuenta', onClick: () => setShowForm(true) }}
             />
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               {cuentas.map(cuenta => (
                 <CuentaCard
                   key={cuenta.id}

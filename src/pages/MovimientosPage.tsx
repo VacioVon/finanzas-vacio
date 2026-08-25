@@ -45,20 +45,20 @@ export function MovimientosPage() {
       <div className="space-y-3 pt-4">
         {/* Resumen del mes */}
         {(ingresos > 0 || gastos > 0) && (
-          <div className="px-4 grid grid-cols-2 gap-3">
+          <div className="px-4 lg:px-0 grid grid-cols-2 gap-3">
             <div className="bg-ingreso-500/10 border border-ingreso-500/20 rounded-2xl p-3">
-              <p className="text-xs text-ingreso-400 font-medium">Ingresos</p>
-              <p className="text-base font-bold text-ingreso-300 mt-0.5">{formatCLP(ingresos)}</p>
+              <p className="text-xs text-ingreso-400 font-medium">Ingresos este mes</p>
+              <p className="text-base font-bold text-ingreso-300 mt-0.5 tabular-nums">{formatCLP(ingresos)}</p>
             </div>
             <div className="bg-gasto-500/10 border border-gasto-500/20 rounded-2xl p-3">
-              <p className="text-xs text-gasto-400 font-medium">Gastos</p>
-              <p className="text-base font-bold text-gasto-300 mt-0.5">{formatCLP(gastos)}</p>
+              <p className="text-xs text-gasto-400 font-medium">Gastos este mes</p>
+              <p className="text-base font-bold text-gasto-300 mt-0.5 tabular-nums">{formatCLP(gastos)}</p>
             </div>
           </div>
         )}
 
         {/* Buscador */}
-        <div className="px-4">
+        <div className="px-4 lg:px-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
             <input
@@ -82,7 +82,7 @@ export function MovimientosPage() {
         <MovimientoFilters active={filtro} onChange={setFiltro} />
 
         {/* Lista */}
-        <div className="px-4">
+        <div className="px-4 lg:px-0 pb-8">
           {isLoading ? (
             <SkeletonList count={5} />
           ) : !movimientos?.length ? (
@@ -93,7 +93,7 @@ export function MovimientosPage() {
               action={{ label: 'Agregar movimiento', onClick: () => setShowForm(true) }}
             />
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
               {movimientos.map(mov => (
                 <MovimientoCard key={mov.id} movimiento={mov} />
               ))}

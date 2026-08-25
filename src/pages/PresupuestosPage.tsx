@@ -35,7 +35,7 @@ export function PresupuestosPage() {
     <AppLayout>
       <Header title="Presupuestos" />
 
-      <div className="space-y-4 pt-4 px-4">
+      <div className="space-y-4 pt-4 px-4 lg:px-0">
         {/* Navegación de mes */}
         <div className="flex items-center justify-between">
           <button
@@ -87,7 +87,7 @@ export function PresupuestosPage() {
             description={`No tienes presupuestos para ${labelMesAnio(mes, anio)}. Crea uno para controlar tus gastos.`}
           />
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 pb-8">
             {presupuestos!.map(p => (
               <PresupuestoCard key={p.id} presupuesto={p} mes={mes} anio={anio} />
             ))}
@@ -98,7 +98,7 @@ export function PresupuestosPage() {
       {/* FAB */}
       <button
         onClick={() => setFormOpen(true)}
-        className="fixed bottom-24 right-5 size-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all z-30"
+        className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 size-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all z-30"
         aria-label="Nuevo presupuesto"
       >
         <Plus className="h-7 w-7" />
