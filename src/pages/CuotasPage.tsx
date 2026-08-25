@@ -42,7 +42,7 @@ export function CuotasPage() {
 
         {/* Resumen */}
         {activas.length > 0 && (
-          <div className="px-4">
+          <div className="px-4 lg:px-0">
             <Card padding="none">
               <div className="grid grid-cols-3 divide-x divide-night-border/40">
                 <div className="flex flex-col items-center py-4 px-2">
@@ -63,7 +63,7 @@ export function CuotasPage() {
         )}
 
         {/* Filtros */}
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar px-4">
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar px-4 lg:px-0">
           {filtros.map(f => (
             <button
               key={f.value}
@@ -81,7 +81,7 @@ export function CuotasPage() {
         </div>
 
         {/* Lista */}
-        <div className="px-4">
+        <div className="px-4 lg:px-0 pb-8">
           {isLoading ? (
             <SkeletonList count={3} />
           ) : lista.length === 0 ? (
@@ -97,7 +97,7 @@ export function CuotasPage() {
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               {lista.map(cuota => (
                 <CuotaCard
                   key={cuota.id}
@@ -113,13 +113,11 @@ export function CuotasPage() {
       {/* FAB */}
       <button
         onClick={() => { setEditing(null); setFormOpen(true) }}
-        className="fixed bottom-24 right-5 size-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all z-30"
+        className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 size-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all z-30"
         aria-label="Nueva compra en cuotas"
       >
         <Plus className="h-7 w-7" />
       </button>
-
-      <div className="h-4" />
 
       <CuotaForm
         isOpen={formOpen || !!editing}

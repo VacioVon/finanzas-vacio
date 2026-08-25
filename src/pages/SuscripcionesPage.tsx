@@ -37,7 +37,7 @@ export function SuscripcionesPage() {
         }
       />
 
-      <div className="px-4 pt-4 space-y-4">
+      <div className="px-4 lg:px-0 pt-4 space-y-4 pb-8">
 
         {/* Resumen */}
         {activas.length > 0 && (
@@ -56,7 +56,7 @@ export function SuscripcionesPage() {
         )}
 
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
           </div>
         ) : suscripciones?.length === 0 ? (
@@ -69,7 +69,7 @@ export function SuscripcionesPage() {
         ) : (
           <>
             {activas.length > 0 && (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {activas.map(s => <SuscripcionCard key={s.id} suscripcion={s} />)}
               </div>
             )}
@@ -79,7 +79,7 @@ export function SuscripcionesPage() {
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">
                   Pausadas
                 </p>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {pausadas.map(s => <SuscripcionCard key={s.id} suscripcion={s} />)}
                 </div>
               </div>

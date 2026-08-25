@@ -134,13 +134,13 @@ export function CobrosPage() {
     <AppLayout>
       <Header title="Por cobrar" />
 
-      <div className="px-4 pt-4 space-y-4 pb-8">
+      <div className="px-4 lg:px-0 pt-4 space-y-4 pb-8">
 
         {/* Resumen */}
         {totalPendiente > 0 && (
           <Card padding="md">
             <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Total pendiente</p>
-            <p className="text-3xl font-bold text-white tabular-nums mt-1">{formatCLP(totalPendiente)}</p>
+            <p className="text-3xl font-bold text-ingreso-400 tabular-nums mt-1">{formatCLP(totalPendiente)}</p>
             <p className="text-xs text-slate-500 mt-0.5">
               {pendientes.length} cobro{pendientes.length !== 1 ? 's' : ''} activo{pendientes.length !== 1 ? 's' : ''}
             </p>
@@ -169,7 +169,7 @@ export function CobrosPage() {
                     </p>
                   </div>
                   {/* Cobros individuales */}
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                     {items.map(cobro => (
                       <CobroCard
                         key={cobro.id}
