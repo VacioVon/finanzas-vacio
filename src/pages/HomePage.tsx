@@ -10,6 +10,7 @@ import { ObjetivosWidget } from '@/components/modules/home/ObjetivosWidget'
 import { DeudasWidget } from '@/components/modules/home/DeudasWidget'
 import { CuotasWidget } from '@/components/modules/home/CuotasWidget'
 import { SuscripcionesWidget } from '@/components/modules/home/SuscripcionesWidget'
+import { CultivationTree } from '@/components/modules/home/CultivationTree'
 import { useMovimientosDelMes } from '@/hooks/useMovimientos'
 import { useAportesObjetivosMes } from '@/hooks/useObjetivos'
 import { useTotalDeudasActivas } from '@/hooks/useDeudas'
@@ -64,6 +65,10 @@ export function HomePage() {
         <AvailableBalance />
       </div>
 
+      <div className="mb-4">
+        <CultivationTree />
+      </div>
+
       {/* ══ FILA 1 — Patrimonio + Resumen del mes ════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <PatrimonioNeto totalDeudas={totalDeudas} />
@@ -102,22 +107,5 @@ export function HomePage() {
 
       <div className="h-4" />
     </AppLayout>
-  )
-}
-
-function ProximoSprint({ icon, label, sprint }: { icon: string; label: string; sprint: string }) {
-  return (
-    <div className="mx-4">
-      <div className="flex items-center gap-3 p-3 bg-night-2 rounded-2xl border border-night-border/60 opacity-60">
-        <span className="text-xl">{icon}</span>
-        <div className="flex-1">
-          <p className="text-sm font-medium text-slate-600">{label}</p>
-          <p className="text-xs text-slate-400">Disponible en {sprint}</p>
-        </div>
-        <span className="text-xs bg-night-3 text-slate-500 px-2 py-0.5 rounded-full font-medium">
-          Próximamente
-        </span>
-      </div>
-    </div>
   )
 }

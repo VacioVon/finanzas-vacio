@@ -24,7 +24,7 @@ export function SuscripcionesWidget() {
   return (
     <Card padding="md" className="mx-4 lg:mx-0">
       <button
-        onClick={() => navigate('/suscripciones')}
+        onClick={() => navigate('/compromisos')}
         className="w-full flex items-center justify-between mb-3"
       >
         <p className="text-sm font-semibold text-white">Próximos cobros</p>

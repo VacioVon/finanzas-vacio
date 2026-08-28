@@ -28,7 +28,7 @@ function DarkTooltip({ active, payload, label }: {
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-ocean-1 border border-ocean-border/70 rounded-xl px-3 py-2 shadow-xl text-xs">
+    <div className="bg-night-1 border border-night-border/70 rounded-xl px-3 py-2 shadow-xl text-xs">
       {label && <p className="text-slate-400 mb-1 font-medium">{label}</p>}
       {payload.map((p, i) => (
         <p key={i} className="tabular-nums" style={{ color: p.color }}>
@@ -58,7 +58,7 @@ function StatCard({ label, monto, color }: {
     Minus
 
   return (
-    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-ocean-1 border border-ocean-border/50">
+    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-night-1 border border-night-border/50">
       <div className="flex items-center gap-1.5">
         <Icon className={`h-3.5 w-3.5 ${colorMap[color]}`} />
         <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">{label}</p>
@@ -140,7 +140,7 @@ export function AnalisisPage() {
       <div className="flex items-center justify-between px-4 lg:px-0 pt-4 pb-2">
         <button
           onClick={() => navegar(-1)}
-          className="size-9 flex items-center justify-center rounded-full hover:bg-ocean-1 transition-colors"
+          className="size-9 flex items-center justify-center rounded-full hover:bg-night-1 transition-colors"
           aria-label="Mes anterior"
         >
           <ChevronLeft className="h-5 w-5 text-slate-400" />
@@ -149,7 +149,7 @@ export function AnalisisPage() {
         <button
           onClick={() => navegar(1)}
           disabled={esMesActual}
-          className="size-9 flex items-center justify-center rounded-full hover:bg-ocean-1 transition-colors disabled:opacity-30"
+          className="size-9 flex items-center justify-center rounded-full hover:bg-night-1 transition-colors disabled:opacity-30"
           aria-label="Mes siguiente"
         >
           <ChevronRight className="h-5 w-5 text-slate-400" />
@@ -203,7 +203,7 @@ export function AnalisisPage() {
 
                 {/* Top categorías compacto dentro del mismo card en desktop */}
                 {catData.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-ocean-border/50 space-y-3">
+                  <div className="mt-4 pt-4 border-t border-night-border/50 space-y-3">
                     <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Top categorías</p>
                     {catData.slice(0, 5).map((cat, i) => {
                       const pct = totalGastos > 0 ? cat.monto / totalGastos * 100 : 0

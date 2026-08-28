@@ -103,7 +103,7 @@ export function MasPage() {
             />
           </Card>
 
-          {/* Compromisos */}
+          {/* Obligaciones */}
           <Card padding="none" className="divide-y divide-night-border/40">
             <MenuItem
               icon={<ShoppingBag className="h-4 w-4" />}

@@ -39,16 +39,19 @@ interface CuotaFormProps {
   editing?: CuotaCredito | null
 }
 
+const inputBase = 'w-full rounded-xl border bg-night-3 text-white text-sm outline-none transition-colors placeholder:text-slate-500'
+const inputRing = 'focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500'
+const inputBorder = 'border-night-border hover:border-brand-500/40'
+const inputError  = 'border-gasto-500 focus:ring-gasto-500/50 focus:border-gasto-500'
+
 export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
   const createMutation = useCreateCuota()
   const updateMutation = useUpdateCuota()
   const { data: cuentas } = useCuentas()
 
-  // Estado para tercero fuera de RHF (consistente con MovimientoForm)
   const [paraTercero,   setParaTercero]   = useState(false)
   const [terceroNombre, setTerceroNombre] = useState('')
 
-  // Solo tarjetas de crédito
   const tarjetaOptions = (cuentas ?? [])
     .filter(c => c.activa && c.tipo === 'credito')
     .map(c => ({ value: c.id, label: c.nombre }))
@@ -58,25 +61,22 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
     defaultValues: { fecha_inicio: todayISO(), interes: 0, comision: 0, emoji: '🛍️' }
   })
 
-  const montoTotal        = watch('monto_total')   ?? 0
-  const cuotasTotal       = watch('cuotas_total')  ?? 0
-  const cuotasPagadas     = Number(watch('cuotas_pagadas_inicial') ?? 0)
-  const comision          = watch('comision') ?? 0
-  const selectedEmoji     = watch('emoji')
+  const montoTotal       = watch('monto_total')  ?? 0
+  const cuotasTotal      = watch('cuotas_total') ?? 0
+  const cuotasPagadas    = Number(watch('cuotas_pagadas_inicial') ?? 0)
+  const comision         = watch('comision') ?? 0
+  const selectedEmoji    = watch('emoji')
 
-  // Modo historial: cuando ya hay cuotas pagadas
-  const esModoHistorial   = cuotasPagadas > 0
-  const cuotasPendientes  = Math.max(0, cuotasTotal - cuotasPagadas)
-  const costoReal         = montoTotal + comision
+  const esModoHistorial  = cuotasPagadas > 0
+  const cuotasPendientes = Math.max(0, cuotasTotal - cuotasPagadas)
+  const costoReal        = montoTotal + comision
 
-  // Auto-calcular cuota mensual
   useEffect(() => {
     if (montoTotal > 0 && cuotasTotal > 0 && !editing) {
       setValue('monto_cuota', Math.ceil(montoTotal / cuotasTotal))
     }
   }, [montoTotal, cuotasTotal, editing, setValue])
 
-  // Inicializar form
   useEffect(() => {
     if (!isOpen) return
     if (editing) {
@@ -130,7 +130,7 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
     }
   }
 
-  const isLoading  = createMutation.isPending || updateMutation.isPending
+  const isLoading   = createMutation.isPending || updateMutation.isPending
   const submitLabel = editing
     ? 'Guardar cambios'
     : esModoHistorial
@@ -146,12 +146,11 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
         {tarjetaOptions.length === 0 && (
-          <div className="p-3 bg-warning-50 rounded-xl text-xs text-warning-700">
+          <div className="p-3 bg-xp-500/10 rounded-xl text-xs text-xp-400">
             No tienes tarjetas de crédito configuradas. Agrega una cuenta tipo "Crédito" primero.
           </div>
         )}
 
-        {/* ── 1. Tarjeta ─────────────────────────────────────────── */}
         <Select
           label="Tarjeta de crédito"
           options={tarjetaOptions}
@@ -160,7 +159,7 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
           {...register('cuenta_id')}
         />
 
-        {/* ── 2. Ícono ───────────────────────────────────────────── */}
+        {/* Ícono */}
         <div>
           <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">Ícono</label>
           <div className="flex flex-wrap gap-1.5 mt-2">
@@ -170,10 +169,10 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
                 type="button"
                 onClick={() => setValue('emoji', e)}
                 className={[
-                  'w-9 h-9 rounded-xl text-lg transition-all',
+                  'size-9 rounded-xl text-lg transition-all',
                   selectedEmoji === e
-                    ? 'bg-primary-100 ring-2 ring-primary-400 scale-110'
-                    : 'bg-slate-100 hover:bg-slate-200'
+                    ? 'bg-brand-500/20 ring-2 ring-brand-500/60 scale-110'
+                    : 'bg-night-3 hover:bg-night-2'
                 ].join(' ')}
               >
                 {e}
@@ -182,7 +181,6 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
           </div>
         </div>
 
-        {/* ── 3. Nombre ──────────────────────────────────────────── */}
         <Input
           label="Nombre de la compra"
           placeholder="Ej: Proteína Whey, Skechers, Smart TV…"
@@ -190,7 +188,7 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
           {...register('nombre')}
         />
 
-        {/* ── 4. Monto financiado ────────────────────────────────── */}
+        {/* Monto financiado */}
         <div>
           <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
             Monto financiado
@@ -202,17 +200,13 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
               type="number"
               inputMode="numeric"
               placeholder="0"
-              className={[
-                'w-full h-11 pl-7 pr-4 rounded-xl border bg-white text-sm outline-none',
-                'focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-                errors.monto_total ? 'border-danger-400' : 'border-slate-200'
-              ].join(' ')}
+              className={[inputBase, inputRing, 'h-11 pl-7 pr-4', errors.monto_total ? inputError : inputBorder].join(' ')}
             />
           </div>
-          {errors.monto_total && <p className="text-xs text-danger-600 mt-1">{errors.monto_total.message}</p>}
+          {errors.monto_total && <p className="text-xs text-gasto-400 mt-1">{errors.monto_total.message}</p>}
         </div>
 
-        {/* ── 5. Cuotas: total + ya pagadas + valor cuota ────────── */}
+        {/* Cuotas: total + ya pagadas + valor cuota */}
         <div className="grid grid-cols-3 gap-2">
           <div>
             <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">Total</label>
@@ -222,13 +216,9 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
               inputMode="numeric"
               min={1}
               placeholder="3"
-              className={[
-                'w-full mt-1 h-11 px-3 rounded-xl border bg-white text-sm outline-none text-center',
-                'focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-                errors.cuotas_total ? 'border-danger-400' : 'border-slate-200'
-              ].join(' ')}
+              className={[inputBase, inputRing, 'mt-1 h-11 px-3 text-center', errors.cuotas_total ? inputError : inputBorder].join(' ')}
             />
-            {errors.cuotas_total && <p className="text-[10px] text-danger-600 mt-1">{errors.cuotas_total.message}</p>}
+            {errors.cuotas_total && <p className="text-[10px] text-gasto-400 mt-1">{errors.cuotas_total.message}</p>}
           </div>
           <div>
             <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">Ya pagadas</label>
@@ -239,16 +229,16 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
               min={0}
               placeholder="0"
               className={[
-                'w-full mt-1 h-11 px-3 rounded-xl border text-sm outline-none text-center transition-colors',
-                'focus:ring-2',
-                esModoHistorial
-                  ? 'border-warning-300 bg-warning-50 text-warning-800 font-semibold focus:ring-warning-400 focus:border-warning-400'
-                  : 'border-slate-200 bg-white focus:ring-primary-500 focus:border-primary-500',
-                errors.cuotas_pagadas_inicial ? 'border-danger-400' : ''
+                inputBase, inputRing, 'mt-1 h-11 px-3 text-center',
+                errors.cuotas_pagadas_inicial
+                  ? inputError
+                  : esModoHistorial
+                  ? 'border-xp-500/50 bg-xp-500/10 text-xp-300 font-semibold focus:ring-xp-500/50 focus:border-xp-500'
+                  : inputBorder
               ].join(' ')}
             />
             {errors.cuotas_pagadas_inicial && (
-              <p className="text-[10px] text-danger-600 mt-1">{errors.cuotas_pagadas_inicial.message}</p>
+              <p className="text-[10px] text-gasto-400 mt-1">{errors.cuotas_pagadas_inicial.message}</p>
             )}
           </div>
           <div>
@@ -260,26 +250,22 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
                 type="number"
                 inputMode="numeric"
                 placeholder="Auto"
-                className={[
-                  'w-full h-11 pl-5 pr-2 rounded-xl border bg-white text-sm outline-none text-center',
-                  'focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-                  errors.monto_cuota ? 'border-danger-400' : 'border-slate-200'
-                ].join(' ')}
+                className={[inputBase, inputRing, 'h-11 pl-5 pr-2 text-center', errors.monto_cuota ? inputError : inputBorder].join(' ')}
               />
             </div>
-            {errors.monto_cuota && <p className="text-[10px] text-danger-600 mt-1">{errors.monto_cuota.message}</p>}
+            {errors.monto_cuota && <p className="text-[10px] text-gasto-400 mt-1">{errors.monto_cuota.message}</p>}
           </div>
         </div>
 
-        {/* ── Banner modo historial ──────────────────────────────── */}
+        {/* Banner modo historial / info */}
         {esModoHistorial ? (
-          <div className="flex items-start gap-2.5 p-3.5 bg-warning-50 border border-warning-200 rounded-xl">
+          <div className="flex items-start gap-2.5 p-3.5 bg-xp-500/10 border border-xp-500/25 rounded-xl">
             <span className="text-lg flex-shrink-0">📋</span>
             <div>
-              <p className="text-xs font-bold text-warning-800 mb-0.5">
+              <p className="text-xs font-bold text-xp-300 mb-0.5">
                 Reconstrucción de historial
               </p>
-              <p className="text-xs text-warning-700 leading-relaxed">
+              <p className="text-xs text-xp-400 leading-relaxed">
                 Esta compra ya tiene{' '}
                 <strong>{cuotasPagadas} de {cuotasTotal || '?'}</strong> cuotas pagadas.{' '}
                 {cuotasPendientes > 0
@@ -291,20 +277,20 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
           </div>
         ) : (
           montoTotal > 0 && (
-            <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
-              <Info className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-blue-700 leading-relaxed">
+            <div className="flex items-start gap-2 p-3 bg-brand-500/10 border border-brand-500/20 rounded-xl">
+              <Info className="h-4 w-4 text-brand-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-brand-300 leading-relaxed">
                 Las cuotas son <strong>informacionales</strong>. No afectan el saldo de la tarjeta — ese impacto ya se registró en el movimiento de gasto.
               </p>
             </div>
           )
         )}
 
-        {/* ── 6. Comisión / impuesto (opcional) ──────────────────── */}
+        {/* Comisión / impuesto */}
         <div>
           <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
             Comisión / Impuesto{' '}
-            <span className="font-normal normal-case text-slate-300">— opcional</span>
+            <span className="font-normal normal-case text-slate-500">— opcional</span>
           </label>
           <div className="relative mt-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
@@ -313,23 +299,23 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
               type="number"
               inputMode="numeric"
               placeholder="0"
-              className="w-full h-11 pl-7 pr-4 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className={[inputBase, inputRing, 'h-11 pl-7 pr-4', inputBorder].join(' ')}
             />
           </div>
-          <p className="text-[10px] text-slate-400 mt-1">
+          <p className="text-[10px] text-slate-500 mt-1">
             Ej: "IMPUESTO COMPRA CUOTAS". No altera el monto ni el cálculo de cuotas.
           </p>
           {comision > 0 && montoTotal > 0 && (
-            <div className="mt-2 flex items-center justify-between px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-xs text-slate-500">
+            <div className="mt-2 flex items-center justify-between px-3 py-2 bg-night-3 rounded-xl border border-night-border">
+              <span className="text-xs text-slate-400">
                 Costo financiero real ({formatCLP(montoTotal)} + {formatCLP(comision)})
               </span>
-              <span className="text-sm font-bold text-slate-900">{formatCLP(costoReal)}</span>
+              <span className="text-sm font-bold text-white tabular-nums">{formatCLP(costoReal)}</span>
             </div>
           )}
         </div>
 
-        {/* ── 7. Interés + Fecha ─────────────────────────────────── */}
+        {/* Interés + Fecha */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
@@ -341,9 +327,9 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
               inputMode="decimal"
               step="0.01"
               placeholder="0"
-              className="w-full mt-1 h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-500"
+              className={[inputBase, inputRing, 'mt-1 h-11 px-3', inputBorder].join(' ')}
             />
-            <p className="text-[10px] text-slate-400 mt-0.5">0 = sin interés</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">0 = sin interés</p>
           </div>
           <Input
             label="Fecha de compra"
@@ -353,10 +339,10 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
           />
         </div>
 
-        {/* ── 8. Compra para tercero ─────────────────────────────── */}
+        {/* Compra para tercero */}
         <div className={[
           'rounded-2xl border transition-all',
-          paraTercero ? 'border-warning-200 bg-warning-50' : 'border-slate-200 bg-white'
+          paraTercero ? 'border-xp-500/30 bg-xp-500/10' : 'border-night-border bg-night-3/50'
         ].join(' ')}>
           <button
             type="button"
@@ -364,46 +350,44 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
             className="w-full flex items-center gap-3 px-4 py-3"
           >
             <div className={[
-              'w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors',
-              paraTercero ? 'bg-warning-500 border-warning-500' : 'border-slate-300 bg-white'
+              'size-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors',
+              paraTercero ? 'bg-xp-500 border-xp-500' : 'border-night-border bg-night-3'
             ].join(' ')}>
               {paraTercero && <span className="text-white text-[10px] font-bold">✓</span>}
             </div>
             <div className="flex items-center gap-2 flex-1 text-left">
-              <Users className={`h-4 w-4 ${paraTercero ? 'text-warning-600' : 'text-slate-400'}`} />
+              <Users className={`h-4 w-4 ${paraTercero ? 'text-xp-400' : 'text-slate-400'}`} />
               <div>
-                <p className={`text-xs font-semibold ${paraTercero ? 'text-warning-700' : 'text-slate-700'}`}>
+                <p className={`text-xs font-semibold ${paraTercero ? 'text-xp-300' : 'text-slate-300'}`}>
                   Compra para otra persona
                 </p>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-slate-500">
                   Se excluirá del análisis personal de cuotas
                 </p>
               </div>
             </div>
           </button>
           {paraTercero && (
-            <div className="px-4 pb-4 border-t border-warning-100 pt-3">
-              <label className="text-xs text-slate-500 font-medium">¿Para quién? (opcional)</label>
+            <div className="px-4 pb-4 border-t border-xp-500/20 pt-3">
+              <label className="text-xs text-slate-400 font-medium">¿Para quién? (opcional)</label>
               <input
                 type="text"
                 value={terceroNombre}
                 onChange={e => setTerceroNombre(e.target.value)}
                 placeholder="Ej: Mamá, Pareja, Juan…"
                 maxLength={60}
-                className="w-full mt-1 h-10 px-3 rounded-xl border border-warning-200 bg-white text-sm outline-none focus:ring-2 focus:ring-warning-400"
+                className={[inputBase, inputRing, 'mt-1 h-10 px-3', 'border-xp-500/30 hover:border-xp-500/50'].join(' ')}
               />
             </div>
           )}
         </div>
 
-        {/* ── 9. Nota ────────────────────────────────────────────── */}
         <Input
           label="Nota (opcional)"
           placeholder="Tienda, referencia, detalles…"
           {...register('nota')}
         />
 
-        {/* Botones */}
         <div className="flex gap-2 pt-2">
           <Button type="button" variant="secondary" fullWidth onClick={onClose}>
             Cancelar

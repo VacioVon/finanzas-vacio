@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
 import { Card } from '@/components/ui/Card'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonList } from '@/components/ui/Skeleton'
 import { CuotaCard } from '@/components/modules/cuotas/CuotaCard'
 import { CuotaForm } from '@/components/modules/cuotas/CuotaForm'
@@ -85,17 +86,11 @@ export function CuotasPage() {
           {isLoading ? (
             <SkeletonList count={3} />
           ) : lista.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-4xl mb-3">🛍️</p>
-              <p className="text-sm font-medium text-slate-400">
-                {filtro === 'activas' ? 'Sin compras en cuotas activas' : 'Sin compras en este estado'}
-              </p>
-              {filtro === 'activas' && (
-                <p className="text-xs text-slate-500 mt-1">
-                  Registra tus compras en cuotas para hacer seguimiento de lo que sigues pagando
-                </p>
-              )}
-            </div>
+            <EmptyState
+              icon="🛍️"
+              title={filtro === 'activas' ? 'Sin compras en cuotas activas' : 'Sin compras en este estado'}
+              description={filtro === 'activas' ? 'Registra tus compras en cuotas para hacer seguimiento de lo que sigues pagando' : undefined}
+            />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               {lista.map(cuota => (
