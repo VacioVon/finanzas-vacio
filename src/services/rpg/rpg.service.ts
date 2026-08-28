@@ -3,6 +3,7 @@ import type {
   RPGPerfil,
   RPGEvento,
   RPGLogro,
+  RPGLogroCatalogo,
   RPGRacha,
   RPGEventoRespuesta,
   TipoEventoRPG,
@@ -71,6 +72,16 @@ export async function getRPGLogros(userId: string): Promise<RPGLogro[]> {
 
   if (error) throw error
   return (data ?? []) as RPGLogro[]
+}
+
+export async function getRPGLogrosCatalogo(): Promise<RPGLogroCatalogo[]> {
+  const { data, error } = await supabase
+    .from('rpg_logros_catalogo')
+    .select('*')
+    .order('logro_tipo')
+
+  if (error) throw error
+  return (data ?? []) as RPGLogroCatalogo[]
 }
 
 export async function getRPGRachas(userId: string): Promise<RPGRacha[]> {

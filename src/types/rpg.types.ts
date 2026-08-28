@@ -150,6 +150,15 @@ export interface RPGLogro {
   obtenido_en:  string
 }
 
+export interface RPGLogroCatalogo {
+  logro_tipo:  string
+  nombre:      string
+  descripcion: string
+  emoji:       string
+  xp_bonus:    number
+  oculto:      boolean
+}
+
 export interface RPGRacha {
   usuario_id:   string
   tipo_racha:   string
@@ -170,6 +179,7 @@ export interface RPGEventoRespuesta {
   nivel_nuevo?:   number
   subio_nivel?:   boolean
   rango?:         string
+  logros_nuevos?: string[]
   stats?:         RPGStats
   vida?:          number
 }

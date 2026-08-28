@@ -5,15 +5,17 @@ import {
   procesarEventoRPG,
   getRPGEventos,
   getRPGLogros,
+  getRPGLogrosCatalogo,
   getRPGRachas,
 } from '@/services/rpg/rpg.service'
 import type { TipoEventoRPG, RPGEventoRespuesta } from '@/types/rpg.types'
 
 const RPG_KEYS = {
-  perfil:   (uid: string) => ['rpg', 'perfil',   uid] as const,
-  eventos:  (uid: string) => ['rpg', 'eventos',  uid] as const,
-  logros:   (uid: string) => ['rpg', 'logros',   uid] as const,
-  rachas:   (uid: string) => ['rpg', 'rachas',   uid] as const,
+  perfil:    (uid: string) => ['rpg', 'perfil',    uid] as const,
+  eventos:   (uid: string) => ['rpg', 'eventos',   uid] as const,
+  logros:    (uid: string) => ['rpg', 'logros',    uid] as const,
+  rachas:    (uid: string) => ['rpg', 'rachas',    uid] as const,
+  catalogo:  ()            => ['rpg', 'catalogo']       as const,
 }
 
 export function useRPGPerfil() {
@@ -53,6 +55,14 @@ export function useRPGRachas() {
     queryFn:   () => getRPGRachas(user!.id),
     enabled:   !!user?.id,
     staleTime: 120_000,
+  })
+}
+
+export function useRPGLogrosCatalogo() {
+  return useQuery({
+    queryKey:  RPG_KEYS.catalogo(),
+    queryFn:   getRPGLogrosCatalogo,
+    staleTime: 5 * 60_000,
   })
 }
 

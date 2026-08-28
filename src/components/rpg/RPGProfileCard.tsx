@@ -1,9 +1,14 @@
+import { useState } from 'react'
 import { Card } from '@/components/ui/Card'
 import { XPBar } from './XPBar'
 import { VitalityBar } from './VitalityBar'
 import { StatsPanel } from './StatsPanel'
-import { useRPGPerfil } from '@/hooks/rpg/useRPG'
+import { LogrosGallery } from './LogrosGallery'
+import { RachasWidget } from './RachasWidget'
+import { useRPGPerfil, useRPGLogros } from '@/hooks/rpg/useRPG'
 import type { RPGStats } from '@/types/rpg.types'
+
+type Tab = 'atributos' | 'logros' | 'rachas'
 
 function Skeleton() {
   return (
@@ -17,6 +22,8 @@ function Skeleton() {
 
 export function RPGProfileCard() {
   const { data: perfil, isLoading } = useRPGPerfil()
+  const { data: logros = [] }       = useRPGLogros()
+  const [tab, setTab]               = useState<Tab>('atributos')
 
   if (isLoading) return <Skeleton />
   if (!perfil)   return null
@@ -29,9 +36,15 @@ export function RPGProfileCard() {
     trabajo:      perfil.stat_trabajo,
   }
 
+  const tabs: { id: Tab; label: string; badge?: number }[] = [
+    { id: 'atributos', label: 'Atributos' },
+    { id: 'logros',    label: 'Logros',  badge: logros.length || undefined },
+    { id: 'rachas',    label: 'Rachas' },
+  ]
+
   return (
     <Card padding="md" className="space-y-4 bg-[#23212C] border-[#3D3B50]">
-      {/* Header: nivel y rango */}
+      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[10px] font-medium uppercase tracking-[.22em] text-[#FFB703]/70">
@@ -46,7 +59,7 @@ export function RPGProfileCard() {
         </div>
       </div>
 
-      {/* Barras: XP y Vida */}
+      {/* Barras */}
       <div className="space-y-3">
         <XPBar xpTotal={perfil.xp_total} nivel={perfil.nivel} />
         <VitalityBar vida={perfil.vida} />
@@ -54,19 +67,33 @@ export function RPGProfileCard() {
 
       <div className="h-px bg-[#3D3B50]" />
 
-      {/* Estadísticas */}
-      <div>
-        <p className="mb-2.5 text-[10px] font-medium uppercase tracking-[.18em] text-slate-500">
-          Atributos
-        </p>
-        <StatsPanel stats={stats} />
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-xl bg-[#1A1822] p-1">
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={[
+              'flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors',
+              tab === t.id
+                ? 'bg-[#2C2A38] text-slate-200 shadow-sm'
+                : 'text-slate-500 hover:text-slate-400',
+            ].join(' ')}
+          >
+            {t.label}
+            {t.badge !== undefined && (
+              <span className="rounded-full bg-[#FFB703]/20 px-1.5 py-0.5 text-[9px] font-semibold tabular-nums text-[#FFB703]">
+                {t.badge}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Placeholder árbol — HITO 06.5 implementará assets finales */}
-      <div className="rounded-lg border border-dashed border-[#3D3B50] bg-[#1A1822] py-6 text-center">
-        <p className="text-[11px] text-slate-500">Árbol de cultivo</p>
-        <p className="mt-0.5 text-[10px] text-slate-600">Disponible en HITO 06.5</p>
-      </div>
+      {/* Panel */}
+      {tab === 'atributos' && <StatsPanel stats={stats} />}
+      {tab === 'logros'    && <LogrosGallery />}
+      {tab === 'rachas'    && <RachasWidget />}
     </Card>
   )
 }
