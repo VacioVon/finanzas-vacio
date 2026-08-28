@@ -8,7 +8,8 @@ import {
   pagarCuota,
   deshacerPagoCuota
 } from '@/services/cuotas.service'
-import type { CuotaFormData } from '@/types/app.types'
+import { procesarEventoRPG } from '@/services/rpg/rpg.service'
+import type { CuotaFormData, CuotaCredito } from '@/types/app.types'
 
 export const CUOTAS_KEY = 'cuotas_credito'
 
@@ -52,11 +53,16 @@ export function useDeleteCuota() {
 }
 
 export function usePagarCuota() {
+  const { user } = useAuthStore()
   const qc = useQueryClient()
 
   return useMutation({
     mutationFn: (id: string) => pagarCuota(id),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: [CUOTAS_KEY] })
+    onSuccess: (cuota: CuotaCredito) => {
+      qc.invalidateQueries({ queryKey: [CUOTAS_KEY] })
+      const evento = cuota.estado === 'completada' ? 'CMR_COMPLETADA' : 'CMR_CUOTA_TIEMPO'
+      procesarEventoRPG(user!.id, evento, cuota.id, 'cuota').catch(() => null)
+    }
   })
 }
 

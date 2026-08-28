@@ -8,8 +8,10 @@ import {
   asignarFondosObjetivo,
   getAportesObjetivosPeriodo
 } from '@/services/objetivos.service'
+import { procesarEventoRPG } from '@/services/rpg/rpg.service'
 import { getPeriodoPresupuestal, getCurrentMesAnio } from '@/utils/periodo'
-import type { ObjetivoFormData } from '@/types/app.types'
+import type { ObjetivoFormData, ObjetivoAhorro } from '@/types/app.types'
+import type { TipoEventoRPG } from '@/types/rpg.types'
 
 export const OBJETIVOS_KEY = 'objetivos'
 
@@ -29,7 +31,10 @@ export function useCreateObjetivo() {
 
   return useMutation({
     mutationFn: (form: ObjetivoFormData) => createObjetivo(user!.id, form),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [OBJETIVOS_KEY] })
+    onSuccess: (objetivo: ObjetivoAhorro) => {
+      qc.invalidateQueries({ queryKey: [OBJETIVOS_KEY] })
+      procesarEventoRPG(user!.id, 'OBJETIVO_CREADO', objetivo.id, 'objetivo').catch(() => null)
+    }
   })
 }
 
@@ -44,6 +49,7 @@ export function useUpdateObjetivo() {
 }
 
 export function useAsignarFondosObjetivo() {
+  const { user } = useAuthStore()
   const qc = useQueryClient()
 
   return useMutation({
@@ -58,9 +64,29 @@ export function useAsignarFondosObjetivo() {
       nota?:  string
       fecha?: string
     }) => asignarFondosObjetivo(id, delta, nota, fecha),
-    onSuccess: () => {
+    onSuccess: (objetivo: ObjetivoAhorro) => {
       qc.invalidateQueries({ queryKey: [OBJETIVOS_KEY] })
       qc.invalidateQueries({ queryKey: ['aportes_objetivos'] })
+
+      // Detectar hito o completado y disparar evento RPG
+      const pct = objetivo.monto_objetivo > 0
+        ? (objetivo.monto_actual / objetivo.monto_objetivo) * 100
+        : 0
+
+      let evento: TipoEventoRPG | null = null
+      if (objetivo.estado === 'completado') {
+        evento = 'OBJETIVO_COMPLETADO'
+      } else if (pct >= 75) {
+        evento = 'OBJETIVO_HITO_75'
+      } else if (pct >= 50) {
+        evento = 'OBJETIVO_HITO_50'
+      } else if (pct >= 25) {
+        evento = 'OBJETIVO_HITO_25'
+      }
+
+      if (evento) {
+        procesarEventoRPG(user!.id, evento, objetivo.id, 'objetivo').catch(() => null)
+      }
     }
   })
 }

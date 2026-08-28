@@ -9,6 +9,7 @@ import {
   deleteMovimiento,
   updateMovimiento
 } from '@/services/movimientos.service'
+import { procesarEventoRPG } from '@/services/rpg/rpg.service'
 import { getPeriodoPresupuestal } from '@/utils/periodo'
 import { CUENTAS_KEY } from './useCuentas'
 import type { Movimiento, MovimientoFormData } from '@/types/app.types'
@@ -62,11 +63,14 @@ export function useCreateMovimiento() {
 
   return useMutation({
     mutationFn: (form: MovimientoFormData) => createMovimiento(user!.id, form),
-    onSuccess: () => {
+    onSuccess: (mov: Movimiento, form) => {
       qc.invalidateQueries({ queryKey: [MOVIMIENTOS_KEY] })
       qc.invalidateQueries({ queryKey: [CUENTAS_KEY] })
       qc.invalidateQueries({ queryKey: ['presupuestos'] })
       qc.invalidateQueries({ queryKey: ['objetivos'] })
+      if (form.tipo === 'ingreso') {
+        procesarEventoRPG(user!.id, 'INGRESO_REGISTRADO', mov.id, 'movimiento').catch(() => null)
+      }
     }
   })
 }

@@ -10,6 +10,7 @@ import {
   registrarPagoCompromiso,
   type PagoCompromisoData
 } from '@/services/suscripciones.service'
+import { procesarEventoRPG } from '@/services/rpg/rpg.service'
 import type { Suscripcion, SuscripcionFormData } from '@/types/app.types'
 
 const KEY = ['suscripciones'] as const
@@ -28,7 +29,10 @@ export function useCreateSuscripcion() {
   const qc       = useQueryClient()
   return useMutation({
     mutationFn: (form: SuscripcionFormData) => createSuscripcion(user!.id, form),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: KEY })
+    onSuccess: (sus: Suscripcion) => {
+      qc.invalidateQueries({ queryKey: KEY })
+      procesarEventoRPG(user!.id, 'COMPROMISO_REGISTRADO', sus.id, 'compromiso').catch(() => null)
+    }
   })
 }
 

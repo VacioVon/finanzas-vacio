@@ -8,6 +8,7 @@ import {
   deleteDeuda,
   getTotalDeudasActivas
 } from '@/services/deudas.service'
+import { procesarEventoRPG } from '@/services/rpg/rpg.service'
 import type { DeudaFormData } from '@/types/app.types'
 
 export const DEUDAS_KEY = 'deudas'
@@ -38,7 +39,10 @@ export function useCreateDeuda() {
 
   return useMutation({
     mutationFn: (form: DeudaFormData) => createDeuda(user!.id, form),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: [DEUDAS_KEY] })
+    onSuccess: (deuda) => {
+      qc.invalidateQueries({ queryKey: [DEUDAS_KEY] })
+      procesarEventoRPG(user!.id, 'DEUDA_REGISTRADA', deuda.id, 'deuda').catch(() => null)
+    }
   })
 }
 
@@ -53,12 +57,18 @@ export function useUpdateDeuda() {
 }
 
 export function useUpdateEstadoDeuda() {
+  const { user } = useAuthStore()
   const qc = useQueryClient()
 
   return useMutation({
     mutationFn: ({ id, estado }: { id: string; estado: 'activa' | 'pagada' | 'en_mora' }) =>
       updateEstadoDeuda(id, estado),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [DEUDAS_KEY] })
+    onSuccess: (_, { id, estado }) => {
+      qc.invalidateQueries({ queryKey: [DEUDAS_KEY] })
+      if (estado === 'pagada') {
+        procesarEventoRPG(user!.id, 'DEUDA_COMPLETADA', id, 'deuda').catch(() => null)
+      }
+    }
   })
 }
 
