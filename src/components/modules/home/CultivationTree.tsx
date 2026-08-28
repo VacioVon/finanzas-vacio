@@ -1,5 +1,7 @@
 import { useId } from 'react'
 import { Card } from '@/components/ui/Card'
+import { useRPGPerfil } from '@/hooks/rpg/useRPG'
+import { rpgProgresoPorcentaje, RPG_XP_CURVA } from '@/types/rpg.types'
 
 export interface CultivationStats {
   finanzas: number
@@ -13,43 +15,100 @@ interface CultivationTreeProps {
   stats?: CultivationStats
 }
 
-const defaultStats: CultivationStats = {
-  finanzas: 90,
-  disciplina: 30,
-  vitalidad: 20,
-  conocimiento: 20,
-  trabajo: 30,
-}
-
 const clamp = (value: number) => Math.max(0, Math.min(100, value))
 
-export function CultivationTree({ stats = defaultStats }: CultivationTreeProps) {
+const STAGE_NAMES = [
+  'Semilla',
+  'Brote',
+  'Raíz despierta',
+  'Árbol joven',
+  'Árbol del pulso',
+  'Árbol ancestral',
+  'Entidad del firmamento',
+]
+
+function stageFromLevel(nivel: number): string {
+  if (nivel <= 2)  return STAGE_NAMES[0]
+  if (nivel <= 4)  return STAGE_NAMES[1]
+  if (nivel <= 7)  return STAGE_NAMES[2]
+  if (nivel <= 10) return STAGE_NAMES[3]
+  if (nivel <= 14) return STAGE_NAMES[4]
+  if (nivel <= 18) return STAGE_NAMES[5]
+  return STAGE_NAMES[6]
+}
+
+export function CultivationTree({ stats: statsProp }: CultivationTreeProps) {
+  const { data: perfil, isLoading } = useRPGPerfil()
+
+  // Usar datos del perfil RPG si existen, si no los props, si no ceros
+  const raw: CultivationStats = statsProp ?? (perfil ? {
+    finanzas:     perfil.stat_finanzas,
+    disciplina:   perfil.stat_disciplina,
+    vitalidad:    perfil.stat_vitalidad,
+    conocimiento: perfil.stat_conocimiento,
+    trabajo:      perfil.stat_trabajo,
+  } : { finanzas: 0, disciplina: 0, vitalidad: 0, conocimiento: 0, trabajo: 0 })
+
   const safeStats: CultivationStats = {
-    finanzas:     clamp(stats.finanzas),
-    disciplina:   clamp(stats.disciplina),
-    vitalidad:    clamp(stats.vitalidad),
-    conocimiento: clamp(stats.conocimiento),
-    trabajo:      clamp(stats.trabajo),
+    finanzas:     clamp(raw.finanzas),
+    disciplina:   clamp(raw.disciplina),
+    vitalidad:    clamp(raw.vitalidad),
+    conocimiento: clamp(raw.conocimiento),
+    trabajo:      clamp(raw.trabajo),
   }
-  const average = Object.values(safeStats).reduce((sum, value) => sum + value, 0) / 5
-  const stage = average < 12 ? 'Semilla antigua' : average < 28 ? 'Brote del meridiano' : average < 48 ? 'Raíz despierta' : average < 70 ? 'Árbol del pulso' : average < 88 ? 'Árbol ancestral' : 'Entidad del firmamento'
-  const uid = useId().replace(/:/g, '')
-  const rootScale = 0.72 + safeStats.finanzas / 360
-  const trunkScale = 0.82 + safeStats.disciplina / 420
-  const canopyScale = 0.58 + safeStats.vitalidad / 190
+
+  const nivel  = perfil?.nivel  ?? 1
+  const rango  = perfil?.rango  ?? 'Discípulo Marcial'
+  const xp     = perfil?.xp_total ?? 0
+  const vida   = perfil?.vida   ?? 80
+  const pctXP  = rpgProgresoPorcentaje(xp, nivel)
+  const stage  = stageFromLevel(nivel)
+
+  const uid         = useId().replace(/:/g, '')
+  const rootScale   = 0.72 + safeStats.finanzas   / 360
+  const trunkScale  = 0.82 + safeStats.disciplina  / 420
+  const canopyScale = 0.58 + safeStats.vitalidad   / 190
   const flowerCount = Math.round(safeStats.conocimiento / 25)
-  const fruitCount = Math.round(safeStats.trabajo / 25)
+  const fruitCount  = Math.round(safeStats.trabajo      / 25)
+
+  const vidaColor = vida >= 70 ? '#10D97F' : vida >= 35 ? '#FFB703' : '#F4645F'
 
   return (
     <Card padding="none" className="relative isolate overflow-hidden bg-[#11101A] border-[#3D3B50]/80">
       <div className="absolute inset-0 opacity-80" style={{ background: 'radial-gradient(ellipse at 50% 48%, rgba(30,96,64,.18), transparent 55%), radial-gradient(ellipse at 12% 90%, rgba(41,121,255,.10), transparent 42%)' }} />
+
+      {/* Header */}
       <div className="relative flex items-start justify-between px-4 pt-4 sm:px-6">
         <div>
           <p className="text-[10px] font-medium uppercase tracking-[.22em] text-ingreso-400/80">Cultivo personal</p>
-          <h2 className="mt-1 text-base font-semibold text-white">Tu árbol despierta</h2>
-          <p className="mt-1 text-xs text-slate-400">{stage} · rango {Math.max(1, Math.ceil(average / 5))}</p>
+          <h2 className="mt-1 text-base font-semibold text-white text-balance">
+            {isLoading ? 'Cargando…' : rango}
+          </h2>
+          <p className="mt-1 text-xs text-slate-400">
+            {stage} · Nivel {nivel}
+          </p>
         </div>
-        <div className="rounded-full border border-ingreso-500/20 bg-ingreso-500/10 px-2.5 py-1 text-[10px] font-medium text-ingreso-300">{Math.round(average)}% esencia</div>
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="rounded-full border border-ingreso-500/20 bg-ingreso-500/10 px-2.5 py-1 text-[10px] font-medium tabular-nums text-ingreso-300">
+            {xp.toLocaleString()} XP
+          </div>
+          {/* Vida mini */}
+          <div className="flex items-center gap-1.5 pr-0.5">
+            <div className="h-1 w-16 rounded-full bg-[#3D3B50]">
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${vida}%`, backgroundColor: vidaColor }} />
+            </div>
+            <span className="text-[9px] tabular-nums" style={{ color: vidaColor }}>{vida}</span>
+          </div>
+          {/* XP mini */}
+          {nivel < 20 && (
+            <div className="flex items-center gap-1.5 pr-0.5">
+              <div className="h-1 w-16 rounded-full bg-[#3D3B50]">
+                <div className="h-full rounded-full bg-[#FFB703] transition-all duration-500" style={{ width: `${pctXP}%` }} />
+              </div>
+              <span className="text-[9px] tabular-nums text-[#FFB703]">{pctXP}%</span>
+            </div>
+          )}
+        </div>
       </div>
       <div className="relative mx-auto mt-1 aspect-[1.22/1] w-full max-w-[680px] min-h-[290px] sm:min-h-[360px]">
         <svg viewBox="0 0 700 570" className="h-full w-full" role="img" aria-label={`Árbol de cultivo en etapa ${stage}`}>

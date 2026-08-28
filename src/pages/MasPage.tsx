@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 import {
   Wallet, Tag, Target, PiggyBank, CreditCard, ShoppingBag,
-  RefreshCw, CalendarDays, Settings, ChevronRight, HandCoins
+  RefreshCw, CalendarDays, Settings, ChevronRight, HandCoins, Sprout
 } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
 import { Card } from '@/components/ui/Card'
 import { useAuthStore } from '@/store/authStore'
+import { RPGProfileCard } from '@/components/rpg/RPGProfileCard'
 
 interface MenuItemProps {
   icon:         React.ReactNode
@@ -77,6 +78,14 @@ export function MasPage() {
             <ChevronRight className="h-4 w-4 text-slate-600" />
           </button>
         </Card>
+
+        {/* ── Cultivo personal (RPG) ── */}
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-[.22em] text-slate-500 mb-2 px-1">
+            Cultivo personal
+          </p>
+          <RPGProfileCard />
+        </div>
 
         {/* Módulos — en desktop grid 2×N */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
