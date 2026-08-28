@@ -204,6 +204,21 @@ export function rpgProgresoPorcentaje(xpTotal: number, nivel: number): number {
   return Math.round(((xpTotal - base) / (siguiente - base)) * 100)
 }
 
+// Colores de tier — 7 etapas visuales (aura + sello)
+const RPG_TIER_PALETA: readonly [number, number, string][] = [
+  [1,  2,  '#8B8DA8'],  // niebla
+  [3,  4,  '#10D97F'],  // brote
+  [5,  7,  '#00C2CB'],  // raíz despierta
+  [8,  10, '#2979FF'],  // árbol joven
+  [11, 14, '#9B5DE5'],  // árbol del pulso
+  [15, 18, '#FFB703'],  // árbol ancestral
+  [19, 20, '#FFFFFF'],  // entidad del firmamento
+] as const
+
+export function rpgTierColor(nivel: number): string {
+  return RPG_TIER_PALETA.find(([min, max]) => nivel >= min && nivel <= max)?.[2] ?? '#8B8DA8'
+}
+
 export function rpgNivelDesdeXP(xp: number): number {
   let nivel = 1
   for (let i = 0; i < RPG_XP_CURVA.length; i++) {
