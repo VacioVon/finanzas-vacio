@@ -1,7 +1,6 @@
 // ── Árbol de Vida — sistema de etapas ───────────────────────────────────────
 // 20 niveles → 6 etapas visuales.
-// El asset de etapa NUNCA retrocede (nivel nunca decrece — spec congelada).
-// Los efectos/layers modula la intensidad visual DENTRO de cada etapa.
+// Rangos: según Biblia_Arbol_de_los_Meridianos_6_Etapas (nivel nunca retrocede).
 
 export type TreeStage =
   | 'semilla'
@@ -14,22 +13,21 @@ export type TreeStage =
 export interface TreeStageInfo {
   key:        TreeStage
   label:      string           // nombre de etapa para UI
-  file:       string           // nombre del WebP esperado
+  file:       string           // archivo PNG en /public/assets/rpg/tree/
   levelRange: [number, number] // [min, max] inclusive
 }
 
-// Tabla maestra de etapas — congelada junto con los 20 niveles del RPG
+// Tabla maestra — congelada junto con la Biblia del Árbol
 export const TREE_STAGES: readonly TreeStageInfo[] = [
-  { key: 'semilla',         label: 'Semilla',         file: 'semilla.webp',         levelRange: [1,  2]  },
-  { key: 'brote',           label: 'Brote',           file: 'brote.webp',           levelRange: [3,  4]  },
-  { key: 'arbol-joven',     label: 'Árbol Joven',     file: 'arbol-joven.webp',     levelRange: [5,  9]  },
-  { key: 'arbol-fuerte',    label: 'Árbol Fuerte',    file: 'arbol-fuerte.webp',    levelRange: [10, 13] },
-  { key: 'arbol-antiguo',   label: 'Árbol Antiguo',   file: 'arbol-antiguo.webp',   levelRange: [14, 17] },
-  { key: 'arbol-ancestral', label: 'Árbol Ancestral', file: 'arbol-ancestral.webp', levelRange: [18, 20] },
+  { key: 'semilla',         label: 'Semilla',         file: 'semilla.png',         levelRange: [1,  2]  },
+  { key: 'brote',           label: 'Brote',           file: 'brote.png',           levelRange: [3,  4]  },
+  { key: 'arbol-joven',     label: 'Árbol Joven',     file: 'arbol-joven.png',     levelRange: [5,  7]  },
+  { key: 'arbol-fuerte',    label: 'Árbol Fuerte',    file: 'arbol-fuerte.png',    levelRange: [8,  11] },
+  { key: 'arbol-antiguo',   label: 'Árbol Antiguo',   file: 'arbol-antiguo.png',   levelRange: [12, 16] },
+  { key: 'arbol-ancestral', label: 'Árbol Ancestral', file: 'arbol-ancestral.png', levelRange: [17, 20] },
 ] as const
 
-// Devuelve la etapa correspondiente al nivel.
-// Nunca retrocede porque el nivel nunca decrece.
+// Devuelve la etapa correspondiente al nivel (nunca retrocede).
 export function treeStageFromLevel(nivel: number): TreeStageInfo {
   return (
     TREE_STAGES.find(s => nivel >= s.levelRange[0] && nivel <= s.levelRange[1])
@@ -37,9 +35,15 @@ export function treeStageFromLevel(nivel: number): TreeStageInfo {
   )
 }
 
-// Progresión dentro de la etapa actual: 0.0 (inicio de etapa) → 1.0 (límite superior).
-// Permite que los efectos cresciendo dentro de la misma etapa, evitando
-// largos tramos visualmente estáticos entre cambios de asset.
+// Índice 0-5 de la etapa dentro de TREE_STAGES.
+export function treeStageIndex(stage: TreeStageInfo): number {
+  const idx = TREE_STAGES.findIndex(s => s.key === stage.key)
+  return idx < 0 ? 0 : idx
+}
+
+// Progresión dentro de la etapa: 0.0 (inicio) → 1.0 (tope).
+// Permite que los efectos de capas crezcan dentro de la misma etapa,
+// evitando periodos visualmente estáticos entre cambios de asset.
 export function stageProgress(nivel: number, stage: TreeStageInfo): number {
   const [min, max] = stage.levelRange
   if (max === min) return 1
