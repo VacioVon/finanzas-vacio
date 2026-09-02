@@ -119,6 +119,8 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
       isOpen={isOpen}
       onClose={onClose}
       title={editing ? 'Editar deuda' : 'Nueva deuda'}
+      theme="dark"
+      accent="#F4645F"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 

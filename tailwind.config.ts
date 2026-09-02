@@ -175,8 +175,11 @@ const config: Config = {
         'glow-gold':    '0 0 22px rgba(201,162,39,0.30)',
       },
       animation: {
-        'fade-in':  'fadeIn 0.2s ease-in-out',
-        'slide-up': 'slideUp 0.3s ease-out',
+        'fade-in':    'fadeIn 0.2s ease-in-out',
+        'slide-up':   'slideUp 0.3s ease-out',
+        'shimmer':    'shimmer 2.2s linear infinite',
+        'glow-pulse': 'glowPulse 2.5s ease-in-out infinite',
+        'vita-pulse': 'vitaPulse 1.4s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -186,7 +189,19 @@ const config: Config = {
         slideUp: {
           '0%':   { transform: 'translateY(8px)', opacity: '0' },
           '100%': { transform: 'translateY(0)',    opacity: '1' },
-        }
+        },
+        shimmer: {
+          '0%':   { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(200%)' },
+        },
+        glowPulse: {
+          '0%,100%': { opacity: '0.6' },
+          '50%':     { opacity: '1'   },
+        },
+        vitaPulse: {
+          '0%,100%': { opacity: '0.7', transform: 'scaleX(1)'    },
+          '50%':     { opacity: '1',   transform: 'scaleX(1.005)' },
+        },
       }
     }
   },

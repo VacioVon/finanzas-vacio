@@ -6,6 +6,7 @@ import { StatsPanel } from './StatsPanel'
 import { LogrosGallery } from './LogrosGallery'
 import { RachasWidget } from './RachasWidget'
 import { useRPGPerfil, useRPGLogros } from '@/hooks/rpg/useRPG'
+import { rpgTierColor } from '@/types/rpg.types'
 import type { RPGStats } from '@/types/rpg.types'
 
 type Tab = 'atributos' | 'logros' | 'rachas'
@@ -36,6 +37,8 @@ export function RPGProfileCard() {
     trabajo:      perfil.stat_trabajo,
   }
 
+  const tierColor = rpgTierColor(perfil.nivel)
+
   const tabs: { id: Tab; label: string; badge?: number }[] = [
     { id: 'atributos', label: 'Atributos' },
     { id: 'logros',    label: 'Logros',  badge: logros.length || undefined },
@@ -43,7 +46,22 @@ export function RPGProfileCard() {
   ]
 
   return (
-    <Card padding="md" className="space-y-4 bg-night-1 border-night-border">
+    <Card padding="none" className="overflow-hidden bg-night-1 border-night-border"
+      style={{ boxShadow: `0 0 0 1px ${tierColor}22, 0 4px 24px ${tierColor}12` }}
+    >
+      {/* Borde superior con color del tier */}
+      <div
+        className="h-[2px] w-full"
+        style={{ background: `linear-gradient(to right, transparent, ${tierColor}90, transparent)` }}
+      />
+      {/* Nebula interior sutil */}
+      <div
+        className="absolute inset-0 pointer-events-none rounded-2xl"
+        style={{
+          background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${tierColor}09, transparent 70%)`,
+        }}
+      />
+      <div className="relative p-4 space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -94,6 +112,7 @@ export function RPGProfileCard() {
       {tab === 'atributos' && <StatsPanel stats={stats} />}
       {tab === 'logros'    && <LogrosGallery />}
       {tab === 'rachas'    && <RachasWidget />}
+      </div>
     </Card>
   )
 }

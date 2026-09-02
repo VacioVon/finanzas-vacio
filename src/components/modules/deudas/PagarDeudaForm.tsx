@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -79,7 +79,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Registrar pago">
+    <Modal isOpen={isOpen} onClose={onClose} title="Registrar pago" theme="dark" accent="#F4645F">
 
       {/* Cabecera de la deuda */}
       <div className="flex items-center gap-3 mb-5 p-3 rounded-2xl bg-night-3 border border-night-border/60">

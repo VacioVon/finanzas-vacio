@@ -115,15 +115,48 @@ function AssetBase({ stage, vida }: { stage: TreeStageInfo; vida: number }) {
   }
 
   if (missing) {
+    // Placeholder animado — semilla / brote visual por etapa
+    const seedEmoji = stage.key === 'semilla'        ? '🌱'
+      : stage.key === 'brote'          ? '🌿'
+      : stage.key === 'arbol-joven'    ? '🌳'
+      : stage.key === 'arbol-fuerte'   ? '🌲'
+      : stage.key === 'arbol-antiguo'  ? '🌲✨'
+      : '🌌'
+    const tierColorLocal = '#FFB703'
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center">
-        <div className="rounded-2xl border border-dashed border-night-border bg-night-0/80 px-8 py-10 text-center">
-          <p className="text-[10px] font-medium uppercase tracking-[.25em] text-slate-600">
-            Asset pendiente
-          </p>
-          <p className="mt-3 text-xl font-bold text-slate-400">{stage.label}</p>
-          <p className="mt-1.5 font-mono text-[11px] text-slate-600">{stage.file}</p>
-          <p className="mt-1 text-[9px] text-slate-500">/public/assets/rpg/tree/</p>
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4">
+        <div
+          className="flex flex-col items-center gap-3 rounded-3xl px-10 py-8"
+          style={{
+            background:    'radial-gradient(ellipse 80% 70% at 50% 40%, rgba(155,93,229,0.10), transparent 75%)',
+            border:        `1px solid ${tierColorLocal}22`,
+          }}
+        >
+          <div
+            className="text-6xl leading-none"
+            style={{ filter: `drop-shadow(0 0 18px ${tierColorLocal}70) drop-shadow(0 0 8px ${tierColorLocal}50)`, animation: 'tol-pulse 3s ease-in-out infinite' }}
+          >
+            {seedEmoji}
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-bold text-slate-300">{stage.label}</p>
+            <p className="text-[10px] text-slate-600 mt-0.5 font-mono">{stage.file}</p>
+          </div>
+          {/* Partículas mínimas alrededor */}
+          <div className="flex gap-3 mt-1">
+            {['#00C2CB','#10D97F','#9B5DE5','#FFB703','#2979FF'].map((c, i) => (
+              <div
+                key={i}
+                className="size-1.5 rounded-full"
+                style={{
+                  backgroundColor: c,
+                  boxShadow:       `0 0 6px ${c}`,
+                  animation:       `tol-particle ${2.8 + i * 0.5}s ease-out infinite`,
+                  animationDelay:  `${i * 0.6}s`,
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     )

@@ -10,9 +10,10 @@ interface ModalProps {
   children: ReactNode
   size?: 'sm' | 'md' | 'full'
   theme?: 'light' | 'dark'
+  accent?: string  // color hex para la nebula del módulo
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'md', theme = 'light' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md', theme = 'light', accent }: ModalProps) {
   const isDark = theme === 'dark'
 
   useEffect(() => {
@@ -55,11 +56,14 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', theme = '
         {isDark && (
           <>
             <StarField className="opacity-90 rounded-t-3xl" />
-            {/* Nebulosa: violeta fuerte arriba-derecha, cian suave abajo-izquierda, coral muy sutil al centro */}
             <div
               className="absolute inset-0 pointer-events-none rounded-t-3xl"
               style={{
-                background: [
+                background: accent ? [
+                  `radial-gradient(ellipse 80% 55% at 90% -10%, ${accent}45 0%, transparent 65%)`,
+                  `radial-gradient(ellipse 55% 40% at 5%  95%, ${accent}22 0%, transparent 60%)`,
+                  'radial-gradient(ellipse 40% 30% at 50% 40%, rgba(155,93,229,0.06) 0%, transparent 70%)',
+                ].join(', ') : [
                   'radial-gradient(ellipse 70% 50% at 85% -5%,  rgba(155,93,229,0.28) 0%, transparent 65%)',
                   'radial-gradient(ellipse 50% 35% at 5%  95%,  rgba(41,121,255,0.20) 0%, transparent 60%)',
                   'radial-gradient(ellipse 40% 30% at 50% 40%,  rgba(244,100,95,0.06) 0%, transparent 70%)',

@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback } from 'react'
+﻿import { useMemo, useState, useRef, useCallback } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
 import { formatCLP } from '@/utils/currency'
@@ -678,7 +678,7 @@ export function CalendarioPage() {
   }, [eventos, diaSheetFecha])
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#2979FF">
       <Header title="Calendario financiero" />
 
       <div className="px-4 lg:px-0 pt-4 pb-8 space-y-4">

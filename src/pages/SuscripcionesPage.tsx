@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -41,7 +41,7 @@ export function SuscripcionesPage() {
   const totalMensual = activas.reduce((sum, s) => sum + mensualEquivalente(s.monto, s.frecuencia), 0)
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#00C2CB">
       <Header
         title="Compromisos"
         action={

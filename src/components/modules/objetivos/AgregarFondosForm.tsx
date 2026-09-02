@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -60,7 +60,7 @@ export function AgregarFondosForm({ isOpen, onClose, objetivo }: AgregarFondosFo
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Registrar progreso">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Registrar progreso" theme="dark" accent="#9B5DE5">
       {/* Header del objetivo */}
       <div
         className="flex items-center gap-3 mb-5 p-3 rounded-2xl"

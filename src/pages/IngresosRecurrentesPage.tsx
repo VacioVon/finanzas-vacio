@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Plus, Trash2, ToggleLeft, ToggleRight, Calendar } from 'lucide-react'
 import { AppLayout }    from '@/components/layout/AppLayout'
 import { Header }       from '@/components/layout/Header'
@@ -86,7 +86,7 @@ export function IngresosRecurrentesPage() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#10D97F">
       <Header title="Ingresos recurrentes" showBack />
 
       <div className="space-y-5 pt-4 px-4 lg:px-0 pb-10">

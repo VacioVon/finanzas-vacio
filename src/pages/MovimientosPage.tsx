@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Search, Plus, X } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -31,7 +31,7 @@ export function MovimientosPage() {
   const gastos   = (movimientosMes ?? []).filter(m => m.tipo === 'gasto' && !m.para_tercero).reduce((s, m) => s + m.monto, 0)
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#2979FF">
       <Header
         title="Movimientos"
         action={

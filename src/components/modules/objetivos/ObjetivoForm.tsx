@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -88,7 +88,7 @@ export function ObjetivoForm({ isOpen, onClose, editing }: ObjetivoFormProps) {
   const isLoading = createMutation.isPending || updateMutation.isPending
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar objetivo' : 'Nuevo objetivo'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar objetivo' : 'Nuevo objetivo'} theme="dark" accent="#9B5DE5">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <EmojiPicker
           label="Ícono"

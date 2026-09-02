@@ -34,8 +34,16 @@ const TIPOS_CUENTA: { value: TipoCuenta; label: string }[] = [
 ]
 
 const COLORES = [
-  '#2563EB', '#7C3AED', '#0891B2', '#16A34A',
-  '#D97706', '#DC2626', '#DB2777', '#0F172A'
+  // Azules
+  '#2979FF', '#2563EB', '#3B82F6', '#0EA5E9', '#06B6D4',
+  // Verdes
+  '#10D97F', '#16A34A', '#22C55E', '#84CC16', '#65A30D',
+  // Violetas y rosados
+  '#9B5DE5', '#7C3AED', '#A855F7', '#EC4899', '#DB2777',
+  // Rojos y naranjas
+  '#F4645F', '#DC2626', '#F97316', '#D97706', '#EAB308',
+  // Neutros
+  '#64748B', '#475569', '#334155', '#0F172A',
 ]
 
 interface CuentaFormProps {
@@ -135,6 +143,8 @@ export function CuentaForm({ isOpen, onClose, editingCuenta }: CuentaFormProps) 
       isOpen={isOpen}
       onClose={onClose}
       title={editingCuenta ? 'Editar cuenta' : 'Nueva cuenta'}
+      theme="dark"
+      accent="#10D97F"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
@@ -211,19 +221,38 @@ export function CuentaForm({ isOpen, onClose, editingCuenta }: CuentaFormProps) 
         )}
 
         {/* Selector de color */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-300">Color</label>
-          <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">Color</label>
+            <div className="flex items-center gap-2">
+              <div
+                className="size-5 rounded-full border-2 border-white/20"
+                style={{ backgroundColor: selectedColor }}
+              />
+              <label className="relative cursor-pointer">
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={e => setValue('color', e.target.value)}
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                />
+                <span className="text-[11px] text-brand-400 font-medium hover:text-brand-300 transition-colors">
+                  Personalizar →
+                </span>
+              </label>
+            </div>
+          </div>
+          <div className="grid grid-cols-8 gap-1.5">
             {COLORES.map(color => (
               <button
                 key={color}
                 type="button"
                 onClick={() => setValue('color', color)}
                 className={[
-                  'w-8 h-8 rounded-full transition-all',
+                  'size-8 rounded-full transition-all active:scale-90',
                   selectedColor === color
-                    ? 'ring-2 ring-offset-2 ring-slate-700 scale-110'
-                    : 'hover:scale-105'
+                    ? 'ring-2 ring-offset-1 ring-offset-night-2 ring-white/60 scale-110'
+                    : 'hover:scale-105 hover:ring-1 hover:ring-white/30'
                 ].join(' ')}
                 style={{ backgroundColor: color }}
               />

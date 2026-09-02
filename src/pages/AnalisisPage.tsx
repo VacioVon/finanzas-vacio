@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import {
   PieChart, Pie, Cell,
@@ -135,7 +135,7 @@ export function AnalisisPage() {
   const totalGastos = catData.reduce((s, c) => s + c.monto, 0)
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#2979FF">
       <Header title="Análisis" />
 
       {/* Navegación por mes */}

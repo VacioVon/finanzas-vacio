@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -94,7 +94,7 @@ export function PerfilForm({ isOpen, onClose }: PerfilFormProps) {
   const avatarIsLoading = uploadMutation.isPending || deleteMutation.isPending
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Editar perfil">
+    <Modal isOpen={isOpen} onClose={onClose} title="Editar perfil" theme="dark" accent="#2979FF">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
         {/* Avatar */}

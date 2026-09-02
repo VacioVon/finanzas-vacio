@@ -37,7 +37,24 @@
       "Bash(curl -s *fcysoelztnopggrtiraq*)",
       "Bash(node -e \"const s = require\\('@supabase/supabase-js'\\); console.log\\('✅ supabase-js:', require\\('./node_modules/@supabase/supabase-js/package.json'\\).version\\)\")",
       "Bash(node --input-type=module)",
-      "Bash(node supabase/scripts/inspect.mjs)"
+      "Bash(node supabase/scripts/inspect.mjs)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "Bash(python -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\('vitest' in str\\(p.get\\('devDependencies',''\\)\\) or 'vitest' in str\\(p.get\\('dependencies',''\\)\\)\\)\")",
+      "Bash(npm install *)",
+      "Bash(npx vitest *)",
+      "Bash(node supabase/scripts/apply-migration.mjs supabase/migrations/002_rpg_sistema.sql)",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\rojas\\\\OneDrive\\\\Escritorio\\\\Claude\\\\App Finanzas\\\\public\\\\assets\\\\rpg\\\\tree\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\rojas\\\\OneDrive\\\\Escritorio\\\\Claude\\\\App Finanzas\\\\src\\\\components\\\\rpg\\\\tree\")",
+      "PowerShell(pandoc -t markdown \"C:\\\\Users\\\\rojas\\\\Downloads\\\\Biblia_Arbol_de_los_Meridianos_6_Etapas.docx\" 2>&1)",
+      "PowerShell(supabase --version 2>&1)",
+      "Bash(git commit -m 'feat\\(calendar-071\\): unificar compromisos, calendario y movimientos *)",
+      "Bash(node supabase/scripts/apply_migration.mjs supabase/027_misiones_manuales.sql)",
+      "Bash(node supabase/scripts/inspect.mjs profiles)",
+      "Bash(node supabase/scripts/sql.mjs \"SELECT 1 as test\")",
+      "Bash(python -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\('Scripts:', list\\(p.get\\('scripts',{}\\).keys\\(\\)\\)\\); print\\('DevDeps:', list\\(p.get\\('devDependencies',{}\\).keys\\(\\)\\)\\)\")",
+      "Bash(npm test *)",
+      "PowerShell(python $script \"RPG gamification dark neon glow cultivation growth\" --design-system --motion 7 --variance 7 -p \"QloB RPG\" 2>&1)"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -84,7 +84,7 @@ export function CategoriaForm({ isOpen, onClose, editing, onSuccess }: Categoria
   const isLoading = createMutation.isPending || updateMutation.isPending
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar categoría' : 'Nueva categoría'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar categoría' : 'Nueva categoría'} theme="dark" accent="#64748B">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <EmojiPicker
           label="Ícono"

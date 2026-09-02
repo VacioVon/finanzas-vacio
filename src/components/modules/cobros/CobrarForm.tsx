@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -64,7 +64,7 @@ export function CobrarForm({ isOpen, onClose, cobro }: CobrarFormProps) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Registrar cobro">
+    <Modal isOpen={isOpen} onClose={onClose} title="Registrar cobro" theme="dark" accent="#00C2CB">
       {/* Info del cobro */}
       <div className="mb-5 p-3 rounded-2xl bg-ingreso-500/10 border border-ingreso-500/25">
         <p className="text-xs text-ingreso-400 font-semibold uppercase tracking-wide">

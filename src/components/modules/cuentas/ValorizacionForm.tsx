@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -56,7 +56,7 @@ export function ValorizacionForm({ isOpen, onClose, cuenta }: ValorizacionFormPr
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Actualizar valor">
+    <Modal isOpen={isOpen} onClose={onClose} title="Actualizar valor" theme="dark" accent="#10D97F">
       {/* Header de la cuenta */}
       <div
         className="flex items-center gap-3 mb-5 p-3 rounded-2xl"

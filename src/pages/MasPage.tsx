@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+﻿import { useNavigate } from 'react-router-dom'
 import {
   Wallet, Tag, Target, PiggyBank, CreditCard, ShoppingBag,
   RefreshCw, CalendarDays, Settings, ChevronRight, HandCoins, TrendingUp
@@ -48,7 +48,7 @@ export function MasPage() {
   const { profile } = useAuthStore()
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#9B5DE5">
       <Header title="Más" />
 
       <div className="space-y-4 pt-4 px-4 lg:px-0 pb-8">

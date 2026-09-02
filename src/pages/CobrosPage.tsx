@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { format, parseISO, differenceInDays } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
@@ -131,7 +131,7 @@ export function CobrosPage() {
   }, {})
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#00C2CB">
       <Header title="Por cobrar" />
 
       <div className="px-4 lg:px-0 pt-4 space-y-4 pb-8">

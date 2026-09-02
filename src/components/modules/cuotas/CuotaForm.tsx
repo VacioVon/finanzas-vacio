@@ -14,7 +14,30 @@ import { formatCLP } from '@/utils/currency'
 import { calcularTCT } from '@/utils/financial'
 import type { CuotaCredito } from '@/types/app.types'
 
-const EMOJIS_COMPRAS = ['🛍️','👟','📱','💻','🖥️','📺','🎮','🏠','🚗','✈️','🎓','💊','🛋️','⌚','📷','🎸','🏋️','👗','🧳','🎁']
+const EMOJIS_COMPRAS = [
+  // Tecnología
+  '📱','💻','🖥️','⌨️','🖱️','📷','📹','🎮','🕹️','⌚','📺','🔊','🎧','🖨️',
+  // Moda y calzado
+  '👟','👠','👜','👗','🧥','🧣','🧤','🕶️','💍','👒','🎩',
+  // Hogar
+  '🛍️','🛋️','🛏️','🪑','🚿','🪴','🧹','🧺','🍳','🫕','🧊',
+  // Deportes y fitness
+  '🏋️','🚲','⚽','🏀','🎾','🏊','🧘','🏄','🎿','🥊',
+  // Comida y restaurantes
+  '🍕','🍔','🍣','☕','🍷','🥗','🎂','🍦',
+  // Salud y bienestar
+  '💊','🩺','🏥','🧴','🪥','💉',
+  // Transporte
+  '🚗','🚕','✈️','🚢','🏍️','🛵',
+  // Educación y libros
+  '🎓','📚','📖','🖊️','🗒️',
+  // Entretenimiento
+  '🎸','🎹','🎺','🎭','🎬','🎟️','🎠',
+  // Viajes
+  '🧳','🗺️','🏖️','⛺','🎡',
+  // Regalos y otros
+  '🎁','🎀','💐','🌟','✨',
+]
 
 const schema = z.object({
   cuenta_id:               z.string().min(1, 'Selecciona la tarjeta'),
@@ -145,6 +168,8 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
       isOpen={isOpen}
       onClose={onClose}
       title={editing ? 'Editar compra en cuotas' : 'Registrar compra en cuotas'}
+      theme="dark"
+      accent="#2979FF"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
@@ -164,23 +189,30 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
 
         {/* Ícono */}
         <div>
-          <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">Ícono</label>
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {EMOJIS_COMPRAS.map(e => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => setValue('emoji', e)}
-                className={[
-                  'size-9 rounded-xl text-lg transition-all',
-                  selectedEmoji === e
-                    ? 'bg-brand-500/20 ring-2 ring-brand-500/60 scale-110'
-                    : 'bg-night-3 hover:bg-night-2'
-                ].join(' ')}
-              >
-                {e}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 mb-2">
+            <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">Ícono</label>
+            {selectedEmoji && (
+              <span className="text-xl leading-none">{selectedEmoji}</span>
+            )}
+          </div>
+          <div className="max-h-36 overflow-y-auto rounded-xl bg-night-3/60 p-2 border border-night-border/40">
+            <div className="flex flex-wrap gap-1.5">
+              {EMOJIS_COMPRAS.map(e => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => setValue('emoji', e)}
+                  className={[
+                    'size-9 rounded-xl text-lg transition-all flex-shrink-0',
+                    selectedEmoji === e
+                      ? 'bg-brand-500/30 ring-2 ring-brand-500/60 scale-110'
+                      : 'hover:bg-night-2 active:scale-95'
+                  ].join(' ')}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

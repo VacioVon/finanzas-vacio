@@ -21,6 +21,15 @@ import { formatCLP } from '@/utils/currency'
 import type { Movimiento, TipoMovimiento, ContextoPago } from '@/types/app.types'
 
 // ── Tokens visuales por tipo ─────────────────────────────────────
+const TIPO_ACCENT_HEX: Record<string, string> = {
+  gasto:        '#F4645F',
+  ingreso:      '#10D97F',
+  ahorro:       '#9B5DE5',
+  transferencia:'#00C2CB',
+  pago_deuda:   '#FFB703',
+  pago_tarjeta: '#2979FF',
+}
+
 const TIPO_THEME = {
   gasto: {
     accent:       'text-gasto-400',
@@ -384,7 +393,7 @@ export function MovimientoForm({
   const labelDark = 'text-xs font-medium text-slate-400'
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={title} theme="dark">
+    <Modal isOpen={isOpen} onClose={handleClose} title={title} theme="dark" accent={TIPO_ACCENT_HEX[tipoReal]}>
 
       {/* Volver — paso detalles */}
       {paso === 'detalles' && (

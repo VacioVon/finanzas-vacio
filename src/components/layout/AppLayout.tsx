@@ -4,18 +4,23 @@ import { StarField } from '@/components/ui/StarField'
 
 interface AppLayoutProps {
   children: ReactNode
+  nebula?: string  // color hex del módulo — tinta la nebula de fondo
 }
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children, nebula }: AppLayoutProps) {
   return (
     <div className="relative min-h-screen bg-background lg:flex">
       {/* Fondo de estrellas — fijo, detrás de todo, ambientación */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <StarField />
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 transition-all duration-700"
           style={{
-            background: [
+            background: nebula ? [
+              `radial-gradient(ellipse 70% 55% at 85% 5%,  ${nebula}14 0%, transparent 65%)`,
+              `radial-gradient(ellipse 55% 45% at 5%  90%,  ${nebula}0d 0%, transparent 60%)`,
+              'radial-gradient(ellipse 35% 30% at 50% 50%,  rgba(155,93,229,0.04) 0%, transparent 70%)',
+            ].join(', ') : [
               'radial-gradient(ellipse 60% 45% at 80% 10%,  rgba(155,93,229,0.08) 0%, transparent 65%)',
               'radial-gradient(ellipse 50% 40% at 10% 85%,  rgba(41,121,255,0.07) 0%, transparent 60%)',
               'radial-gradient(ellipse 35% 30% at 50% 50%,  rgba(16,217,127,0.03) 0%, transparent 70%)',

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -36,7 +36,7 @@ export function CuotasPage() {
   const totalPendiente    = activas.reduce((s, c) => s + c.monto_cuota * (c.cuotas_total - c.cuotas_pagadas), 0)
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#2979FF">
       <Header title="Compras en cuotas" />
 
       <div className="space-y-4 pt-4">

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Plus, Pencil, Trash2, PlusCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -219,7 +219,7 @@ export function CategoriasPage() {
   )
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#64748B">
       <Header title="Categorías" />
 
       <div className="space-y-3 pt-4">

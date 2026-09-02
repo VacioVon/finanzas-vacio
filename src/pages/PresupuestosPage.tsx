@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -32,7 +32,7 @@ export function PresupuestosPage() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#FFB703">
       <Header title="Presupuestos" />
 
       <div className="space-y-4 pt-4 px-4 lg:px-0">

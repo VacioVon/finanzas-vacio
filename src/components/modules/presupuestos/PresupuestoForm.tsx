@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -82,7 +82,7 @@ export function PresupuestoForm({
   const isLoading = createMutation.isPending || updateMutation.isPending
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar presupuesto' : 'Nuevo presupuesto'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar presupuesto' : 'Nuevo presupuesto'} theme="dark" accent="#FFB703">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {!editing && (
           <Select

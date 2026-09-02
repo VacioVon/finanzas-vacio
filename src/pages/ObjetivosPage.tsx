@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -21,7 +21,7 @@ export function ObjetivosPage() {
   const totalMeta     = activos.reduce((s, o) => s + o.monto_objetivo, 0)
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#9B5DE5">
       <Header title="Objetivos de Ahorro" />
 
       <div className="space-y-4 pt-4 px-4 lg:px-0 pb-8">

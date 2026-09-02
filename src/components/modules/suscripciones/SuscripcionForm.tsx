@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -136,7 +136,7 @@ export function SuscripcionForm({ isOpen, onClose, editing, onSuccess }: Props) 
   const isLoading           = createMutation.isPending || updateMutation.isPending
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar compromiso' : 'Nuevo compromiso'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar compromiso' : 'Nuevo compromiso'} theme="dark" accent="#00C2CB">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
         {/* Tipo de compromiso */}

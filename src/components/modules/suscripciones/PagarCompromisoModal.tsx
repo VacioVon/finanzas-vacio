@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -72,7 +72,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   const esEstimado = compromiso.monto_tipo === 'estimado'
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Registrar pago">
+    <Modal isOpen={isOpen} onClose={onClose} title="Registrar pago" theme="dark" accent="#00C2CB">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
         {/* Info del compromiso */}

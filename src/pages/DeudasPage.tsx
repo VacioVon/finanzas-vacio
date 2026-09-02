@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -36,7 +36,7 @@ export function DeudasPage() {
   const totalPagado    = totalOriginal - totalPendiente
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#F4645F">
       <Header title="Deudas" />
 
       <div className="space-y-4 pt-4">

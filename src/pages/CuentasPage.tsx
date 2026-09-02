@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -41,7 +41,7 @@ export function CuentasPage() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout nebula="#10D97F">
       <Header
         title="Cuentas"
         action={
