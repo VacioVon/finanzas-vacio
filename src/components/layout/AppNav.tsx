@@ -11,7 +11,7 @@ import { useAuthStore } from '@/store/authStore'
 const mobileNav = [
   { to: '/',            icon: Home,          label: 'Inicio'      },
   { to: '/movimientos', icon: ArrowLeftRight, label: 'Movimientos' },
-  { to: '/analisis',    icon: BarChart2,      label: 'Análisis'    },
+  { to: '/calendario',  icon: CalendarDays,   label: 'Calendario'  },
   { to: '/mas',         icon: MoreHorizontal, label: 'Más'         },
 ]
 
