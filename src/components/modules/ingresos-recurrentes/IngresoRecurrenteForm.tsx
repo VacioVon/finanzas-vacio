@@ -9,16 +9,18 @@ interface Props {
 }
 
 const FRECUENCIAS: { value: FrecuenciaIngreso; label: string }[] = [
-  { value: 'mensual',    label: 'Mensual'    },
-  { value: 'quincenal',  label: 'Quincenal'  },
-  { value: 'semanal',    label: 'Semanal'    },
-  { value: 'bimestral',  label: 'Bimestral'  },
+  { value: 'mensual',   label: 'Mensual'   },
+  { value: 'quincenal', label: 'Quincenal' },
+  { value: 'semanal',   label: 'Semanal'   },
+  { value: 'bimestral', label: 'Bimestral' },
 ]
 
+const FIELD_CLASS = 'w-full bg-night-3 border border-night-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none placeholder-slate-600'
+
 export function IngresoRecurrenteForm({ onClose }: Props) {
-  const { data: cuentas  = [] } = useCuentas()
-  const { data: fuentes  = [] } = useFuentesIngreso()
-  const crear    = useCreateIngresoRecurrente()
+  const { data: cuentas = [] } = useCuentas()
+  const { data: fuentes = [] } = useFuentesIngreso()
+  const crear       = useCreateIngresoRecurrente()
   const crearFuente = useCreateFuenteIngreso()
 
   const [form, setForm] = useState<CreateIngresoRecurrenteForm>({
@@ -32,10 +34,9 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
     tipo_fecha:      'fijo',
     nota:            '',
   })
-
-  const [nuevaFuente,    setNuevaFuente]    = useState('')
-  const [mostrarFuente,  setMostrarFuente]  = useState(false)
-  const [error,          setError]          = useState('')
+  const [nuevaFuente,   setNuevaFuente]   = useState('')
+  const [mostrarFuente, setMostrarFuente] = useState(false)
+  const [error,         setError]         = useState('')
 
   function set<K extends keyof CreateIngresoRecurrenteForm>(k: K, v: CreateIngresoRecurrenteForm[K]) {
     setForm(f => ({ ...f, [k]: v }))
@@ -52,76 +53,99 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!form.nombre.trim())       return setError('El nombre es requerido')
-    if (form.monto_esperado <= 0)  return setError('El monto debe ser mayor a 0')
+    if (!form.nombre.trim())                           return setError('El nombre es requerido')
+    if (form.monto_esperado <= 0)                      return setError('El monto debe ser mayor a 0')
     if (form.dia_esperado < 1 || form.dia_esperado > 31) return setError('Día inválido (1-31)')
-
     try {
       await crear.mutateAsync(form)
       onClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al crear el ingreso')
+      setError(err instanceof Error ? err.message : 'Error al guardar')
     }
   }
 
+  const ventanaMin = Math.max(1, form.dia_esperado - form.tolerancia_dias)
+  const ventanaMax = form.dia_esperado + form.tolerancia_dias
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+    /* Overlay */
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
+      {/*
+        El form usa flex-col con max-h-[90dvh].
+        - header: flex-shrink-0 (nunca se comprime)
+        - scroll-body: flex-1 overflow-y-auto (único lugar que hace scroll)
+        - footer: flex-shrink-0 + padding safe-area (siempre visible)
+      */}
       <form
         onSubmit={handleSubmit}
-        className="relative w-full max-w-sm bg-night-1 border border-night-border rounded-2xl overflow-hidden shadow-2xl max-h-[90dvh] overflow-y-auto"
+        className={[
+          'relative flex flex-col w-full max-w-sm',
+          'bg-night-1 border border-night-border shadow-2xl',
+          // Móvil: full-width bottom sheet redondeado arriba
+          // Desktop (sm+): centrado con bordes completos
+          'rounded-t-2xl sm:rounded-2xl',
+          'max-h-[90dvh]',
+        ].join(' ')}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-night-border/50 sticky top-0 bg-night-1 z-10">
-          <p className="text-base font-semibold text-white">Nuevo ingreso recurrente</p>
-          <button type="button" onClick={onClose} className="size-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-night-3/50 transition-colors" aria-label="Cerrar">
+
+        {/* ── HEADER fijo ─────────────────────────────────────── */}
+        <div className="flex-shrink-0 flex items-center justify-between px-5 pt-5 pb-4 border-b border-night-border/50">
+          <div>
+            <p className="text-base font-semibold text-white">Nuevo ingreso recurrente</p>
+            <p className="text-[11px] text-slate-500">Sueldo, honorarios u otro pago esperado</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="size-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-night-3/50 transition-colors"
+            aria-label="Cerrar"
+          >
             <X className="size-4" />
           </button>
         </div>
 
-        <div className="px-5 py-5 space-y-4">
-          {/* Nombre */}
+        {/* ── SCROLL BODY ──────────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+
+          {/* 1. Nombre */}
           <div>
-            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">
-              Nombre
-            </label>
+            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">Nombre</label>
             <input
               type="text"
+              autoFocus
               value={form.nombre}
               onChange={e => set('nombre', e.target.value)}
-              placeholder="Ej. Sueldo segunda parte"
-              className="w-full bg-night-3 border border-night-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-ingreso-500 placeholder-slate-600"
+              placeholder="Ej. Sueldo primera parte"
+              className={`${FIELD_CLASS} focus:border-ingreso-500`}
             />
           </div>
 
-          {/* Monto */}
+          {/* 2. Monto */}
           <div>
-            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">
-              Monto esperado
-            </label>
+            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">Monto esperado</label>
             <input
               type="number"
+              inputMode="numeric"
               value={form.monto_esperado || ''}
               onChange={e => set('monto_esperado', parseFloat(e.target.value) || 0)}
-              placeholder="150000"
-              className="w-full bg-night-3 border border-night-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-ingreso-500 tabular-nums placeholder-slate-600"
+              placeholder="650000"
+              className={`${FIELD_CLASS} tabular-nums focus:border-ingreso-500`}
             />
           </div>
 
-          {/* Frecuencia */}
+          {/* 3. Frecuencia */}
           <div>
-            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">
-              Frecuencia
-            </label>
-            <div className="grid grid-cols-2 gap-1.5 bg-night-3/40 rounded-xl p-1">
+            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">Frecuencia</label>
+            <div className="grid grid-cols-4 gap-1 bg-night-3/40 rounded-xl p-1">
               {FRECUENCIAS.map(f => (
                 <button
                   key={f.value}
                   type="button"
                   onClick={() => set('frecuencia', f.value)}
                   className={[
-                    'py-2 rounded-lg text-xs font-semibold transition-all',
+                    'py-2 rounded-lg text-[11px] font-semibold transition-all',
                     form.frecuencia === f.value
                       ? 'bg-night-2 text-slate-100 shadow'
                       : 'text-slate-500 hover:text-slate-400',
@@ -133,75 +157,71 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
             </div>
           </div>
 
-          {/* Tipo de fecha */}
-          <div>
-            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">
-              ¿La fecha es fija o aproximada?
-            </label>
-            <div className="flex gap-1.5 bg-night-3/40 rounded-xl p-1">
-              {([['fijo', 'Fecha fija'], ['aproximado', 'Fecha aproximada']] as const).map(([v, l]) => (
+          {/* 4. Fecha: tipo + día + tolerancia */}
+          <div className="space-y-3">
+            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block">Fecha esperada</label>
+            {/* Toggle fija / aproximada */}
+            <div className="flex gap-1 bg-night-3/40 rounded-xl p-1">
+              {(['fijo', 'aproximado'] as const).map(v => (
                 <button
                   key={v}
                   type="button"
-                  onClick={() => {
-                    set('tipo_fecha', v)
-                    if (v === 'fijo') set('tolerancia_dias', 0)
-                  }}
+                  onClick={() => { set('tipo_fecha', v); if (v === 'fijo') set('tolerancia_dias', 0) }}
                   className={[
-                    'flex-1 py-2 rounded-lg text-xs font-semibold transition-all',
+                    'flex-1 py-2 rounded-lg text-[11px] font-semibold transition-all',
                     form.tipo_fecha === v
                       ? 'bg-night-2 text-slate-100 shadow'
                       : 'text-slate-500 hover:text-slate-400',
                   ].join(' ')}
                 >
-                  {l}
+                  {v === 'fijo' ? 'Fecha fija' : 'Aproximada'}
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Día esperado + tolerancia */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">
-                Día esperado
-              </label>
-              <input
-                type="number"
-                min={1} max={31}
-                value={form.dia_esperado}
-                onChange={e => set('dia_esperado', parseInt(e.target.value) || 1)}
-                className="w-full bg-night-3 border border-night-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-ingreso-500 tabular-nums"
-              />
-            </div>
-            {form.tipo_fecha === 'aproximado' && (
+            <div className={`grid gap-3 ${form.tipo_fecha === 'aproximado' ? 'grid-cols-2' : 'grid-cols-1'}`}>
               <div>
-                <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">
-                  Tolerancia (días)
-                </label>
+                <label className="text-[10px] text-slate-600 block mb-1">Día del mes</label>
                 <input
                   type="number"
-                  min={1} max={15}
-                  value={form.tolerancia_dias}
-                  onChange={e => set('tolerancia_dias', parseInt(e.target.value) || 0)}
-                  className="w-full bg-night-3 border border-night-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-ingreso-500 tabular-nums"
+                  inputMode="numeric"
+                  min={1} max={31}
+                  value={form.dia_esperado}
+                  onChange={e => set('dia_esperado', parseInt(e.target.value) || 1)}
+                  className={`${FIELD_CLASS} tabular-nums focus:border-ingreso-500`}
                 />
-                <p className="text-[10px] text-slate-600 mt-1">
-                  Ventana: día {Math.max(1, form.dia_esperado - form.tolerancia_dias)} – {form.dia_esperado + form.tolerancia_dias}
-                </p>
               </div>
+              {form.tipo_fecha === 'aproximado' && (
+                <div>
+                  <label className="text-[10px] text-slate-600 block mb-1">
+                    Tolerancia (±días)
+                  </label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1} max={15}
+                    value={form.tolerancia_dias}
+                    onChange={e => set('tolerancia_dias', parseInt(e.target.value) || 1)}
+                    className={`${FIELD_CLASS} tabular-nums focus:border-ingreso-500`}
+                  />
+                </div>
+              )}
+            </div>
+
+            {form.tipo_fecha === 'aproximado' && form.tolerancia_dias > 0 && (
+              <p className="text-[11px] text-ingreso-400/70 tabular-nums">
+                Ventana de recepción: día {ventanaMin} – {ventanaMax}
+              </p>
             )}
           </div>
 
-          {/* Cuenta destino */}
+          {/* 5. Cuenta destino */}
           <div>
-            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">
-              Cuenta destino
-            </label>
+            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">Cuenta destino</label>
             <select
               value={form.cuenta_id ?? ''}
               onChange={e => set('cuenta_id', e.target.value || null)}
-              className="w-full bg-night-3 border border-night-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-ingreso-500"
+              className={`${FIELD_CLASS} focus:border-ingreso-500`}
             >
               <option value="">Sin cuenta específica</option>
               {cuentas.map(c => (
@@ -210,16 +230,16 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
             </select>
           </div>
 
-          {/* Fuente de ingreso (agrupador) */}
+          {/* 6. Fuente de ingreso */}
           <div>
             <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">
-              Fuente de ingreso (opcional)
+              Fuente <span className="normal-case font-normal text-slate-600">(opcional — agrupa pagos del mismo empleador)</span>
             </label>
             <div className="flex gap-2">
               <select
                 value={form.fuente_id ?? ''}
                 onChange={e => set('fuente_id', e.target.value || null)}
-                className="flex-1 bg-night-3 border border-night-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500"
+                className={`flex-1 ${FIELD_CLASS} focus:border-brand-500`}
               >
                 <option value="">Sin agrupar</option>
                 {fuentes.map(f => (
@@ -229,7 +249,7 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setMostrarFuente(v => !v)}
-                className="size-10 flex items-center justify-center rounded-xl bg-night-3 border border-night-border text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+                className="size-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-night-3 border border-night-border text-slate-400 hover:text-slate-200 transition-colors"
                 aria-label="Nueva fuente"
               >
                 <Plus className="size-4" />
@@ -242,7 +262,7 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
                   value={nuevaFuente}
                   onChange={e => setNuevaFuente(e.target.value)}
                   placeholder="Ej. Sueldo mensual"
-                  className="flex-1 bg-night-3 border border-night-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 placeholder-slate-600"
+                  className={`flex-1 ${FIELD_CLASS} focus:border-brand-500`}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleCrearFuente() } }}
                 />
                 <button
@@ -255,31 +275,32 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
                 </button>
               </div>
             )}
-            <p className="text-[10px] text-slate-600 mt-1">
-              Agrupa pagos del mismo empleador para ver el total combinado
-            </p>
           </div>
 
-          {/* Nota */}
+          {/* 7. Nota */}
           <div>
-            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">
-              Nota (opcional)
-            </label>
+            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">Nota <span className="normal-case font-normal text-slate-600">(opcional)</span></label>
             <input
               type="text"
               value={form.nota}
               onChange={e => set('nota', e.target.value)}
-              placeholder="Observaciones..."
-              className="w-full bg-night-3 border border-night-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 placeholder-slate-600"
+              placeholder="Ej. depósito con demora habitual"
+              className={`${FIELD_CLASS} focus:border-brand-500`}
             />
           </div>
+        </div>
 
+        {/* ── FOOTER fijo ──────────────────────────────────────── */}
+        <div
+          className="flex-shrink-0 px-5 pt-3 pb-5 border-t border-night-border/50 bg-night-1 space-y-2.5"
+          style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
+        >
           {error && (
-            <p className="text-xs text-gasto-400 bg-gasto-500/10 px-3 py-2 rounded-xl">{error}</p>
+            <p className="text-xs text-gasto-400 bg-gasto-500/10 px-3 py-2 rounded-xl text-pretty">
+              {error}
+            </p>
           )}
-
-          {/* Acciones */}
-          <div className="flex gap-2 pt-1">
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={onClose}
@@ -292,7 +313,7 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
               disabled={crear.isPending}
               className="flex-1 py-2.5 rounded-xl bg-ingreso-500 text-night-0 text-sm font-semibold hover:bg-ingreso-400 disabled:opacity-50 transition-colors"
             >
-              {crear.isPending ? 'Guardando…' : 'Guardar'}
+              {crear.isPending ? 'Guardando…' : 'Guardar ingreso'}
             </button>
           </div>
         </div>
