@@ -227,3 +227,42 @@ export function rpgNivelDesdeXP(xp: number): number {
   }
   return Math.min(nivel, 20)
 }
+
+// ── Misiones / Quests — HITO 06.8 ───────────────────────────
+
+export type TipoMision     = 'diaria' | 'semanal' | 'especial'
+export type DificultadMision = 'facil' | 'media' | 'dificil' | 'legendaria'
+export type EstadoMision   = 'pendiente' | 'en_progreso' | 'completada' | 'expirada'
+
+export interface MisionRPG {
+  mision_id:       string
+  clave:           string
+  nombre:          string
+  descripcion:     string
+  tipo:            TipoMision
+  dificultad:      DificultadMision
+  condicion_tipo:  string
+  condicion_valor: number
+  xp_recompensa:   number
+  stat_recompensa: string | null
+  stat_delta:      number
+  vida_delta:      number
+  orden_ui:        number
+  instancia_id:    string | null
+  estado:          EstadoMision
+  progreso:        number
+  periodo_inicio:  string
+  periodo_fin:     string
+  completada_at:   string | null
+}
+
+export interface VerificarMisionResultado {
+  ok:            boolean
+  error?:        string
+  ya_completada?: boolean
+  completada:    boolean
+  progreso:      number
+  objetivo:      number
+  xp_ganado:     number
+  rpg?:          RPGEventoRespuesta
+}

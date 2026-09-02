@@ -8,6 +8,7 @@ import { Header } from '@/components/layout/Header'
 import { Card } from '@/components/ui/Card'
 import { useAuthStore } from '@/store/authStore'
 import { RPGProfileCard } from '@/components/rpg/RPGProfileCard'
+import { MisionesPanel } from '@/components/rpg/misiones/MisionesPanel'
 
 interface MenuItemProps {
   icon:         React.ReactNode
@@ -85,6 +86,16 @@ export function MasPage() {
             Cultivo personal
           </p>
           <RPGProfileCard />
+        </div>
+
+        {/* ── Misiones ── */}
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-[.22em] text-slate-500 mb-2 px-1">
+            Misiones del cultivador
+          </p>
+          <Card>
+            <MisionesPanel />
+          </Card>
         </div>
 
         {/* Módulos — en desktop grid 2×N */}
