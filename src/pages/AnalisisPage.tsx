@@ -41,31 +41,33 @@ function DarkTooltip({ active, payload, label }: {
 
 // ─── Stat card con superficie ocean ──────────────────────────────────────────
 
-function StatCard({ label, monto, color }: {
+function StatCard({ label, valor, color, sub }: {
   label: string
-  monto: number
+  valor: string
   color: 'ingreso' | 'gasto' | 'ahorro' | 'neutral'
+  sub?: string
 }) {
   const colorMap = {
-    ingreso: 'text-ingreso-400',
-    gasto:   'text-gasto-400',
-    ahorro:  'text-ahorro-400',
-    neutral: 'text-white'
+    ingreso: { text: 'text-ingreso-400', bg: 'bg-ingreso-500/8 border-ingreso-500/15' },
+    gasto:   { text: 'text-gasto-400',   bg: 'bg-gasto-500/8   border-gasto-500/15'   },
+    ahorro:  { text: 'text-ahorro-400',  bg: 'bg-ahorro-500/8  border-ahorro-500/15'  },
+    neutral: { text: 'text-slate-300',   bg: 'bg-night-1       border-night-border/50' },
   }
   const Icon =
     color === 'ingreso' ? TrendingUp :
     color === 'gasto'   ? TrendingDown :
     Minus
 
+  const { text, bg } = colorMap[color]
+
   return (
-    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-night-1 border border-night-border/50">
+    <div className={`flex flex-col gap-1.5 p-3 rounded-2xl border ${bg}`}>
       <div className="flex items-center gap-1.5">
-        <Icon className={`h-3.5 w-3.5 ${colorMap[color]}`} />
-        <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">{label}</p>
+        <Icon className={`h-3 w-3 flex-shrink-0 ${text}`} />
+        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide truncate">{label}</p>
       </div>
-      <p className={`text-base font-bold tabular-nums ${colorMap[color]}`}>
-        {formatCLP(Math.abs(monto))}
-      </p>
+      <p className={`text-lg font-extrabold tabular-nums leading-none ${text}`}>{valor}</p>
+      {sub && <p className="text-[10px] text-slate-500 leading-none">{sub}</p>}
     </div>
   )
 }
@@ -140,16 +142,16 @@ export function AnalisisPage() {
       <div className="flex items-center justify-between px-4 lg:px-0 pt-4 pb-2">
         <button
           onClick={() => navegar(-1)}
-          className="size-9 flex items-center justify-center rounded-full hover:bg-night-1 transition-colors"
+          className="size-9 flex items-center justify-center rounded-full hover:bg-night-1 active:bg-night-2 transition-colors"
           aria-label="Mes anterior"
         >
           <ChevronLeft className="h-5 w-5 text-slate-400" />
         </button>
-        <p className="text-white font-semibold text-sm">{labelMesAnio(mes, anio)}</p>
+        <p className="text-white font-semibold text-sm capitalize">{labelMesAnio(mes, anio)}</p>
         <button
           onClick={() => navegar(1)}
           disabled={esMesActual}
-          className="size-9 flex items-center justify-center rounded-full hover:bg-night-1 transition-colors disabled:opacity-30"
+          className="size-9 flex items-center justify-center rounded-full hover:bg-night-1 active:bg-night-2 transition-colors disabled:opacity-30"
           aria-label="Mes siguiente"
         >
           <ChevronRight className="h-5 w-5 text-slate-400" />
@@ -162,57 +164,53 @@ export function AnalisisPage() {
           <SkeletonList count={4} />
         ) : (
           <>
-            {/* Stat cards — 3 col siempre */}
-            <div className="grid grid-cols-3 gap-2 lg:gap-3">
-              <StatCard label="Ingresos" monto={ingresos} color="ingreso" />
-              <StatCard label="Gastos"   monto={gastos}   color="gasto"   />
+            {/* Stat cards — 2 col en móvil, 4 en desktop */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
               <StatCard
-                label="Flujo"
-                monto={flujo}
+                label="Ingresos"
+                valor={formatCLP(ingresos)}
+                color="ingreso"
+              />
+              <StatCard
+                label="Gastos"
+                valor={formatCLP(gastos)}
+                color="gasto"
+              />
+              <StatCard
+                label="Flujo neto"
+                valor={formatCLP(Math.abs(flujo))}
                 color={flujo > 0 ? 'ingreso' : flujo < 0 ? 'gasto' : 'neutral'}
+                sub={flujo > 0 ? 'superávit' : flujo < 0 ? 'déficit' : 'equilibrio'}
+              />
+              <StatCard
+                label="Tasa ahorro"
+                valor={`${tasaAhorro}%`}
+                color={tasaAhorro >= 20 ? 'ingreso' : tasaAhorro >= 10 ? 'neutral' : 'gasto'}
+                sub={ingresos > 0 ? 'del ingreso' : 'sin ingresos'}
               />
             </div>
 
             {/* Desktop: tasa de ahorro + donut en 2 col / Móvil: stack */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-              {/* Tasa de ahorro */}
+              {/* Top categorías de gasto */}
               <Card variant="ocean">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-semibold text-slate-200">Tasa de ahorro</p>
-                  <span className={`text-lg font-bold tabular-nums ${tasaAhorro >= 20 ? 'text-ingreso-400' : tasaAhorro >= 10 ? 'text-xp-400' : 'text-gasto-400'}`}>
-                    {tasaAhorro}%
-                  </span>
-                </div>
-                <div className="h-2 bg-ocean-2 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${tasaAhorro >= 20 ? 'bg-ingreso-500' : tasaAhorro >= 10 ? 'bg-xp-500' : 'bg-gasto-500'}`}
-                    style={{ width: `${Math.min(tasaAhorro, 100)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  {ingresos === 0
-                    ? 'Sin ingresos registrados este período'
-                    : tasaAhorro >= 20
-                      ? 'Excelente — estás ahorrando más del 20%'
-                      : tasaAhorro >= 10
-                        ? 'Bien — intenta llegar al 20%'
-                        : 'Ajusta tus gastos para ahorrar más'
-                  }
-                </p>
-
-                {/* Top categorías compacto dentro del mismo card en desktop */}
-                {catData.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-night-border/50 space-y-3">
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Top categorías</p>
+                <p className="text-sm font-semibold text-slate-200 mb-4">Top categorías</p>
+                {catData.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-6">Sin gastos este período</p>
+                ) : (
+                  <div className="space-y-3">
                     {catData.slice(0, 5).map((cat, i) => {
                       const pct = totalGastos > 0 ? cat.monto / totalGastos * 100 : 0
                       const clr = cat.color && cat.color !== '#6B7280' ? cat.color : PIE_COLORS[i % PIE_COLORS.length]
                       return (
                         <div key={cat.id}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-slate-300">{cat.emoji} {cat.nombre}</span>
-                            <span className="text-xs text-slate-400 tabular-nums">{formatCLP(cat.monto)}</span>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs text-slate-300 truncate flex-1 mr-2">{cat.emoji} {cat.nombre}</span>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className="text-[10px] text-slate-500 tabular-nums">{Math.round(pct)}%</span>
+                              <span className="text-xs font-semibold text-slate-300 tabular-nums">{formatCLP(cat.monto)}</span>
+                            </div>
                           </div>
                           <div className="h-1.5 bg-ocean-2 rounded-full overflow-hidden">
                             <div

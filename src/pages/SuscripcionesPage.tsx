@@ -59,20 +59,40 @@ export function SuscripcionesPage() {
 
         {/* Resumen */}
         {activas.length > 0 && (
-          <div className="bg-night-2 rounded-2xl border border-night-border/60 px-4 py-3 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Equivalente mensual</p>
-              <p className="text-xl font-bold text-white tabular-nums">{formatCLP(Math.round(totalMensual))}</p>
+          <div className={[
+            'rounded-2xl border px-4 py-3',
+            vencidos > 0
+              ? 'bg-gasto-500/6 border-gasto-500/20'
+              : 'bg-night-2 border-night-border/60'
+          ].join(' ')}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-0.5">
+                  Compromiso mensual
+                </p>
+                <p className="text-2xl font-extrabold text-white tabular-nums leading-none">
+                  {formatCLP(Math.round(totalMensual))}
+                </p>
+              </div>
+              <div className="text-right space-y-1">
+                <p className="text-xs text-slate-400">
+                  {activas.length} activo{activas.length !== 1 ? 's' : ''}
+                </p>
+                {pausadas.length > 0 && (
+                  <p className="text-xs text-slate-500">
+                    {pausadas.length} pausado{pausadas.length !== 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-slate-400">{activas.length} activo{activas.length !== 1 ? 's' : ''}</p>
-              {vencidos > 0 && (
-                <p className="text-xs font-semibold text-gasto-400">{vencidos} vencido{vencidos !== 1 ? 's' : ''}</p>
-              )}
-              {pausadas.length > 0 && (
-                <p className="text-xs text-slate-500">{pausadas.length} pausado{pausadas.length !== 1 ? 's' : ''}</p>
-              )}
-            </div>
+            {vencidos > 0 && (
+              <div className="mt-3 flex items-center gap-2 py-2 px-3 rounded-xl bg-gasto-500/10 border border-gasto-500/20">
+                <span className="text-gasto-400 text-sm">⚠</span>
+                <p className="text-xs font-semibold text-gasto-300">
+                  {vencidos} compromiso{vencidos !== 1 ? 's' : ''} vencido{vencidos !== 1 ? 's' : ''} — registra el pago desde el Calendario
+                </p>
+              </div>
+            )}
           </div>
         )}
 
