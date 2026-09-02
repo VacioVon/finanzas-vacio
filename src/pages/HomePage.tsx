@@ -1,6 +1,5 @@
 import { AppLayout } from '@/components/layout/AppLayout'
 import { IngresosPendientesAlert } from '@/components/modules/ingresos-recurrentes/IngresosPendientesAlert'
-import { GreetingCard } from '@/components/modules/home/GreetingCard'
 import { AvailableBalance } from '@/components/modules/home/AvailableBalance'
 import { FinancialHealthWidget } from '@/components/modules/home/FinancialHealthWidget'
 import { PatrimonioNeto } from '@/components/modules/home/PatrimonioNeto'
@@ -16,6 +15,16 @@ import { useMovimientosDelMes } from '@/hooks/useMovimientos'
 import { useAportesObjetivosMes } from '@/hooks/useObjetivos'
 import { useTotalDeudasActivas } from '@/hooks/useDeudas'
 
+function ZoneSeparator({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-3 mt-1">
+      <div className="h-px flex-1 bg-night-border/40" />
+      <span className="text-[10px] font-semibold uppercase tracking-[.18em] text-slate-600">{label}</span>
+      <div className="h-px flex-1 bg-night-border/40" />
+    </div>
+  )
+}
+
 export function HomePage() {
   const { data: movimientosMes }   = useMovimientosDelMes()
   const { data: aportesMes }       = useAportesObjetivosMes()
@@ -25,16 +34,14 @@ export function HomePage() {
     .filter(m => m.tipo === 'ingreso')
     .reduce((s, m) => s + m.monto, 0)
 
-  // Excluir gastos para terceros del resumen personal
   const gastos = (movimientosMes ?? [])
     .filter(m => m.tipo === 'gasto' && !m.para_tercero)
     .reduce((s, m) => s + m.monto, 0)
 
-  // Ahorro contable (movimiento tipo='ahorro') + ahorro intencional (aportes a objetivos)
   const ahorrosContables  = (movimientosMes ?? [])
     .filter(m => m.tipo === 'ahorro')
     .reduce((s, m) => s + m.monto, 0)
-  const ahorrosObjetivos  = Math.max(0, aportesMes?.neto ?? 0)   // solo neto positivo
+  const ahorrosObjetivos  = Math.max(0, aportesMes?.neto ?? 0)
   const ahorros           = ahorrosContables + ahorrosObjetivos
 
   const puntajeSalud = (ingresos > 0 || gastos > 0)
@@ -43,10 +50,6 @@ export function HomePage() {
 
   return (
     <AppLayout>
-      {/* Saludo solo en móvil — en desktop el sidebar ya identifica al usuario */}
-      <div className="lg:hidden">
-        <GreetingCard />
-      </div>
 
       {/* ── Título desktop ── */}
       <div className="hidden lg:flex items-center justify-between mb-6">
@@ -61,23 +64,25 @@ export function HomePage() {
         )}
       </div>
 
+      {/* ══ ZONA 1 — Cultivador & Árbol de vida ═══════════════════ */}
+      <div className="mb-4">
+        <CultivationTree />
+      </div>
+
       {/* ══ ALERTA — ingresos esperados hoy ══════════════════════ */}
       <div className="mb-4">
         <IngresosPendientesAlert />
       </div>
 
-      {/* ══ HERO — protagonista visual único ══════════════════════ */}
+      {/* ══ ZONA 2 — Economía personal ════════════════════════════ */}
+      <ZoneSeparator label="Economía" />
+
       <div className="mb-4">
         <AvailableBalance />
       </div>
 
-      <div className="mb-4">
-        <CultivationTree />
-      </div>
-
-      {/* ══ FILA 1 — Patrimonio + Resumen del mes ════════════════ */}
+      {/* ══ Resumen mes + Patrimonio ══════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <PatrimonioNeto totalDeudas={totalDeudas} />
         {(ingresos > 0 || gastos > 0 || ahorros > 0) && (
           <MesSummary
             ingresos={ingresos}
@@ -86,15 +91,17 @@ export function HomePage() {
             ahorrosObjetivos={ahorrosObjetivos}
           />
         )}
+        <PatrimonioNeto totalDeudas={totalDeudas} />
       </div>
 
-      {/* ══ FILA 2 — Objetivos (gold) + Presupuestos ═════════════ */}
+      {/* ══ ZONA 3 — Progreso & Compromisos ══════════════════════ */}
+      <ZoneSeparator label="Progreso" />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <ObjetivosWidget />
         <PresupuestosWidget />
       </div>
 
-      {/* ══ FILA 3 — Deudas + Cuotas + Suscripciones ════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <DeudasWidget />
         <CuotasWidget />
@@ -102,9 +109,9 @@ export function HomePage() {
       </div>
 
       {/* ══ Últimos movimientos — full width ══════════════════════ */}
+      <ZoneSeparator label="Movimientos recientes" />
       <RecentMovements />
 
-      {/* Salud financiera solo en móvil (en desktop va en header) */}
       {puntajeSalud !== null && (
         <div className="lg:hidden mt-4">
           <FinancialHealthWidget puntaje={puntajeSalud} />

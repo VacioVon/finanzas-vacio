@@ -82,18 +82,26 @@ export function CultivationTree({ stats: statsProp }: CultivationTreeProps) {
         />
       </div>
 
-      {/* Stats footer — espejo de las capas del árbol */}
-      <div className="relative grid grid-cols-5 gap-1 border-t border-white/5 px-3 py-3 sm:px-6">
+      {/* Stats footer — atributos del cultivador */}
+      <div className="relative grid grid-cols-5 border-t border-white/5 px-3 py-3 sm:px-6">
         {([
-          ['Finanzas',     safeStats.finanzas,     'text-mover-400'],
-          ['Disciplina',   safeStats.disciplina,   'text-brand-400'],
-          ['Vitalidad',    safeStats.vitalidad,    'text-ingreso-400'],
-          ['Conocimiento', safeStats.conocimiento, 'text-ahorro-400'],
-          ['Trabajo',      safeStats.trabajo,      'text-xp-400'],
-        ] as const).map(([label, value, color]) => (
-          <div key={label} className="text-center">
-            <p className={`text-sm font-semibold tabular-nums ${color}`}>{Math.round(value)}</p>
-            <p className="mt-0.5 truncate text-[9px] text-slate-500">{label}</p>
+          ['💧', 'Finanzas',     safeStats.finanzas,     'text-mover-400',   '#00C2CB'],
+          ['⚡', 'Disciplina',   safeStats.disciplina,   'text-brand-400',   '#2979FF'],
+          ['🌿', 'Vitalidad',    safeStats.vitalidad,    'text-ingreso-400', '#10D97F'],
+          ['🔮', 'Conocimiento', safeStats.conocimiento, 'text-ahorro-400',  '#9B5DE5'],
+          ['🔥', 'Trabajo',      safeStats.trabajo,      'text-xp-400',      '#FFB703'],
+        ] as const).map(([emoji, label, value, color, hex]) => (
+          <div key={label} className="flex flex-col items-center gap-1 px-0.5">
+            <span className="text-sm leading-none">{emoji}</span>
+            <p className={`text-sm font-bold tabular-nums leading-none ${color}`}>{Math.round(value)}</p>
+            {/* Mini barra de progreso */}
+            <div className="w-full h-0.5 rounded-full bg-night-border/60">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${value}%`, backgroundColor: hex, opacity: 0.75 }}
+              />
+            </div>
+            <p className="truncate text-[10px] font-medium text-slate-500 leading-none">{label}</p>
           </div>
         ))}
       </div>
