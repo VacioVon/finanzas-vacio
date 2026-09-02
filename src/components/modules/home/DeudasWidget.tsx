@@ -51,7 +51,7 @@ export function DeudasWidget() {
         </span>
       </button>
 
-      <Card padding="none">
+      <Card padding="none" className="border-t-[3px] border-t-gasto-400/60">
         {/* Resumen total */}
         <div className="px-4 py-3 border-b border-night-border/40 flex items-center justify-between">
           <div className="flex items-center gap-2">

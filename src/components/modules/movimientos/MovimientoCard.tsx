@@ -48,6 +48,14 @@ const tipoBadgeVariant: Record<string, 'ingreso' | 'gasto' | 'ahorro' | 'mover' 
   transferencia: 'muted',
 }
 
+const tipoBorderL: Record<string, string> = {
+  ingreso:       'border-l-[3px] border-l-ingreso-400',
+  gasto:         'border-l-[3px] border-l-gasto-400',
+  ahorro:        'border-l-[3px] border-l-ahorro-400',
+  pago_deuda:    'border-l-[3px] border-l-xp-400',
+  transferencia: 'border-l-[3px] border-l-mover-400',
+}
+
 // Menú flotante con posición fija para evitar clipping en listas
 function ContextMenu({
   onEdit,
@@ -136,7 +144,7 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
 
   return (
     <>
-      <Card padding="sm" className="relative">
+      <Card padding="sm" className={`relative ${tipoBorderL[mov.tipo] ?? ''}`}>
         <div className="flex items-center gap-3">
           {/* Ícono categoría */}
           <div

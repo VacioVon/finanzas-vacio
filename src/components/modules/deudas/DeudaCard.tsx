@@ -62,8 +62,14 @@ export function DeudaCard({ deuda, onEdit, onPagar }: DeudaCardProps) {
     estadoMutation.mutate({ id: deuda.id, estado: 'activa' })
   }
 
+  const borderL = deuda.estado === 'pagada'
+    ? 'border-l-[3px] border-l-ingreso-400'
+    : deuda.estado === 'en_mora'
+      ? 'border-l-[3px] border-l-gasto-400'
+      : 'border-l-[3px] border-l-gasto-400/60'
+
   return (
-    <Card padding="sm" className="relative">
+    <Card padding="sm" className={`relative ${borderL}`}>
       {/* Cabecera */}
       <div className="flex items-start gap-3">
         <div

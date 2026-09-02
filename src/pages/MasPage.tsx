@@ -8,7 +8,7 @@ import { Header } from '@/components/layout/Header'
 import { Card } from '@/components/ui/Card'
 import { useAuthStore } from '@/store/authStore'
 import { RPGProfileCard } from '@/components/rpg/RPGProfileCard'
-import { MisionesPanel } from '@/components/rpg/misiones/MisionesPanel'
+import { MisionesSummary } from '@/components/rpg/misiones/MisionesSummary'
 
 interface MenuItemProps {
   icon:         React.ReactNode
@@ -16,15 +16,16 @@ interface MenuItemProps {
   description?: string
   onClick:      () => void
   badge?:       string
+  accent?:      string  // clases de color para el fondo del ícono
 }
 
-function MenuItem({ icon, label, description, onClick, badge }: MenuItemProps) {
+function MenuItem({ icon, label, description, onClick, badge, accent }: MenuItemProps) {
   return (
     <button
       onClick={onClick}
       className="w-full flex items-center gap-3 py-3.5 px-4 hover:bg-night-3/50 transition-colors first:rounded-t-2xl last:rounded-b-2xl"
     >
-      <div className="size-9 rounded-xl bg-night-3 flex items-center justify-center text-slate-400 flex-shrink-0">
+      <div className={`size-9 rounded-xl flex items-center justify-center flex-shrink-0 ${accent ?? 'bg-night-3 text-slate-400'}`}>
         {icon}
       </div>
       <div className="flex-1 text-left">
@@ -88,15 +89,8 @@ export function MasPage() {
           <RPGProfileCard />
         </div>
 
-        {/* ── Misiones ── */}
-        <div>
-          <p className="text-[10px] font-medium uppercase tracking-[.22em] text-slate-500 mb-2 px-1">
-            Misiones del cultivador
-          </p>
-          <Card>
-            <MisionesPanel />
-          </Card>
-        </div>
+        {/* ── Misiones — compacto con expand ── */}
+        <MisionesSummary />
 
         {/* Módulos — en desktop grid 2×N */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -108,24 +102,28 @@ export function MasPage() {
               label="Ingresos recurrentes"
               description="Sueldo y pagos esperados"
               onClick={() => navigate('/ingresos-recurrentes')}
+              accent="bg-ingreso-500/15 text-ingreso-400"
             />
             <MenuItem
               icon={<HandCoins className="h-4 w-4" />}
               label="Por cobrar"
               description="Gastos que hiciste para otros"
               onClick={() => navigate('/cobros')}
+              accent="bg-mover-500/15 text-mover-400"
             />
             <MenuItem
               icon={<RefreshCw className="h-4 w-4" />}
               label="Compromisos"
               description="Servicios y gastos fijos recurrentes"
               onClick={() => navigate('/compromisos')}
+              accent="bg-mover-500/15 text-mover-400"
             />
             <MenuItem
               icon={<CalendarDays className="h-4 w-4" />}
               label="Calendario"
               description="Próximos compromisos"
               onClick={() => navigate('/calendario')}
+              accent="bg-brand-500/15 text-brand-400"
             />
           </Card>
 
@@ -136,18 +134,21 @@ export function MasPage() {
               label="Compras en cuotas"
               description="Seguimiento de cuotas en tarjeta"
               onClick={() => navigate('/cuotas')}
+              accent="bg-brand-500/15 text-brand-400"
             />
             <MenuItem
               icon={<CreditCard className="h-4 w-4" />}
               label="Deudas"
               description="Créditos y préstamos externos"
               onClick={() => navigate('/deudas')}
+              accent="bg-gasto-500/15 text-gasto-400"
             />
             <MenuItem
               icon={<Target className="h-4 w-4" />}
               label="Presupuestos"
               description="Controla tus gastos por categoría"
               onClick={() => navigate('/presupuestos')}
+              accent="bg-xp-500/15 text-xp-400"
             />
           </Card>
 
@@ -158,6 +159,7 @@ export function MasPage() {
               label="Objetivos de Ahorro"
               description="Metas y progreso de ahorro"
               onClick={() => navigate('/objetivos')}
+              accent="bg-ahorro-500/15 text-ahorro-400"
             />
           </Card>
 
@@ -168,18 +170,21 @@ export function MasPage() {
               label="Cuentas"
               description="Administra tus cuentas"
               onClick={() => navigate('/cuentas')}
+              accent="bg-ingreso-500/10 text-ingreso-400"
             />
             <MenuItem
               icon={<Tag className="h-4 w-4" />}
               label="Categorías"
               description="Categorías y subcategorías"
               onClick={() => navigate('/categorias')}
+              accent="bg-night-3 text-slate-400"
             />
             <MenuItem
               icon={<Settings className="h-4 w-4" />}
               label="Ajustes"
               description="Perfil, tema, moneda, sueldo"
               onClick={() => navigate('/ajustes')}
+              accent="bg-night-3 text-slate-400"
             />
           </Card>
         </div>

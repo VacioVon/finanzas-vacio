@@ -37,8 +37,12 @@ export function CuotaCard({ cuota, onEdit }: CuotaCardProps) {
     deleteMutation.mutate(cuota.id)
   }
 
+  const borderL = completada
+    ? 'border-l-[3px] border-l-ingreso-400/60'
+    : 'border-l-[3px] border-l-brand-400'
+
   return (
-    <Card padding="sm" className={completada ? 'opacity-70' : ''}>
+    <Card padding="sm" className={`${borderL} ${completada ? 'opacity-70' : ''}`}>
       {/* Cabecera */}
       <div className="flex items-start gap-3">
         <div className="size-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 bg-night-3">
