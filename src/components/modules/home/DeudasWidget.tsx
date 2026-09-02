@@ -22,15 +22,15 @@ export function DeudasWidget() {
   if (todas.length === 0) {
     return (
       <div className="px-4 lg:px-0">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-slate-400">Deudas</h3>
-          <button
-            onClick={() => navigate('/deudas')}
-            className="text-xs text-brand-400 font-medium flex items-center gap-0.5 hover:text-brand-300 transition-colors"
-          >
+        <button
+          onClick={() => navigate('/deudas')}
+          className="w-full flex items-center justify-between mb-3 group"
+        >
+          <h3 className="text-sm font-semibold text-slate-400 group-hover:text-slate-300 transition-colors">Deudas</h3>
+          <span className="text-xs text-brand-400 font-medium flex items-center gap-0.5 group-hover:text-brand-300 transition-colors">
             Ver todas <ChevronRight className="h-3.5 w-3.5" />
-          </button>
-        </div>
+          </span>
+        </button>
         <Card padding="sm">
           <p className="text-sm text-slate-500 text-center py-3">Sin deudas activas 🎉</p>
         </Card>
@@ -40,15 +40,16 @@ export function DeudasWidget() {
 
   return (
     <div className="px-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-400">Deudas</h3>
-        <button
-          onClick={() => navigate('/deudas')}
-          className="text-xs text-brand-400 font-medium flex items-center gap-0.5 hover:text-brand-300 transition-colors"
-        >
+      {/* Header — área completa navegable */}
+      <button
+        onClick={() => navigate('/deudas')}
+        className="w-full flex items-center justify-between mb-3 group"
+      >
+        <h3 className="text-sm font-semibold text-slate-400 group-hover:text-slate-300 transition-colors">Deudas</h3>
+        <span className="text-xs text-brand-400 font-medium flex items-center gap-0.5 group-hover:text-brand-300 transition-colors">
           Ver todas <ChevronRight className="h-3.5 w-3.5" />
-        </button>
-      </div>
+        </span>
+      </button>
 
       <Card padding="none">
         {/* Resumen total */}
@@ -60,7 +61,7 @@ export function DeudasWidget() {
           <span className="text-sm font-bold text-gasto-400">{formatCLP(totalPendiente)}</span>
         </div>
 
-        {/* Lista compacta (máx. 3) */}
+        {/* Filas de deuda — cada una navegable */}
         {todas.slice(0, 3).map((deuda, i) => {
           const pagado  = deuda.monto_total - deuda.monto_pendiente
           const pct     = deuda.monto_total > 0
@@ -68,12 +69,16 @@ export function DeudasWidget() {
             : 0
 
           return (
-            <div
+            <button
               key={deuda.id}
-              className={`px-4 py-3 flex items-center gap-3 ${i < Math.min(todas.length, 3) - 1 ? 'border-b border-night-border/40' : ''}`}
+              onClick={() => navigate('/deudas')}
+              className={[
+                'w-full px-4 py-3 flex items-center gap-3 hover:bg-night-3/40 active:bg-night-3/60 transition-colors text-left',
+                i < Math.min(todas.length, 3) - 1 ? 'border-b border-night-border/40' : ''
+              ].join(' ')}
             >
               <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+                className="size-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
                 style={{ backgroundColor: `${deuda.categoria?.color ?? '#6B7280'}20` }}
               >
                 {deuda.categoria?.emoji ?? '💳'}
@@ -85,7 +90,6 @@ export function DeudasWidget() {
                     {formatCLP(deuda.monto_pendiente)}
                   </p>
                 </div>
-                {/* Barra de progreso mini */}
                 <div className="mt-1 h-1 bg-night-3 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-ingreso-400 rounded-full transition-all"
@@ -93,14 +97,14 @@ export function DeudasWidget() {
                   />
                 </div>
               </div>
-            </div>
+            </button>
           )
         })}
 
         {todas.length > 3 && (
           <button
             onClick={() => navigate('/deudas')}
-            className="w-full py-2.5 text-xs text-brand-400 font-medium border-t border-night-border/40 hover:bg-night-3/50 transition-colors rounded-b-2xl"
+            className="w-full py-2.5 text-xs text-brand-400 font-medium border-t border-night-border/40 hover:bg-night-3/50 active:bg-night-3/70 transition-colors rounded-b-2xl"
           >
             Ver {todas.length - 3} más
           </button>

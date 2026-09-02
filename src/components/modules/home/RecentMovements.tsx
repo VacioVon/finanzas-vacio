@@ -15,15 +15,18 @@ export function RecentMovements() {
 
   return (
     <div className="px-4 lg:px-0">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-400">Últimos movimientos</h3>
-        <button
-          onClick={() => navigate('/movimientos')}
-          className="flex items-center gap-0.5 text-xs text-brand-400 font-medium hover:text-brand-300 transition-colors"
-        >
+      {/* Header — área completa navegable */}
+      <button
+        onClick={() => navigate('/movimientos')}
+        className="w-full flex items-center justify-between mb-3 group"
+      >
+        <h3 className="text-sm font-semibold text-slate-400 group-hover:text-slate-300 transition-colors">
+          Últimos movimientos
+        </h3>
+        <span className="flex items-center gap-0.5 text-xs text-brand-400 font-medium group-hover:text-brand-300 transition-colors">
           Ver todos <ChevronRight className="h-3.5 w-3.5" />
-        </button>
-      </div>
+        </span>
+      </button>
 
       {!movimientos?.length ? (
         <Card>
@@ -37,31 +40,37 @@ export function RecentMovements() {
       ) : (
         <div className="space-y-2">
           {movimientos.map(mov => (
-            <Card key={mov.id} padding="sm">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg flex-shrink-0 border border-night-border/60"
-                  style={{ backgroundColor: `${mov.categoria?.color ?? '#6B7280'}18` }}
-                >
-                  {mov.categoria?.emoji ?? '💸'}
+            <button
+              key={mov.id}
+              onClick={() => navigate('/movimientos')}
+              className="w-full text-left"
+            >
+              <Card padding="sm" className="hover:border-night-border active:bg-night-3/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg flex-shrink-0 border border-night-border/60"
+                    style={{ backgroundColor: `${mov.categoria?.color ?? '#6B7280'}18` }}
+                  >
+                    {mov.categoria?.emoji ?? '💸'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-200 truncate">
+                      {mov.categoria?.nombre ?? 'Sin categoría'}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {mov.subcategoria?.nombre ? `${mov.subcategoria.nombre} · ` : ''}
+                      {formatDate(mov.fecha)}
+                    </p>
+                  </div>
+                  <CurrencyDisplay
+                    amount={mov.monto}
+                    size="sm"
+                    showSign
+                    tipo={mov.tipo}
+                  />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-200 truncate">
-                    {mov.categoria?.nombre ?? 'Sin categoría'}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {mov.subcategoria?.nombre ? `${mov.subcategoria.nombre} · ` : ''}
-                    {formatDate(mov.fecha)}
-                  </p>
-                </div>
-                <CurrencyDisplay
-                  amount={mov.monto}
-                  size="sm"
-                  showSign
-                  tipo={mov.tipo}
-                />
-              </div>
-            </Card>
+              </Card>
+            </button>
           ))}
         </div>
       )}
