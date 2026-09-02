@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { formatCLP } from '@/utils/currency'
 import { fechaFinCuota, fechaProximaCuota, formatMesAnio } from '@/utils/periodo'
+import { calcularTCT } from '@/utils/financial'
 import { usePagarCuota, useDeshacerPagoCuota, useDeleteCuota } from '@/hooks/useCuotas'
 import type { CuotaCredito } from '@/types/app.types'
 
@@ -23,6 +24,7 @@ export function CuotaCard({ cuota, onEdit }: CuotaCardProps) {
   const montoPagado    = cuota.monto_cuota * cuota.cuotas_pagadas
   const montoPendiente = cuota.monto_cuota * pendientes
   const completada     = cuota.estado === 'completada'
+  const tct            = calcularTCT(cuota.monto_total, cuota.interes, cuota.comision, cuota.cuotas_total)
 
   const proximaCuota = !completada
     ? formatMesAnio(fechaProximaCuota(cuota.fecha_inicio, cuota.cuotas_pagadas))
@@ -160,15 +162,23 @@ export function CuotaCard({ cuota, onEdit }: CuotaCardProps) {
         </div>
       </div>
 
-      {/* Costo financiero real cuando hay comisión */}
-      {cuota.comision > 0 && (
-        <div className="mt-2 pt-2 border-t border-night-border/40 flex items-center justify-between">
-          <span className="text-[10px] text-slate-500">
-            Costo real ({formatCLP(cuota.monto_total)} + {formatCLP(cuota.comision)} comisión)
-          </span>
-          <span className="text-xs font-bold text-slate-300 tabular-nums">
-            {formatCLP(cuota.monto_total + cuota.comision)}
-          </span>
+      {/* TCT y costo financiero real */}
+      {tct !== null && (
+        <div className="mt-2 pt-2 border-t border-night-border/40 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-slate-500">Tasa de Costo Total (TCT)</span>
+            <span className="text-xs font-bold text-gasto-400 tabular-nums">{tct}% anual</span>
+          </div>
+          {cuota.comision > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-500">
+                Costo total ({formatCLP(cuota.monto_total)} + {formatCLP(cuota.comision)} comisión)
+              </span>
+              <span className="text-[11px] font-semibold text-slate-400 tabular-nums">
+                {formatCLP(cuota.monto_total + cuota.comision)}
+              </span>
+            </div>
+          )}
         </div>
       )}
 

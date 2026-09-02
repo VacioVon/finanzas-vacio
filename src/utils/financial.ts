@@ -171,3 +171,26 @@ export function signMovimiento(tipo: string): '+' | '-' | '' {
   if (tipo === 'gasto' || tipo === 'ahorro' || tipo === 'pago_deuda') return '-'
   return ''
 }
+
+/**
+ * Calcula la Tasa de Costo Total (TCT) anual de una cuota de crédito.
+ * Fórmula simplificada (lineal sobre el principal):
+ *   TCT = (interés_total + comision) / monto_total / (meses / 12) × 100
+ * Devuelve null si no hay costo financiero o si los parámetros son inválidos.
+ */
+export function calcularTCT(
+  montoTotal:  number,
+  interes:     number,  // tasa anual %
+  comision:    number,  // cargo fijo adicional
+  cuotasTotal: number   // plazo en meses
+): number | null {
+  if (montoTotal <= 0 || cuotasTotal <= 0) return null
+  if (interes <= 0 && comision <= 0)       return null
+
+  const anos          = cuotasTotal / 12
+  const interesTotal  = montoTotal * (interes / 100) * anos
+  const costoExtra    = interesTotal + comision
+  const tct           = (costoExtra / montoTotal) / anos * 100
+
+  return Math.round(tct * 10) / 10  // 1 decimal
+}

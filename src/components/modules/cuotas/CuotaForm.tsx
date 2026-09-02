@@ -11,6 +11,7 @@ import { useCreateCuota, useUpdateCuota } from '@/hooks/useCuotas'
 import { useCuentas } from '@/hooks/useCuentas'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
+import { calcularTCT } from '@/utils/financial'
 import type { CuotaCredito } from '@/types/app.types'
 
 const EMOJIS_COMPRAS = ['🛍️','👟','📱','💻','🖥️','📺','🎮','🏠','🚗','✈️','🎓','💊','🛋️','⌚','📷','🎸','🏋️','👗','🧳','🎁']
@@ -65,11 +66,13 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
   const cuotasTotal      = watch('cuotas_total') ?? 0
   const cuotasPagadas    = Number(watch('cuotas_pagadas_inicial') ?? 0)
   const comision         = watch('comision') ?? 0
+  const interesWatch     = watch('interes') ?? 0
   const selectedEmoji    = watch('emoji')
 
   const esModoHistorial  = cuotasPagadas > 0
   const cuotasPendientes = Math.max(0, cuotasTotal - cuotasPagadas)
   const costoReal        = montoTotal + comision
+  const tctPreview       = calcularTCT(montoTotal, interesWatch, comision, cuotasTotal)
 
   useEffect(() => {
     if (montoTotal > 0 && cuotasTotal > 0 && !editing) {
@@ -305,12 +308,22 @@ export function CuotaForm({ isOpen, onClose, editing }: CuotaFormProps) {
           <p className="text-[10px] text-slate-500 mt-1">
             Ej: "IMPUESTO COMPRA CUOTAS". No altera el monto ni el cálculo de cuotas.
           </p>
-          {comision > 0 && montoTotal > 0 && (
-            <div className="mt-2 flex items-center justify-between px-3 py-2 bg-night-3 rounded-xl border border-night-border">
-              <span className="text-xs text-slate-400">
-                Costo financiero real ({formatCLP(montoTotal)} + {formatCLP(comision)})
-              </span>
-              <span className="text-sm font-bold text-white tabular-nums">{formatCLP(costoReal)}</span>
+          {(comision > 0 || interesWatch > 0) && montoTotal > 0 && cuotasTotal > 0 && (
+            <div className="mt-2 space-y-1.5 px-3 py-2.5 bg-night-3 rounded-xl border border-night-border">
+              {comision > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">
+                    Costo total ({formatCLP(montoTotal)} + {formatCLP(comision)} comisión)
+                  </span>
+                  <span className="text-xs font-bold text-slate-300 tabular-nums">{formatCLP(costoReal)}</span>
+                </div>
+              )}
+              {tctPreview !== null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">TCT estimada</span>
+                  <span className="text-xs font-bold text-gasto-400 tabular-nums">{tctPreview}% anual</span>
+                </div>
+              )}
             </div>
           )}
         </div>
