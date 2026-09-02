@@ -14,6 +14,7 @@ import { useCreateMovimiento, useUpdateMovimiento } from '@/hooks/useMovimientos
 import { useCreateCuota } from '@/hooks/useCuotas'
 import { useCrearGastoTercero } from '@/hooks/useCobros'
 import { useDeudas } from '@/hooks/useDeudas'
+import { useSuscripciones } from '@/hooks/useSuscripciones'
 import { ContextoPagoSelector } from '@/components/modules/deudas/ContextoPagoSelector'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
@@ -166,12 +167,14 @@ export function MovimientoForm({
   const [fechaVencimientoCobro, setFechaVencimientoCobro] = useState('')
   const [fondosTercero,         setFondosTercero]         = useState(false)
   const [comprobanteUrl,  setComprobante]     = useState<string | null>(null)
-  const [contextoPago,    setContextoPago]    = useState<ContextoPago | null>(null)
-  const [deudaVinculada,  setDeudaVinculada]  = useState<string | null>(null)
+  const [contextoPago,       setContextoPago]       = useState<ContextoPago | null>(null)
+  const [deudaVinculada,     setDeudaVinculada]     = useState<string | null>(null)
+  const [compromisoVinculado, setCompromisoVinculado] = useState<string | null>(null)
 
-  const { data: cuentas }    = useCuentas()
-  const { data: categorias } = useCategoriasByTipo(tipoToCategoriaTipo(tipo))
-  const { data: deudas }     = useDeudas()
+  const { data: cuentas }       = useCuentas()
+  const { data: categorias }    = useCategoriasByTipo(tipoToCategoriaTipo(tipo))
+  const { data: deudas }        = useDeudas()
+  const { data: suscripciones } = useSuscripciones()
   const createMutation            = useCreateMovimiento()
   const updateMutation            = useUpdateMovimiento()
   const createCuotaMutation       = useCreateCuota()
@@ -219,6 +222,7 @@ export function MovimientoForm({
     setPagoDeuda(false)
     setContextoPago(null)
     setDeudaVinculada(null)
+    setCompromisoVinculado(null)
 
     const source = editingMovimiento ?? duplicateFrom
     if (source) {
@@ -299,6 +303,7 @@ export function MovimientoForm({
       fondos_tercero:    skipDetalles ? false : (mostrarFondos ? fondosTercero : false),
       contexto_pago:     (!skipDetalles && mostrarContexto) ? contextoPago ?? undefined : undefined,
       deuda_id:          (!skipDetalles && mostrarContexto) ? deudaVinculada ?? undefined : undefined,
+      compromiso_id:     (!skipDetalles && tipo === 'gasto' && !pagoDeuda) ? compromisoVinculado ?? undefined : undefined,
     }
 
     const cuotaPayload = {
@@ -362,6 +367,7 @@ export function MovimientoForm({
     setPagoDeuda(false)
     setContextoPago(null)
     setDeudaVinculada(null)
+    setCompromisoVinculado(null)
     setPaso('principal')
     onClose()
   }
@@ -874,6 +880,42 @@ export function MovimientoForm({
                 </div>
               </button>
             </div>
+          )}
+
+          {/* Vincular a compromiso — solo gastos manuales */}
+          {tipo === 'gasto' && !pagoDeuda && !editingMovimiento && (
+            (() => {
+              const activasSusc = (suscripciones ?? []).filter(s => s.activa)
+              if (activasSusc.length === 0) return null
+              return (
+                <div>
+                  <label className={labelDark}>
+                    ¿Corresponde a un compromiso?{' '}
+                    <span className="text-slate-600 font-normal normal-case">(opcional)</span>
+                  </label>
+                  <div className="relative mt-1">
+                    <select
+                      value={compromisoVinculado ?? ''}
+                      onChange={e => setCompromisoVinculado(e.target.value || null)}
+                      className={`w-full h-11 rounded-xl border pl-3 pr-9 text-sm appearance-none outline-none transition-all ${inputDark}`}
+                    >
+                      <option value="">Sin vincular a compromiso</option>
+                      {activasSusc.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.emoji ?? '🔄'} {s.nombre} — {s.frecuencia}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">▾</span>
+                  </div>
+                  {compromisoVinculado && (
+                    <p className="text-[10px] text-mover-400 mt-1">
+                      ↳ Este gasto se vinculará al historial del compromiso seleccionado
+                    </p>
+                  )}
+                </div>
+              )
+            })()
           )}
 
           {/* Comprobante */}

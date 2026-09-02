@@ -1,30 +1,33 @@
 import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Plus, CheckCircle2, XCircle, ArrowRight, Loader2 } from 'lucide-react'
+import { Plus, CheckCircle2, XCircle, Loader2, CreditCard, AlertTriangle } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
 import { PlanificacionForm } from './PlanificacionForm'
+import { PagarCompromisoModal } from '@/components/modules/suscripciones/PagarCompromisoModal'
 import { usePlanificaciones } from '@/hooks/usePlanificaciones'
+import { useSuscripciones } from '@/hooks/useSuscripciones'
 import { formatCLP } from '@/utils/currency'
-import type { Planificacion } from '@/types/app.types'
+import type { Planificacion, Suscripcion } from '@/types/app.types'
 
-// ── Tipos para eventos comprometidos (compromisos/cuotas/deudas/sueldo) ──
+// ── Tipos para eventos comprometidos ────────────────────────────
 export interface EventoDia {
-  id:        string
-  tipo:      'compromiso' | 'cuota' | 'deuda' | 'sueldo' | 'cobro_esperado'
-  titulo:    string
-  subtitulo?: string
-  emoji?:    string
-  monto:     number | null  // null = sueldo (monto desconocido)
+  id:             string
+  tipo:           'compromiso' | 'cuota' | 'deuda' | 'sueldo' | 'cobro_esperado'
+  titulo:         string
+  subtitulo?:     string
+  emoji?:         string
+  monto:          number | null
+  suscripcionId?: string   // presente en compromisos — permite abrir PagarCompromisoModal
+  esPasado?:      boolean  // compromiso vencido no pagado
 }
 
 const TIPO_COLOR = {
-  sueldo:         { dot: 'bg-ingreso-500',           text: 'text-ingreso-400',  badge: 'bg-ingreso-500/15 border-ingreso-500/30'  },
-  compromiso:     { dot: 'bg-mover-500',             text: 'text-mover-400',    badge: 'bg-mover-500/15 border-mover-500/30'      },
-  cuota:          { dot: 'bg-brand-500',             text: 'text-brand-400',    badge: 'bg-brand-500/15 border-brand-500/30'      },
-  deuda:          { dot: 'bg-gasto-500',             text: 'text-gasto-400',    badge: 'bg-gasto-500/15 border-gasto-500/30'      },
-  cobro_esperado: { dot: 'border border-ingreso-500', text: 'text-ingreso-400', badge: 'bg-ingreso-500/10 border-ingreso-500/30'  },
+  sueldo:         { dot: 'bg-ingreso-500',            text: 'text-ingreso-400',  badge: 'bg-ingreso-500/15 border-ingreso-500/30'  },
+  compromiso:     { dot: 'bg-mover-500',              text: 'text-mover-400',    badge: 'bg-mover-500/15 border-mover-500/30'      },
+  cuota:          { dot: 'bg-brand-500',              text: 'text-brand-400',    badge: 'bg-brand-500/15 border-brand-500/30'      },
+  deuda:          { dot: 'bg-gasto-500',              text: 'text-gasto-400',    badge: 'bg-gasto-500/15 border-gasto-500/30'      },
+  cobro_esperado: { dot: 'border border-ingreso-500', text: 'text-ingreso-400',  badge: 'bg-ingreso-500/10 border-ingreso-500/30'  },
 }
 
 const PLAN_COLOR: Record<Planificacion['tipo'], { dot: string; text: string; label: string }> = {
@@ -35,19 +38,39 @@ const PLAN_COLOR: Record<Planificacion['tipo'], { dot: string; text: string; lab
 }
 
 interface Props {
-  isOpen:    boolean
-  onClose:   () => void
-  fecha:     string   // 'YYYY-MM-DD'
-  eventos:   EventoDia[]
+  isOpen:  boolean
+  onClose: () => void
+  fecha:   string    // 'YYYY-MM-DD'
+  eventos: EventoDia[]
 }
 
 export function DiaSheet({ isOpen, onClose, fecha, eventos }: Props) {
-  const [mostrarFormPlan, setMostrarFormPlan] = useState(false)
-  const [confirmando, setConfirmando]         = useState<string | null>(null)  // id de planificacion
-  const { planificaciones, convertir, cancelar } = usePlanificaciones()
+  const [mostrarFormPlan,    setMostrarFormPlan]    = useState(false)
+  const [confirmando,        setConfirmando]        = useState<string | null>(null)
+  const [pagandoCompromiso,  setPagandoCompromiso]  = useState<Suscripcion | null>(null)
+  const [alertaDuplicado,    setAlertaDuplicado]    = useState(false)
 
-  const plansDia = planificaciones.filter(p => p.fecha === fecha)
+  const { planificaciones, convertir, cancelar } = usePlanificaciones()
+  const { data: suscripciones = [] }             = useSuscripciones()
+
+  const plansDia   = planificaciones.filter(p => p.fecha === fecha && p.estado === 'pendiente')
   const tituloFecha = format(parseISO(fecha), "EEEE d 'de' MMMM", { locale: es })
+
+  // Compromisos de este día (para alerta de duplicado al planificar)
+  const compromisosEnDia = eventos.filter(ev => ev.tipo === 'compromiso' && ev.suscripcionId)
+
+  function abrirPagarCompromiso(suscripcionId: string) {
+    const s = suscripciones.find(x => x.id === suscripcionId) ?? null
+    if (s) setPagandoCompromiso(s)
+  }
+
+  function handlePlanificar() {
+    if (compromisosEnDia.length > 0 && plansDia.length === 0) {
+      setAlertaDuplicado(true)
+    } else {
+      setMostrarFormPlan(true)
+    }
+  }
 
   async function handleConvertir(id: string) {
     await convertir.mutateAsync(id)
@@ -72,26 +95,57 @@ export function DiaSheet({ isOpen, onClose, fecha, eventos }: Props) {
               <div className="space-y-2">
                 {eventos.map(ev => {
                   const colors = TIPO_COLOR[ev.tipo]
+                  const pagable = ev.tipo === 'compromiso' && !!ev.suscripcionId
+
                   return (
-                    <div key={ev.id} className="flex items-center justify-between bg-night-2 rounded-xl px-3 py-2.5">
-                      <div className="flex items-center gap-2.5">
-                        {/* Dot sólido = comprometido */}
-                        <span className={`h-2 w-2 rounded-full flex-shrink-0 ${colors.dot}`} />
-                        <div>
-                          <p className="text-sm text-white leading-tight">
-                            {ev.emoji ? `${ev.emoji} ` : ''}{ev.titulo}
-                          </p>
-                          {ev.subtitulo && (
-                            <p className="text-[10px] text-slate-500">{ev.subtitulo}</p>
-                          )}
+                    <div
+                      key={ev.id}
+                      className={[
+                        'rounded-xl border overflow-hidden',
+                        ev.esPasado
+                          ? 'border-gasto-500/30 bg-gasto-500/5'
+                          : 'border-night-border/60 bg-night-2'
+                      ].join(' ')}
+                    >
+                      <div className="flex items-center justify-between px-3 py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <span className={`h-2 w-2 rounded-full flex-shrink-0 ${colors.dot}`} />
+                          <div>
+                            <p className="text-sm text-white leading-tight">
+                              {ev.emoji ? `${ev.emoji} ` : ''}{ev.titulo}
+                            </p>
+                            {ev.subtitulo && (
+                              <p className="text-[10px] text-slate-500">{ev.subtitulo}</p>
+                            )}
+                            {ev.esPasado && (
+                              <p className="text-[10px] text-gasto-400 flex items-center gap-1 mt-0.5">
+                                <AlertTriangle className="size-2.5" /> Vencido — pendiente de pago
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {ev.monto !== null
+                            ? <span className={`text-sm font-semibold ${colors.text}`}>
+                                −{formatCLP(ev.monto)}
+                              </span>
+                            : <span className="text-[10px] text-slate-500">Monto no configurado</span>
+                          }
                         </div>
                       </div>
-                      {ev.monto !== null
-                        ? <span className={`text-sm font-semibold ${colors.text}`}>
-                            −{formatCLP(ev.monto)}
-                          </span>
-                        : <span className="text-[10px] text-slate-500">Monto no configurado</span>
-                      }
+
+                      {/* Botón Pagar — solo compromisos */}
+                      {pagable && (
+                        <div className="border-t border-night-border/40 px-3 py-2">
+                          <button
+                            className="flex items-center gap-1.5 text-[11px] text-mover-400 hover:text-mover-300 transition-colors font-medium"
+                            onClick={() => abrirPagarCompromiso(ev.suscripcionId!)}
+                          >
+                            <CreditCard className="h-3 w-3" />
+                            Registrar pago
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -111,15 +165,14 @@ export function DiaSheet({ isOpen, onClose, fecha, eventos }: Props) {
 
             <div className="space-y-2">
               {plansDia.map(plan => {
-                const colors = PLAN_COLOR[plan.tipo]
+                const colors         = PLAN_COLOR[plan.tipo]
                 const isConvirtiendo = convertir.isPending && confirmando === plan.id
-                const isCancelando  = cancelar.isPending
+                const isCancelando   = cancelar.isPending
 
                 return (
-                  <div key={plan.id} className="bg-night-2 rounded-xl overflow-hidden">
+                  <div key={plan.id} className="bg-night-2 rounded-xl overflow-hidden border border-night-border/40">
                     <div className="flex items-center justify-between px-3 py-2.5">
                       <div className="flex items-center gap-2.5">
-                        {/* Dot outline = planificado */}
                         <span className={`h-2 w-2 rounded-full flex-shrink-0 bg-transparent ${colors.dot}`} />
                         <div>
                           <p className="text-sm text-white leading-tight">
@@ -172,7 +225,7 @@ export function DiaSheet({ isOpen, onClose, fecha, eventos }: Props) {
                         </div>
                       </div>
                     ) : (
-                      <div className="border-t border-night-border/40 px-3 py-2 flex gap-2">
+                      <div className="border-t border-night-border/40 px-3 py-2 flex gap-3">
                         <button
                           className="flex items-center gap-1 text-[11px] text-ingreso-500 hover:text-ingreso-400 transition-colors"
                           onClick={() => setConfirmando(plan.id)}
@@ -196,14 +249,43 @@ export function DiaSheet({ isOpen, onClose, fecha, eventos }: Props) {
               })}
             </div>
 
+            {/* Alerta de posible duplicado */}
+            {alertaDuplicado && (
+              <div className="mt-2 p-3 rounded-xl border border-xp-500/30 bg-xp-500/8">
+                <p className="text-xs font-semibold text-xp-300 mb-1">
+                  ⚠ Este día ya tiene {compromisosEnDia.length === 1 ? 'un compromiso' : 'compromisos'} registrado{compromisosEnDia.length !== 1 ? 's' : ''}
+                </p>
+                <p className="text-[10px] text-slate-400 mb-2">
+                  {compromisosEnDia.map(e => `${e.emoji ?? ''} ${e.titulo}`).join(', ')}.
+                  Para registrar el pago, usa el botón «Registrar pago» de arriba.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setAlertaDuplicado(false)}
+                    className="flex-1 py-1.5 text-[11px] rounded-lg bg-night-3 text-slate-400 hover:text-white transition-colors"
+                  >
+                    Entendido
+                  </button>
+                  <button
+                    onClick={() => { setAlertaDuplicado(false); setMostrarFormPlan(true) }}
+                    className="flex-1 py-1.5 text-[11px] rounded-lg border border-brand-500/30 text-brand-400 hover:bg-brand-500/10 transition-colors"
+                  >
+                    Planificar de todos modos
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Botón planificar */}
-            <button
-              className="w-full mt-2 py-2.5 rounded-xl border border-dashed border-night-border text-slate-500 hover:border-brand-500/50 hover:text-brand-400 transition-colors flex items-center justify-center gap-1.5 text-xs"
-              onClick={() => setMostrarFormPlan(true)}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Planificar para este día
-            </button>
+            {!alertaDuplicado && (
+              <button
+                className="w-full mt-2 py-2.5 rounded-xl border border-dashed border-night-border text-slate-500 hover:border-brand-500/50 hover:text-brand-400 transition-colors flex items-center justify-center gap-1.5 text-xs"
+                onClick={handlePlanificar}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Planificar para este día
+              </button>
+            )}
           </section>
 
           {/* Vacío total */}
@@ -214,6 +296,13 @@ export function DiaSheet({ isOpen, onClose, fecha, eventos }: Props) {
           )}
         </div>
       </Modal>
+
+      {/* PagarCompromisoModal — se abre al tocar "Registrar pago" en un compromiso */}
+      <PagarCompromisoModal
+        isOpen={!!pagandoCompromiso}
+        onClose={() => setPagandoCompromiso(null)}
+        compromiso={pagandoCompromiso}
+      />
 
       <PlanificacionForm
         isOpen={mostrarFormPlan}

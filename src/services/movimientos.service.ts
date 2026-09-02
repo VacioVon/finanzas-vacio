@@ -125,6 +125,7 @@ export async function createMovimiento(
     cuenta_destino_id:  form.cuenta_destino_id || null,
     objetivo_ahorro_id: form.objetivo_ahorro_id || null,
     deuda_id:           form.deuda_id || null,
+    compromiso_id:      form.compromiso_id || null,
     contexto_pago:      form.contexto_pago || null,
     capital:            form.capital ?? null,
     interes_pago:       form.interes_pago ?? null,

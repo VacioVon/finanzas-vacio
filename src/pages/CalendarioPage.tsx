@@ -13,7 +13,7 @@ import { useAuthStore } from '@/store/authStore'
 import {
   addDays, addMonths, differenceInDays, format, parseISO,
   setDate, startOfMonth, getDaysInMonth, getDay, isSameMonth,
-  isSameDay, isToday
+  isToday
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { AlertTriangle, TrendingDown, TrendingUp, Wallet, Target } from 'lucide-react'
@@ -29,14 +29,47 @@ type Rango = typeof RANGOS[number]
 type EventoTipo = 'compromiso' | 'cuota' | 'deuda' | 'sueldo' | 'cobro_esperado'
 
 interface EventoCalendario {
-  fecha:       string
-  tipo:        EventoTipo
-  emoji:       string
-  titulo:      string
-  subtitulo?:  string
-  monto:       number | null   // null = sueldo (monto desconocido)
-  delta:       number          // impacto en saldo: negativo = egreso, 0 = informativo
-  esEstimado?: boolean         // true = monto_tipo 'estimado', mostrar ~ y tratar distinto en proyección
+  fecha:          string
+  tipo:           EventoTipo
+  emoji:          string
+  titulo:         string
+  subtitulo?:     string
+  monto:          number | null   // null = sueldo (monto desconocido)
+  delta:          number          // impacto en saldo: negativo = egreso, 0 = informativo
+  esEstimado?:    boolean         // true = monto_tipo 'estimado'
+  suscripcionId?: string          // para abrir PagarCompromisoModal desde el calendario
+  esPasado?:      boolean         // compromiso vencido aún no pagado
+}
+
+// Proyecta TODAS las ocurrencias de un compromiso dentro del rango dado
+function siguienteFrecuencia(d: Date, frecuencia: string): Date {
+  switch (frecuencia) {
+    case 'semanal':    return addDays(d, 7)
+    case 'quincenal':  return addDays(d, 15)
+    case 'bimestral':  return addMonths(d, 2)
+    case 'trimestral': return addMonths(d, 3)
+    case 'semestral':  return addMonths(d, 6)
+    case 'anual':      return addMonths(d, 12)
+    default:           return addMonths(d, 1)  // mensual
+  }
+}
+
+function proyectarOcurrencias(
+  proxima: Date,
+  frecuencia: string,
+  desde: Date,
+  hasta: Date
+): Date[] {
+  const fechas: Date[] = []
+  let f = proxima
+  // Si proxima es pasada, avanzar hasta la primera >= desde
+  // (pero incluimos la última pasada si está pendiente de pago)
+  while (f < desde) f = siguienteFrecuencia(f, frecuencia)
+  while (f <= hasta) {
+    fechas.push(f)
+    f = siguienteFrecuencia(f, frecuencia)
+  }
+  return fechas
 }
 
 // Color por tipo de evento comprometido
@@ -399,17 +432,38 @@ export function CalendarioPage() {
 
     for (const s of suscripciones) {
       if (!s.activa || !s.proxima_fecha) continue
-      const fecha = parseISO(s.proxima_fecha)
-      if (fecha > hoy && fecha <= limite) {
+      const proxima = parseISO(s.proxima_fecha)
+
+      // Incluir la próxima vencida si aún no fue pagada (proxy: proxima_fecha < hoy)
+      const hayVencida = proxima < hoy
+      if (hayVencida) {
         lista.push({
-          fecha:      s.proxima_fecha,
-          tipo:       'compromiso',
-          emoji:      s.emoji ?? '🔄',
-          titulo:     s.nombre,
-          subtitulo:  s.cuenta?.nombre,
-          monto:      s.monto,
-          delta:      -s.monto,
-          esEstimado: s.monto_tipo === 'estimado',
+          fecha:         s.proxima_fecha,
+          tipo:          'compromiso',
+          emoji:         s.emoji ?? '🔄',
+          titulo:        s.nombre,
+          subtitulo:     s.cuenta?.nombre,
+          monto:         s.monto,
+          delta:         -s.monto,
+          esEstimado:    s.monto_tipo === 'estimado',
+          suscripcionId: s.id,
+          esPasado:      true,
+        })
+      }
+
+      // Proyectar todas las ocurrencias dentro del rango
+      const ocurrencias = proyectarOcurrencias(proxima, s.frecuencia, hoy, limite)
+      for (const fecha of ocurrencias) {
+        lista.push({
+          fecha:         format(fecha, 'yyyy-MM-dd'),
+          tipo:          'compromiso',
+          emoji:         s.emoji ?? '🔄',
+          titulo:        s.nombre,
+          subtitulo:     s.cuenta?.nombre,
+          monto:         s.monto,
+          delta:         -s.monto,
+          esEstimado:    s.monto_tipo === 'estimado',
+          suscripcionId: s.id,
         })
       }
     }
@@ -612,12 +666,14 @@ export function CalendarioPage() {
     return eventos
       .filter(ev => ev.fecha === diaSheetFecha)
       .map(ev => ({
-        id:        `${ev.tipo}-${ev.fecha}-${ev.titulo}`,
-        tipo:      ev.tipo,
-        titulo:    ev.titulo,
-        subtitulo: ev.subtitulo,
-        emoji:     ev.emoji,
-        monto:     ev.monto,
+        id:            `${ev.tipo}-${ev.fecha}-${ev.titulo}`,
+        tipo:          ev.tipo,
+        titulo:        ev.titulo,
+        subtitulo:     ev.subtitulo,
+        emoji:         ev.emoji,
+        monto:         ev.monto,
+        suscripcionId: ev.suscripcionId,
+        esPasado:      ev.esPasado,
       }))
   }, [eventos, diaSheetFecha])
 
@@ -732,8 +788,8 @@ export function CalendarioPage() {
                                 ) : (
                                   <span className="text-xs text-slate-600 italic">monto ?</span>
                                 )}
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${c.badge}`}>
-                                  {TIPO_LABEL[ev.tipo]}
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${ev.esPasado ? 'bg-gasto-500/20 text-gasto-300 border-gasto-500/40' : c.badge}`}>
+                                  {ev.esPasado ? 'Vencido' : TIPO_LABEL[ev.tipo]}
                                 </span>
                               </div>
                             </div>

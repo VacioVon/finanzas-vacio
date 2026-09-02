@@ -278,6 +278,7 @@ export interface MovimientoFormData {
   cuenta_destino_id?: string
   objetivo_ahorro_id?: string
   deuda_id?: string
+  compromiso_id?: string
   contexto_pago?: ContextoPago
   monto: number
   capital?: number
