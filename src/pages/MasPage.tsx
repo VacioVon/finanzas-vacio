@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import {
   Wallet, Tag, Target, PiggyBank, CreditCard, ShoppingBag,
-  RefreshCw, CalendarDays, Settings, ChevronRight, HandCoins, Sprout
+  RefreshCw, CalendarDays, Settings, ChevronRight, HandCoins, Sprout, TrendingUp
 } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -103,6 +103,12 @@ export function MasPage() {
 
           {/* Herramientas */}
           <Card padding="none" className="divide-y divide-night-border/40">
+            <MenuItem
+              icon={<TrendingUp className="h-4 w-4" />}
+              label="Ingresos recurrentes"
+              description="Sueldo y pagos esperados"
+              onClick={() => navigate('/ingresos-recurrentes')}
+            />
             <MenuItem
               icon={<HandCoins className="h-4 w-4" />}
               label="Por cobrar"

@@ -1,4 +1,5 @@
 import { AppLayout } from '@/components/layout/AppLayout'
+import { IngresosPendientesAlert } from '@/components/modules/ingresos-recurrentes/IngresosPendientesAlert'
 import { GreetingCard } from '@/components/modules/home/GreetingCard'
 import { AvailableBalance } from '@/components/modules/home/AvailableBalance'
 import { FinancialHealthWidget } from '@/components/modules/home/FinancialHealthWidget'
@@ -58,6 +59,11 @@ export function HomePage() {
             </span>
           </span>
         )}
+      </div>
+
+      {/* ══ ALERTA — ingresos esperados hoy ══════════════════════ */}
+      <div className="mb-4">
+        <IngresosPendientesAlert />
       </div>
 
       {/* ══ HERO — protagonista visual único ══════════════════════ */}
