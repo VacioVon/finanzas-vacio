@@ -308,3 +308,35 @@ export interface VerificarMisionResultado {
   xp_ganado:     number
   rpg?:          RPGEventoRespuesta
 }
+
+// ── Misiones Manuales — HITO 08.2 ───────────────────────────
+export interface MisionManual {
+  id:             string
+  clave:          string
+  camino:         CaminoMision
+  nombre:         string
+  descripcion:    string | null
+  emoji:          string
+  xp_recompensa:  number
+  stat_key:       CaminoMision
+  cooldown_horas: number
+  orden_ui:       number
+}
+
+export interface MisionManualLog {
+  id:            string
+  mision_id:     string
+  xp_otorgada:   number
+  dia:           string
+  completada_at: string
+}
+
+export interface CompletarMisionManualResult {
+  ok:             boolean
+  error?:         string
+  xp_otorgada?:   number
+  xp_hoy?:        number
+  cap_diario?:    number
+  disponible_en?: string
+  rpg?:           RPGEventoRespuesta
+}
