@@ -18,6 +18,7 @@ export async function createDeuda(userId: string, form: DeudaFormData): Promise<
     .insert({
       usuario_id:        userId,
       nombre:            form.nombre,
+      tipo_deuda:        form.tipo_deuda      ?? null,
       categoria_id:      form.categoria_id    || null,
       monto_total:       form.monto_total,
       monto_pendiente:   form.monto_total,     // empieza igual al total
@@ -43,6 +44,7 @@ export async function updateDeuda(id: string, form: Partial<DeudaFormData>): Pro
     .from('deudas')
     .update({
       ...(form.nombre             !== undefined && { nombre:            form.nombre }),
+      ...(form.tipo_deuda         !== undefined && { tipo_deuda:        form.tipo_deuda || null }),
       ...(form.categoria_id       !== undefined && { categoria_id:      form.categoria_id || null }),
       ...(form.monto_total        !== undefined && { monto_total:       form.monto_total }),
       ...(form.cuotas_total       !== undefined && { cuotas_total:      form.cuotas_total }),

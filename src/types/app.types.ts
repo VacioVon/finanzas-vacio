@@ -1,5 +1,6 @@
 export type TipoCuenta = 'bancaria' | 'digital' | 'debito' | 'credito' | 'efectivo' | 'inversion'
-export type TipoMovimiento = 'ingreso' | 'gasto' | 'ahorro' | 'pago_deuda' | 'transferencia'
+export type TipoMovimiento = 'ingreso' | 'gasto' | 'ahorro' | 'pago_deuda' | 'transferencia' | 'pago_tarjeta'
+export type TipoDeuda = 'credito_consumo' | 'prestamo_personal' | 'credito_comercial' | 'deuda_persona' | 'tarjeta_credito' | 'otra'
 export type TipoCategoria = 'gasto' | 'ingreso' | 'ahorro' | 'inversion'
 export type EstadoDeuda = 'activa' | 'pagada' | 'en_mora'
 export type EstadoObjetivo = 'activo' | 'completado' | 'pausado'
@@ -134,6 +135,10 @@ export interface Movimiento {
   comision: number                 // cargo adicional (impuesto/fee) asociado a la compra; default 0
   para_tercero: boolean            // gasto realizado para otra persona
   tercero_nombre: string | null    // nombre de quien debe reembolsar
+  fondos_tercero: boolean          // ingreso recibido en nombre de otra persona
+  movimiento_origen_id: string | null
+  capital: number | null           // desglose pago deuda: monto capital
+  interes_pago: number | null      // desglose pago deuda: monto interés
   created_at: string
   updated_at: string
   categoria?: Categoria
@@ -175,6 +180,7 @@ export interface Deuda {
   id: string
   usuario_id: string
   nombre: string
+  tipo_deuda: TipoDeuda | null
   categoria_id: string | null
   cuenta_id: string | null
   monto_total: number
@@ -197,6 +203,7 @@ export interface Deuda {
 
 export interface DeudaFormData {
   nombre: string
+  tipo_deuda?: TipoDeuda
   categoria_id?: string
   monto_total: number
   cuotas_total?: number
@@ -248,7 +255,7 @@ export interface SaludFinanciera {
 export interface MovimientoFormData {
   tipo: TipoMovimiento
   fecha: string
-  categoria_id?: string          // opcional: no aplica en transferencias
+  categoria_id?: string          // opcional: no aplica en transferencias ni pago_tarjeta
   subcategoria_id?: string
   cuenta_id: string
   cuenta_destino_id?: string
@@ -261,6 +268,7 @@ export interface MovimientoFormData {
   comision?: number
   para_tercero?: boolean
   tercero_nombre?: string
+  fondos_tercero?: boolean
 }
 
 export interface Valorizacion {

@@ -79,11 +79,23 @@ const TIPO_THEME = {
     selectorBg:   'bg-xp-500/15 border-xp-500/40 text-xp-300',
     emoji:        '🏦',
   },
+  pago_tarjeta: {
+    accent:       'text-brand-400',
+    border:       'border-brand-500/30',
+    bg:           'bg-brand-500/8',
+    bgActive:     'bg-brand-500/20',
+    ring:         'ring-brand-500/50',
+    btnVariant:   'mover' as const,
+    glow:         'shadow-glow-mover',
+    monto:        'text-brand-400',
+    selectorBg:   'bg-brand-500/15 border-brand-500/40 text-brand-300',
+    emoji:        '💳',
+  },
 }
 
 // ── Schema ───────────────────────────────────────────────────────
 const schema = z.object({
-  tipo:              z.enum(['ingreso', 'gasto', 'ahorro', 'pago_deuda', 'transferencia']),
+  tipo:              z.enum(['ingreso', 'gasto', 'ahorro', 'pago_deuda', 'transferencia', 'pago_tarjeta']),
   fecha:             z.string().min(1, 'Requerido'),
   monto:             z.coerce.number().positive('Debe ser mayor a 0'),
   categoria_id:      z.string().optional(),
@@ -93,14 +105,14 @@ const schema = z.object({
   nota:              z.string().optional(),
   comercio:          z.string().optional()
 }).superRefine((data, ctx) => {
-  if (data.tipo !== 'transferencia' && data.tipo !== 'pago_deuda' && !data.categoria_id) {
+  if (data.tipo !== 'transferencia' && data.tipo !== 'pago_deuda' && data.tipo !== 'pago_tarjeta' && !data.categoria_id) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Selecciona una categoría', path: ['categoria_id'] })
   }
-  if (data.tipo === 'transferencia' && !data.cuenta_destino_id) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Selecciona la cuenta destino', path: ['cuenta_destino_id'] })
+  if ((data.tipo === 'transferencia' || data.tipo === 'pago_tarjeta') && !data.cuenta_destino_id) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Selecciona la tarjeta de crédito', path: ['cuenta_destino_id'] })
   }
   if (
-    data.tipo === 'transferencia' &&
+    (data.tipo === 'transferencia' || data.tipo === 'pago_tarjeta') &&
     data.cuenta_id && data.cuenta_destino_id &&
     data.cuenta_id === data.cuenta_destino_id
   ) {
@@ -112,9 +124,10 @@ type FormValues = z.infer<typeof schema>
 type Paso = 'principal' | 'detalles'
 
 const TIPOS: { value: TipoMovimiento; label: string; emoji: string }[] = [
-  { value: 'ingreso',       label: 'Ingreso', emoji: '💰' },
-  { value: 'gasto',         label: 'Gasto',   emoji: '💸' },
-  { value: 'transferencia', label: 'Mover',   emoji: '🔄' }
+  { value: 'ingreso',       label: 'Ingreso',   emoji: '💰' },
+  { value: 'gasto',         label: 'Gasto',     emoji: '💸' },
+  { value: 'transferencia', label: 'Mover',     emoji: '🔄' },
+  { value: 'pago_tarjeta',  label: 'Pag. tarjeta', emoji: '💳' },
 ]
 
 function tipoToCategoriaTipo(tipo: TipoMovimiento): string {
@@ -149,6 +162,7 @@ export function MovimientoForm({
   const [paraTercero,           setParaTercero]           = useState(false)
   const [terceroNombre,         setTerceroNombre]         = useState('')
   const [fechaVencimientoCobro, setFechaVencimientoCobro] = useState('')
+  const [fondosTercero,         setFondosTercero]         = useState(false)
   const [comprobanteUrl,  setComprobante]     = useState<string | null>(null)
 
   const { data: cuentas }    = useCuentas()
@@ -180,8 +194,9 @@ export function MovimientoForm({
 
   const mostrarCuotas    = tipo === 'gasto' && esTarjeta && !editingMovimiento
   const mostrarTercero   = tipo === 'gasto' && !editingMovimiento
-  const mostrarTransf    = tipo === 'transferencia'
-  const mostrarCategoria = tipo !== 'transferencia' && !pagoDeuda
+  const mostrarFondos    = tipo === 'ingreso' && !editingMovimiento
+  const mostrarTransf    = tipo === 'transferencia' || tipo === 'pago_tarjeta'
+  const mostrarCategoria = tipo !== 'transferencia' && tipo !== 'pago_tarjeta' && !pagoDeuda
 
   const montoCuota     = monto > 0 && cuotasTotal >= 1 ? Math.ceil(monto / cuotasTotal) : 0
   const registrarCuota = mostrarCuotas && cuotasTotal >= 1
@@ -195,6 +210,7 @@ export function MovimientoForm({
     setComisionCuota(0)
     setParaTercero(false)
     setTerceroNombre('')
+    setFondosTercero(false)
     setPagoDeuda(false)
 
     const source = editingMovimiento ?? duplicateFrom
@@ -270,7 +286,8 @@ export function MovimientoForm({
       para_tercero:      skipDetalles ? false : (mostrarTercero ? paraTercero : false),
       tercero_nombre:    skipDetalles ? undefined : (mostrarTercero && paraTercero && terceroNombre.trim()
         ? terceroNombre.trim()
-        : undefined)
+        : undefined),
+      fondos_tercero:    skipDetalles ? false : (mostrarFondos ? fondosTercero : false)
     }
 
     const cuotaPayload = {
@@ -330,6 +347,7 @@ export function MovimientoForm({
     setParaTercero(false)
     setTerceroNombre('')
     setFechaVencimientoCobro('')
+    setFondosTercero(false)
     setPagoDeuda(false)
     setPaso('principal')
     onClose()
@@ -369,7 +387,7 @@ export function MovimientoForm({
 
           {/* Selector de tipo */}
           {!editingMovimiento && (
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-night-0 rounded-2xl border border-night-border">
+            <div className="grid grid-cols-4 gap-1.5 p-1 bg-night-0 rounded-2xl border border-night-border">
               {TIPOS.map(t => {
                 const th = TIPO_THEME[t.value as keyof typeof TIPO_THEME]
                 const isActive = tipo === t.value && (t.value !== 'gasto' || !pagoDeuda)
@@ -383,13 +401,13 @@ export function MovimientoForm({
                       setPagoDeuda(false)
                     }}
                     className={[
-                      'flex flex-col items-center py-2.5 px-1 rounded-xl transition-all text-xs font-semibold border',
+                      'flex flex-col items-center py-2.5 px-1 rounded-xl transition-all text-[10px] font-semibold border leading-tight',
                       isActive
                         ? `${th.selectorBg} ${th.glow}`
                         : 'text-slate-500 border-transparent hover:text-slate-300 hover:bg-white/5'
                     ].join(' ')}
                   >
-                    <span className="text-lg mb-0.5">{t.emoji}</span>
+                    <span className="text-base mb-0.5">{t.emoji}</span>
                     {t.label}
                   </button>
                 )
@@ -425,7 +443,7 @@ export function MovimientoForm({
           {/* Monto — protagonista visual */}
           <div className="text-center py-2">
             <p className={`text-[10px] font-semibold uppercase tracking-widest mb-2 ${theme.accent}`}>
-              {theme.emoji} {pagoDeuda ? 'Pago de deuda' : tipo === 'transferencia' ? 'Mover dinero' : tipo}
+              {theme.emoji} {pagoDeuda ? 'Pago de deuda' : tipo === 'transferencia' ? 'Mover dinero' : tipo === 'pago_tarjeta' ? 'Pago a tarjeta' : tipo}
             </p>
             <div className="relative">
               <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold ${theme.monto} opacity-60`}>$</span>
@@ -505,19 +523,28 @@ export function MovimientoForm({
             {errors.cuenta_id && <p className="text-xs text-danger-400 mt-1">{errors.cuenta_id.message}</p>}
           </div>
 
-          {/* Transferencia — cuenta destino + preview */}
+          {/* Transferencia / Pago tarjeta — cuenta destino + preview */}
           {mostrarTransf && (
             <>
               <div>
-                <label className={labelDark}>Cuenta destino</label>
+                <label className={labelDark}>
+                  {tipo === 'pago_tarjeta' ? 'Tarjeta de crédito a pagar' : 'Cuenta destino'}
+                </label>
                 <div className="relative mt-1">
                   <select
                     {...register('cuenta_destino_id')}
                     className={`w-full h-11 rounded-xl border pl-3 pr-9 text-sm appearance-none outline-none transition-all ${inputDark} ${errors.cuenta_destino_id ? 'border-danger-500/60' : ''}`}
                   >
-                    <option value="" className="bg-night-2">Selecciona cuenta destino</option>
-                    {cuentaOptions.map(o => (
-                      <option key={o.value} value={o.value} className="bg-night-2">{o.label}</option>
+                    <option value="" className="bg-night-2">
+                      {tipo === 'pago_tarjeta' ? 'Selecciona tarjeta' : 'Selecciona cuenta destino'}
+                    </option>
+                    {(tipo === 'pago_tarjeta'
+                      ? (cuentas ?? []).filter(c => c.tipo === 'credito' && c.activa)
+                      : (cuentas ?? [])
+                    ).map(c => (
+                      <option key={c.id} value={c.id} className="bg-night-2">
+                        {c.nombre}{c.tipo === 'credito' ? ' 💳' : ''}
+                      </option>
                     ))}
                   </select>
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">▾</span>
@@ -525,7 +552,7 @@ export function MovimientoForm({
                 {errors.cuenta_destino_id && <p className="text-xs text-danger-400 mt-1">{errors.cuenta_destino_id.message}</p>}
               </div>
               {cuentaOrigen && cuentaDest && monto > 0 && (
-                <div className="rounded-xl border border-mover-500/20 bg-mover-500/5 p-3 space-y-2">
+                <div className={`rounded-xl border p-3 space-y-2 ${tipo === 'pago_tarjeta' ? 'border-brand-500/20 bg-brand-500/5' : 'border-mover-500/20 bg-mover-500/5'}`}>
                   <div className="flex justify-between text-xs">
                     <span className="text-slate-400">{cuentaOrigen.nombre}</span>
                     <span>
@@ -540,6 +567,11 @@ export function MovimientoForm({
                       <span className="font-semibold text-ingreso-400">{formatCLP(cuentaDest.saldo_actual + monto)}</span>
                     </span>
                   </div>
+                  {tipo === 'pago_tarjeta' && cuentaDest.limite && (
+                    <p className="text-[10px] text-brand-400/70">
+                      Cupo disponible después: {formatCLP(cuentaDest.limite + (cuentaDest.saldo_actual + monto))}
+                    </p>
+                  )}
                 </div>
               )}
             </>
@@ -783,6 +815,40 @@ export function MovimientoForm({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Fondos de tercero — ingreso */}
+          {mostrarFondos && (
+            <div className={[
+              'rounded-2xl border transition-all',
+              fondosTercero
+                ? 'border-ingreso-500/40 bg-ingreso-500/8'
+                : 'border-night-border bg-night-3'
+            ].join(' ')}>
+              <button
+                type="button"
+                onClick={() => setFondosTercero(v => !v)}
+                className="w-full flex items-center gap-3 px-4 py-3"
+              >
+                <div className={[
+                  'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                  fondosTercero ? 'bg-ingreso-500 border-ingreso-500' : 'border-slate-600'
+                ].join(' ')}>
+                  {fondosTercero && <span className="text-night-0 text-[10px] font-bold">✓</span>}
+                </div>
+                <div className="flex items-center gap-2 flex-1 text-left">
+                  <Users className={`h-4 w-4 ${fondosTercero ? 'text-ingreso-400' : 'text-slate-600'}`} />
+                  <div>
+                    <p className={`text-xs font-semibold ${fondosTercero ? 'text-ingreso-300' : 'text-slate-400'}`}>
+                      Fondos de tercero
+                    </p>
+                    <p className="text-[10px] text-slate-600">
+                      Ingreso recibido en nombre de otra persona
+                    </p>
+                  </div>
+                </div>
+              </button>
             </div>
           )}
 

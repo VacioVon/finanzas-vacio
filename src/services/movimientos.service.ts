@@ -131,7 +131,8 @@ export async function createMovimiento(
     comprobante_url:    form.comprobante_url || null,
     comision:           form.comision ?? 0,
     para_tercero:       form.para_tercero ?? false,
-    tercero_nombre:     form.tercero_nombre || null
+    tercero_nombre:     form.tercero_nombre || null,
+    fondos_tercero:     form.fondos_tercero ?? false
   }
 
   const { data, error } = await supabase
