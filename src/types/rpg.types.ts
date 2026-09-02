@@ -228,6 +228,48 @@ export function rpgNivelDesdeXP(xp: number): number {
   return Math.min(nivel, 20)
 }
 
+// ── Narrativa por nivel — HITO 08.1 ─────────────────────────
+// Una frase por nivel; el cultivador la lee en su placa.
+export const LEVEL_NARRATIVA: Readonly<Record<number, string>> = {
+  1:  'La semilla ha sido plantada. Todo gran cultivo comienza aquí.',
+  2:  'Tus raíces se afianzan. La tierra reconoce tu intención.',
+  3:  'El primer brote emerge. La energía comienza a fluir.',
+  4:  'Las hojas se despliegan. Tu camino toma forma.',
+  5:  'El árbol joven se alza. Cada raíz refuerza tu propósito.',
+  6:  'Los meridianos se abren. La disciplina cobra sentido.',
+  7:  'Tu copa recibe la luz. El conocimiento alimenta el crecimiento.',
+  8:  'Tu árbol se fortalece. Los frutos del esfuerzo maduran.',
+  9:  'La savia fluye con fuerza. Tu perseverancia es visible.',
+  10: 'Una década de cultivo. Tu árbol ya proyecta sombra.',
+  11: 'Las flores persisten. El conocimiento se convierte en sabiduría.',
+  12: 'Tu árbol es antiguo. Sus raíces tocan lo invisible.',
+  13: 'La energía fluye sin esfuerzo. Has encontrado tu ritmo.',
+  14: 'Tu sombra protege a otros. El cultivador maduro inspira.',
+  15: 'El árbol ancestral despierta. Tu qi trasciende lo ordinario.',
+  16: 'Las partículas de luz te rodean. La trascendencia se aproxima.',
+  17: 'El cosmos responde a tu llamado. Tu árbol conecta mundos.',
+  18: 'Los antiguos cultivadores reconocen tu presencia.',
+  19: 'La Unión se aproxima. Todo tu ser vibra en armonía.',
+  20: 'La Unión. Eres el árbol. El árbol eres tú.',
+}
+
+export function rpgNarrativa(nivel: number): string {
+  const n = Math.min(Math.max(Math.round(nivel), 1), 20)
+  return LEVEL_NARRATIVA[n] ?? LEVEL_NARRATIVA[1]
+}
+
+// ── Caminos de misión — preparado para Etapa C ───────────────
+// Las cinco vías de cultivo que guiarán las futuras misiones manuales.
+export type CaminoMision = 'finanzas' | 'disciplina' | 'vitalidad' | 'conocimiento' | 'trabajo'
+
+export const CAMINO_META: Readonly<Record<CaminoMision, { emoji: string; label: string; color: string }>> = {
+  finanzas:     { emoji: '💰', label: 'Finanzas',     color: '#00C2CB' },
+  disciplina:   { emoji: '⚔️',  label: 'Disciplina',   color: '#2979FF' },
+  vitalidad:    { emoji: '🌱', label: 'Vitalidad',    color: '#10D97F' },
+  conocimiento: { emoji: '📚', label: 'Conocimiento', color: '#9B5DE5' },
+  trabajo:      { emoji: '🔨', label: 'Trabajo',      color: '#FFB703' },
+}
+
 // ── Misiones / Quests — HITO 06.8 ───────────────────────────
 
 export type TipoMision     = 'diaria' | 'semanal' | 'especial'

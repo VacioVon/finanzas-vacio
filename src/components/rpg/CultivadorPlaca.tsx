@@ -1,25 +1,20 @@
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useRPGPerfil, useRPGLogros, useRPGRachas, useRPGLogrosCatalogo } from '@/hooks/rpg/useRPG'
-import { rpgProgresoPorcentaje, rpgTierColor } from '@/types/rpg.types'
+import { useMisiones } from '@/hooks/rpg/useMisiones'
+import { rpgProgresoPorcentaje, rpgTierColor, rpgNarrativa } from '@/types/rpg.types'
+import { treeStageFromLevel } from '@/components/rpg/tree/treeStage'
 import { CultivadorSello } from './CultivadorSello'
 
-// Nombres de etapa según nivel — mismos que CultivationTree
-function stageFromLevel(nivel: number): string {
-  if (nivel <= 2)  return 'Semilla'
-  if (nivel <= 4)  return 'Brote'
-  if (nivel <= 7)  return 'Raíz despierta'
-  if (nivel <= 10) return 'Árbol joven'
-  if (nivel <= 14) return 'Árbol del pulso'
-  if (nivel <= 18) return 'Árbol ancestral'
-  return 'Entidad del firmamento'
-}
-
 export function CultivadorPlaca() {
+  const navigate = useNavigate()
+
   const { profile }                 = useAuthStore()
   const { data: perfil, isLoading } = useRPGPerfil()
   const { data: logros    = [] }    = useRPGLogros()
   const { data: rachas    = [] }    = useRPGRachas()
   const { data: catalogo  = [] }    = useRPGLogrosCatalogo()
+  const { data: misiones  = [] }    = useMisiones()
 
   const nombre    = profile?.nombre ?? 'Cultivador'
   const nivel     = perfil?.nivel    ?? 1
@@ -28,9 +23,10 @@ export function CultivadorPlaca() {
   const xp        = perfil?.xp_total ?? 0
   const pctXP     = rpgProgresoPorcentaje(xp, nivel)
   const tierColor = rpgTierColor(nivel)
-  const stage     = stageFromLevel(nivel)
+  const stage     = treeStageFromLevel(nivel)  // fuente de verdad única
+  const narrativa = rpgNarrativa(nivel)
 
-  // Último logro obtenido (ya ordenados DESC por obtenido_en)
+  // Último logro obtenido (ordenados DESC por obtenido_en)
   const ultimoLogroTipo = logros[0]?.logro_tipo
   const ultimoLogro     = ultimoLogroTipo
     ? catalogo.find(c => c.logro_tipo === ultimoLogroTipo)
@@ -40,6 +36,11 @@ export function CultivadorPlaca() {
   const rachaActiva = rachas
     .filter(r => r.contador > 0 && r.inicio_racha !== null)
     .sort((a, b) => b.contador - a.contador)[0]
+
+  // Misión más urgente pendiente (mayor XP)
+  const misionActiva = misiones
+    .filter(m => m.estado === 'pendiente' || m.estado === 'en_progreso')
+    .sort((a, b) => b.xp_recompensa - a.xp_recompensa)[0]
 
   const vidaColor = vida >= 70 ? '#10D97F' : vida >= 35 ? '#FFB703' : '#F4645F'
 
@@ -60,7 +61,11 @@ export function CultivadorPlaca() {
   }
 
   return (
-    <div className="relative px-4 pt-5 pb-4 sm:px-6">
+    <button
+      onClick={() => navigate('/mas')}
+      className="w-full text-left relative px-4 pt-5 pb-4 sm:px-6 active:bg-white/[.03] transition-colors rounded-t-2xl cursor-pointer"
+      aria-label="Ver perfil del cultivador"
+    >
       <div className="flex items-start gap-4">
 
         {/* Sello hexagonal */}
@@ -72,7 +77,7 @@ export function CultivadorPlaca() {
             className="text-[10px] font-medium uppercase tracking-[.22em]"
             style={{ color: `${tierColor}99` }}
           >
-            Cultivador · {stage}
+            {stage.label} · Nivel {nivel}
           </p>
 
           <h2 className="mt-0.5 text-base font-bold text-white truncate">
@@ -86,8 +91,13 @@ export function CultivadorPlaca() {
             {rango}
           </p>
 
+          {/* Narrativa del nivel */}
+          <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500 line-clamp-2">
+            {narrativa}
+          </p>
+
           {/* Qi Vital + XP */}
-          <div className="mt-3 space-y-1.5">
+          <div className="mt-2.5 space-y-1.5">
 
             {/* Qi Vital */}
             <div className="flex items-center gap-2">
@@ -124,9 +134,11 @@ export function CultivadorPlaca() {
         </div>
       </div>
 
-      {/* Chips — último logro + racha activa */}
-      {(ultimoLogro || rachaActiva) && (
+      {/* ── Chips secundarios ── */}
+      {(ultimoLogro || rachaActiva || misionActiva) && (
         <div className="mt-3 flex flex-wrap gap-1.5">
+
+          {/* Último logro */}
           {ultimoLogro && (
             <span
               title={ultimoLogro.descripcion}
@@ -135,13 +147,31 @@ export function CultivadorPlaca() {
               {ultimoLogro.emoji} {ultimoLogro.nombre}
             </span>
           )}
+
+          {/* Racha activa */}
           {rachaActiva && (
             <span className="inline-flex items-center gap-1 rounded-full border border-brand-500/25 bg-brand-500/8 px-2.5 py-1 text-[10px] font-medium text-brand-300">
               🔥 {rachaActiva.contador}m de racha
             </span>
           )}
+
+          {/* Misión activa — chip secundario, sin saturar la placa */}
+          {misionActiva && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-slate-600/40 bg-slate-800/50 px-2.5 py-1 text-[10px] font-medium text-slate-400">
+              ⚔ {misionActiva.nombre} · +{misionActiva.xp_recompensa} XP
+            </span>
+          )}
         </div>
       )}
-    </div>
+
+      {/* Indicador de navegación — sutil, en la esquina */}
+      <div
+        className="absolute right-4 top-5 sm:right-6 text-[10px] font-medium transition-opacity opacity-25"
+        style={{ color: tierColor }}
+        aria-hidden
+      >
+        Ver perfil →
+      </div>
+    </button>
   )
 }

@@ -64,24 +64,19 @@ export function HomePage() {
         )}
       </div>
 
-      {/* ══ ZONA 1 — Cultivador & Árbol de vida ═══════════════════ */}
-      <div className="mb-4">
-        <CultivationTree />
-      </div>
+      {/* ══ ZONA 1 — DINERO — lo primero que ve el cultivador ════ */}
 
-      {/* ══ ALERTA — ingresos esperados hoy ══════════════════════ */}
-      <div className="mb-4">
+      {/* Alerta ingreso esperado — urgente, va sobre todo */}
+      <div className="mb-3">
         <IngresosPendientesAlert />
       </div>
 
-      {/* ══ ZONA 2 — Economía personal ════════════════════════════ */}
-      <ZoneSeparator label="Economía" />
-
+      {/* Saldo disponible */}
       <div className="mb-4">
         <AvailableBalance />
       </div>
 
-      {/* ══ Resumen mes + Patrimonio ══════════════════════════════ */}
+      {/* Resumen mes + Patrimonio — contexto del dinero */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         {(ingresos > 0 || gastos > 0 || ahorros > 0) && (
           <MesSummary
@@ -94,8 +89,15 @@ export function HomePage() {
         <PatrimonioNeto totalDeudas={totalDeudas} />
       </div>
 
-      {/* ══ ZONA 3 — Progreso & Compromisos ══════════════════════ */}
-      <ZoneSeparator label="Progreso" />
+      {/* ══ ZONA 2 — QUIÉN SOY — identidad del cultivador ════════ */}
+      <ZoneSeparator label="Cultivador" />
+
+      <div className="mb-4">
+        <CultivationTree />
+      </div>
+
+      {/* ══ ZONA 3 — QUÉ PUEDO HACER — acciones prioritarias ════ */}
+      <ZoneSeparator label="Qué puedo hacer" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <ObjetivosWidget />
@@ -108,7 +110,7 @@ export function HomePage() {
         <SuscripcionesWidget />
       </div>
 
-      {/* ══ Últimos movimientos — full width ══════════════════════ */}
+      {/* ══ ZONA 4 — CÓMO ESTOY CRECIENDO — seguimiento ═════════ */}
       <ZoneSeparator label="Movimientos recientes" />
       <RecentMovements />
 

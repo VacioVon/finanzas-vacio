@@ -19,6 +19,7 @@
 //  12  ZoneInfoPanel    — Interacción → información contextual por zona
 
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { rpgTierColor } from '@/types/rpg.types'
 import type { CultivationStats } from '@/components/modules/home/CultivationTree'
 import type { TreeStageInfo } from './treeStage'
@@ -27,16 +28,18 @@ import { stageProgress, treeStageIndex } from './treeStage'
 // ── Animaciones CSS (inyectadas una vez en <head>) ───────────────────────────
 
 const ANIM_CSS = `
-@keyframes tol-meridian  { from { stroke-dashoffset: 320 } to { stroke-dashoffset: 0 } }
-@keyframes tol-pulse     { 0%,100%{ opacity:.55; transform:scale(1) } 50%{ opacity:1; transform:scale(1.07) } }
-@keyframes tol-breathe   { 0%,100%{ opacity:.65 } 50%{ opacity:1 } }
-@keyframes tol-particle  { 0%{ opacity:0; transform:translateY(0) scale(1) } 15%{ opacity:.9 } 100%{ opacity:0; transform:translateY(-90px) scale(.15) } }
-@keyframes tol-cosmic-cw { from{ transform:rotate(0deg)   } to{ transform:rotate(360deg) } }
-@keyframes tol-cosmic-cc { from{ transform:rotate(0deg)   } to{ transform:rotate(-360deg) } }
-@keyframes tol-aura      { 0%,100%{ opacity:.2; transform:scale(1) } 50%{ opacity:.48; transform:scale(1.02) } }
-@keyframes tol-flora     { 0%,100%{ opacity:.5  } 50%{ opacity:.92 } }
-@keyframes tol-fruit     { 0%,100%{ opacity:.4  } 50%{ opacity:.85 } }
-@keyframes tol-panel-in  { from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:translateY(0) } }
+@keyframes tol-meridian      { from { stroke-dashoffset: 320 } to { stroke-dashoffset: 0 } }
+@keyframes tol-pulse         { 0%,100%{ opacity:.55; transform:scale(1) } 50%{ opacity:1; transform:scale(1.07) } }
+@keyframes tol-breathe       { 0%,100%{ opacity:.65 } 50%{ opacity:1 } }
+@keyframes tol-particle      { 0%{ opacity:0; transform:translateY(0) scale(1) } 15%{ opacity:.9 } 100%{ opacity:0; transform:translateY(-90px) scale(.15) } }
+@keyframes tol-cosmic-cw     { from{ transform:rotate(0deg)   } to{ transform:rotate(360deg) } }
+@keyframes tol-cosmic-cc     { from{ transform:rotate(0deg)   } to{ transform:rotate(-360deg) } }
+@keyframes tol-aura          { 0%,100%{ opacity:.2; transform:scale(1) } 50%{ opacity:.48; transform:scale(1.02) } }
+@keyframes tol-flora         { 0%,100%{ opacity:.5  } 50%{ opacity:.92 } }
+@keyframes tol-fruit         { 0%,100%{ opacity:.4  } 50%{ opacity:.85 } }
+@keyframes tol-panel-in      { from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:translateY(0) } }
+@keyframes tol-hotspot-dot   { 0%,100%{ opacity:.35; transform:translate(-50%,-50%) scale(1)   } 50%{ opacity:.9; transform:translate(-50%,-50%) scale(1.55) } }
+@keyframes tol-hotspot-ring  { 0%{ opacity:.55; transform:translate(-50%,-50%) scale(1) } 100%{ opacity:0; transform:translate(-50%,-50%) scale(2.8) } }
 @media (prefers-reduced-motion: reduce) {
   [data-tol] { animation: none !important; transition: none !important; }
 }
@@ -83,12 +86,12 @@ const ZONE_CONFIGS: Record<ZoneId, ZoneConfig> = {
 const ZONE_ORDER: ZoneId[] = ['cosmico','copa','flores','frutos','tronco','raices','nucleo']
 
 const ZONE_DESCRIPTIONS: Record<ZoneId, (nivel: number) => string> = {
-  raices:  () => 'Las raíces son tus fundamentos financieros. Se fortalecen con cada registro y decisión consciente.',
-  tronco:  () => 'Los meridianos conducen la energía de tu disciplina. Reflejan la constancia de tu práctica.',
-  nucleo:  () => 'El núcleo es tu esencia. Aquí converge toda la energía que has cultivado.',
-  copa:    () => 'La copa representa tu vitalidad. Se expande cuando cuidas tu equilibrio vital.',
-  flores:  () => 'Las flores son el fruto de tu conocimiento. Crecen con cada aprendizaje y cada logro.',
-  frutos:  () => 'Los frutos son el resultado de tu trabajo. Maduran con la constancia del esfuerzo.',
+  raices:  () => 'Aquí se sostiene tu prosperidad. Las raíces financieras se fortalecen con cada decisión consciente.',
+  tronco:  () => 'La constancia convierte la intención en fuerza. Los meridianos fluyen más rápido a medida que crece tu disciplina.',
+  nucleo:  () => 'Tu Qi vital mantiene unido el cultivo. Cuida tu esencia para que el árbol florezca.',
+  copa:    () => 'La copa crece cuando cuidas tu equilibrio vital. Cada hábito de salud expande tu vitalidad.',
+  flores:  () => 'Las flores florecen con tu conocimiento. Cada aprendizaje hace al árbol más luminoso.',
+  frutos:  () => 'Los frutos maduran con el trabajo constante. El esfuerzo sostenido produce resultados visibles.',
   cosmico: (n) => n >= 20
     ? 'La Unión. Has alcanzado la trascendencia. Tu árbol y tu esencia son una sola cosa.'
     : 'Tu árbol comienza a conectar con el cosmos. La trascendencia está cerca.',
@@ -416,6 +419,8 @@ function ZoneHotspots({ stageIdx, nivel, activeZone, onZoneClick }: {
   activeZone:  ZoneId | null
   onZoneClick: (id: ZoneId | null) => void
 }) {
+  let dotIndex = 0
+
   return (
     <div className="absolute inset-0" style={{ zIndex: 10 }}>
       {ZONE_ORDER.map(id => {
@@ -424,7 +429,16 @@ function ZoneHotspots({ stageIdx, nivel, activeZone, onZoneClick }: {
         if (id === 'cosmico' && nivel < 17) return null
 
         const [l, t, w, h] = cfg.hotspot
-        const isActive = activeZone === id
+        const isActive      = activeZone === id
+
+        // Posición del indicador visual dentro del botón (relativa al hotspot)
+        const dotLeft = `${((cfg.glowAt[0] - l) / w) * 100}%`
+        const dotTop  = `${((cfg.glowAt[1] - t) / h) * 100}%`
+        // Desfase de animación para que los dots no pulsen al mismo tiempo
+        const animDelay = `${(dotIndex++ * 0.55).toFixed(2)}s`
+
+        // La zona cósmica (nivel 17+) no necesita dot indicador — ya tiene anillos orbitales
+        const showDot = !isActive && id !== 'cosmico'
 
         return (
           <button
@@ -432,21 +446,60 @@ function ZoneHotspots({ stageIdx, nivel, activeZone, onZoneClick }: {
             aria-label={`${cfg.label} — ${cfg.stat}`}
             onClick={() => onZoneClick(isActive ? null : id)}
             style={{
-              position: 'absolute',
-              left:     `${l}%`,
-              top:      `${t}%`,
-              width:    `${w}%`,
-              height:   `${h}%`,
-              background: isActive
-                ? `radial-gradient(ellipse 60% 60% at ${cfg.glowAt[0]}% ${Math.max(10, cfg.glowAt[1] - t)}%, ${cfg.color}22, transparent 70%)`
+              position:     'absolute',
+              left:         `${l}%`,
+              top:          `${t}%`,
+              width:        `${w}%`,
+              height:       `${h}%`,
+              background:   isActive
+                ? `radial-gradient(ellipse 60% 60% at ${cfg.glowAt[0]}% ${Math.max(10, cfg.glowAt[1] - t)}%, ${cfg.color}20, transparent 70%)`
                 : 'transparent',
-              border:     'none',
-              outline:    'none',
+              border:       'none',
+              outline:      'none',
               borderRadius: '50%',
-              cursor:     'pointer',
-              transition: 'background .3s ease',
+              cursor:       'pointer',
+              transition:   'background .3s ease',
             }}
-          />
+          >
+            {/* Indicador pulsante — punto luminoso que hace la zona descubrible */}
+            {showDot && (
+              <>
+                {/* Punto central */}
+                <span
+                  data-tol
+                  aria-hidden
+                  style={{
+                    position:        'absolute',
+                    left:            dotLeft,
+                    top:             dotTop,
+                    width:           '5px',
+                    height:          '5px',
+                    borderRadius:    '50%',
+                    backgroundColor: cfg.color,
+                    boxShadow:       `0 0 5px ${cfg.color}90, 0 0 10px ${cfg.color}40`,
+                    animation:       `tol-hotspot-dot 2.8s ease-in-out infinite ${animDelay}`,
+                    pointerEvents:   'none',
+                  }}
+                />
+                {/* Anillo expansivo — efecto sonar */}
+                <span
+                  data-tol
+                  aria-hidden
+                  style={{
+                    position:      'absolute',
+                    left:          dotLeft,
+                    top:           dotTop,
+                    width:         '12px',
+                    height:        '12px',
+                    borderRadius:  '50%',
+                    border:        `1px solid ${cfg.color}55`,
+                    animation:     `tol-hotspot-ring 2.8s ease-out infinite ${animDelay}`,
+                    pointerEvents: 'none',
+                  }}
+                />
+              </>
+            )}
+          </button>
         )
       })}
     </div>
@@ -455,11 +508,12 @@ function ZoneHotspots({ stageIdx, nivel, activeZone, onZoneClick }: {
 
 // ── Capa 12: Panel de información de zona ────────────────────────────────────
 
-function ZoneInfoPanel({ zoneId, stats, nivel, onClose }: {
-  zoneId:  ZoneId
-  stats:   CultivationStats
-  nivel:   number
-  onClose: () => void
+function ZoneInfoPanel({ zoneId, stats, nivel, onClose, onNavigate }: {
+  zoneId:      ZoneId
+  stats:       CultivationStats
+  nivel:       number
+  onClose:     () => void
+  onNavigate?: () => void
 }) {
   const cfg   = ZONE_CONFIGS[zoneId]
   const value = cfg.statKey !== null ? Math.round(stats[cfg.statKey]) : null
@@ -474,11 +528,11 @@ function ZoneInfoPanel({ zoneId, stats, nivel, onClose }: {
       <div
         className="rounded-2xl px-4 py-3"
         style={{
-          background:      'rgba(10,9,18,.90)',
-          backdropFilter:  'blur(14px)',
+          background:           'rgba(10,9,18,.92)',
+          backdropFilter:       'blur(14px)',
           WebkitBackdropFilter: 'blur(14px)',
-          border:          `1px solid ${cfg.color}38`,
-          boxShadow:       `0 0 24px ${cfg.color}14`,
+          border:               `1px solid ${cfg.color}38`,
+          boxShadow:            `0 0 24px ${cfg.color}14`,
         }}
       >
         {/* Header */}
@@ -494,7 +548,7 @@ function ZoneInfoPanel({ zoneId, stats, nivel, onClose }: {
           </div>
           <div className="flex items-center gap-3">
             {value !== null && (
-              <span className="font-mono text-sm font-bold text-white tabular-nums">{value}</span>
+              <span className="font-mono text-sm font-bold text-white tabular-nums">{value}/100</span>
             )}
             <button
               onClick={onClose}
@@ -527,6 +581,17 @@ function ZoneInfoPanel({ zoneId, stats, nivel, onClose }: {
         <p className="text-[11px] leading-relaxed text-slate-400">
           {ZONE_DESCRIPTIONS[zoneId](nivel)}
         </p>
+
+        {/* Enlace al perfil completo */}
+        {onNavigate && (
+          <button
+            onClick={onNavigate}
+            className="mt-2.5 w-full text-left text-[10px] font-medium text-slate-600 hover:text-slate-400 transition-colors flex items-center gap-1"
+          >
+            <span>Ver cultivador completo</span>
+            <span aria-hidden>→</span>
+          </button>
+        )}
       </div>
     </div>
   )
@@ -544,6 +609,7 @@ interface TreeOfLifeProps {
 export function TreeOfLife({ stage, nivel, stats, vida }: TreeOfLifeProps) {
   useTreeAnimCSS()
 
+  const navigate  = useNavigate()
   const tierColor = rpgTierColor(nivel)
   const progress  = stageProgress(nivel, stage)
   const sIdx      = treeStageIndex(stage)
@@ -553,11 +619,12 @@ export function TreeOfLife({ stage, nivel, stats, vida }: TreeOfLifeProps) {
   // Cierra el panel cuando cambia la etapa
   useEffect(() => { setActiveZone(null) }, [stage.key])
 
+  const goToProfile = () => { setActiveZone(null); navigate('/mas') }
+
   return (
     <div
       className="relative w-full overflow-hidden select-none"
       style={{ aspectRatio: '4 / 5' }}
-      // Atributos data para futura integración Three.js
       data-tree-stage={stage.key}
       data-tree-level={nivel}
       data-stage-progress={progress.toFixed(2)}
@@ -593,7 +660,7 @@ export function TreeOfLife({ stage, nivel, stats, vida }: TreeOfLifeProps) {
       {/* 10 — Conexión cósmica */}
       <CosmicLayer nivel={nivel} tierColor={tierColor} />
 
-      {/* 11 — Zonas interactivas */}
+      {/* 11 — Zonas interactivas con indicadores pulsantes */}
       <ZoneHotspots
         stageIdx={sIdx}
         nivel={nivel}
@@ -601,13 +668,14 @@ export function TreeOfLife({ stage, nivel, stats, vida }: TreeOfLifeProps) {
         onZoneClick={setActiveZone}
       />
 
-      {/* 12 — Panel de información */}
+      {/* 12 — Panel de información de zona */}
       {activeZone && (
         <ZoneInfoPanel
           zoneId={activeZone}
           stats={stats}
           nivel={nivel}
           onClose={() => setActiveZone(null)}
+          onNavigate={goToProfile}
         />
       )}
     </div>
