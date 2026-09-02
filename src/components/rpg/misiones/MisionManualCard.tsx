@@ -17,7 +17,7 @@ interface MisionManualCardProps {
     disponible_en: string | null
     cap_alcanzado: boolean
   }
-  onCompletada?: (xp: number) => void
+  onCompletada?: (xp: number, nivelNuevo?: number) => void
 }
 
 function formatCooldown(isoTs: string): string {
@@ -41,7 +41,8 @@ export function MisionManualCard({ mision, onCompletada }: MisionManualCardProps
     try {
       const res = await completar.mutateAsync(mision.id)
       if (res.ok && res.xp_otorgada) {
-        onCompletada?.(res.xp_otorgada)
+        const nivelNuevo = res.rpg?.subio_nivel ? res.rpg.nivel_nuevo : undefined
+        onCompletada?.(res.xp_otorgada, nivelNuevo)
       } else if (!res.ok) {
         if (res.error === 'cooldown') setError('Cooldown activo')
         else if (res.error === 'limite_diario_alcanzado') setError('Límite diario alcanzado')

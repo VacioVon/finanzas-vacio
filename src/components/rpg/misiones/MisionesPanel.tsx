@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Zap } from 'lucide-react'
+import { Zap, Star } from 'lucide-react'
 import { useMisiones, useVerificarTodasMisiones } from '@/hooks/rpg/useMisiones'
 import { useMisionesManual } from '@/hooks/rpg/useMisionesManual'
 import { MisionCard } from './MisionCard'
 import { MisionManualCard } from './MisionManualCard'
-import type { TipoMision } from '@/types/rpg.types'
+import { CAMINO_META } from '@/types/rpg.types'
+import type { TipoMision, CaminoMision } from '@/types/rpg.types'
 
 type TabId = TipoMision | 'todas' | 'habitos'
 
@@ -15,7 +16,9 @@ const TABS: { tipo: TabId; label: string; emoji: string }[] = [
   { tipo: 'habitos', label: 'Hábitos',  emoji: '🔱' },
 ]
 
-interface XPToast { id: number; xp: number }
+const CAMINOS = Object.entries(CAMINO_META) as [CaminoMision, typeof CAMINO_META[CaminoMision]][]
+
+interface XPToast  { id: number; xp: number; nivelNuevo?: number }
 
 export function MisionesPanel() {
   const { data: misiones, isLoading: loadingM } = useMisiones()
@@ -23,6 +26,7 @@ export function MisionesPanel() {
   const { misiones: misionesManual, xpHoy, capDiario, isLoading: loadingH } = useMisionesManual()
 
   const [tab,    setTab]    = useState<TabId>('todas')
+  const [camino, setCamino] = useState<CaminoMision | 'todos'>('todos')
   const [toasts, setToasts] = useState<XPToast[]>([])
 
   useEffect(() => {
@@ -30,19 +34,22 @@ export function MisionesPanel() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function handleCompletada(xp: number) {
+  function handleCompletada(xp: number, nivelNuevo?: number) {
     const id = Date.now()
-    setToasts(t => [...t, { id, xp }])
-    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3000)
+    setToasts(t => [...t, { id, xp, nivelNuevo }])
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500)
   }
 
-  const esHabitos   = tab === 'habitos'
-  const filtradas   = esHabitos ? [] : (misiones ?? []).filter(m => tab === 'todas' || m.tipo === tab)
+  const esHabitos = tab === 'habitos'
+  const filtradas = esHabitos ? [] : (misiones ?? []).filter(m => tab === 'todas' || m.tipo === tab)
   const pendientes  = filtradas.filter(m => m.estado !== 'completada')
   const completadas = filtradas.filter(m => m.estado === 'completada')
 
-  const disponibles = misionesManual.filter(m => m.disponible)
-  const bloqueadas  = misionesManual.filter(m => !m.disponible)
+  const manualesFiltradas = camino === 'todos'
+    ? misionesManual
+    : misionesManual.filter(m => m.camino === camino)
+  const disponibles = manualesFiltradas.filter(m => m.disponible)
+  const bloqueadas  = manualesFiltradas.filter(m => !m.disponible)
 
   function tabCount(tipo: TabId): number {
     if (tipo === 'habitos') return disponibles.length
@@ -53,15 +60,20 @@ export function MisionesPanel() {
   return (
     <div className="relative">
 
-      {/* XP toasts */}
+      {/* XP / nivel toasts */}
       <div className="fixed top-16 right-4 z-50 space-y-2 pointer-events-none">
         {toasts.map(t => (
-          <div
-            key={t.id}
-            className="flex items-center gap-1.5 bg-xp-500 text-night-0 text-sm font-bold px-3 py-1.5 rounded-xl shadow-glow-xp"
-          >
-            <Zap className="size-3.5" />
-            +{t.xp} XP
+          <div key={t.id} className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-1.5 bg-xp-500 text-night-0 text-sm font-bold px-3 py-1.5 rounded-xl shadow-glow-xp">
+              <Zap className="size-3.5" />
+              +{t.xp} XP
+            </div>
+            {t.nivelNuevo && (
+              <div className="flex items-center gap-1.5 bg-ahorro-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl">
+                <Star className="size-3 fill-white" />
+                ¡Nivel {t.nivelNuevo}!
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -134,6 +146,36 @@ export function MisionesPanel() {
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Filtro por camino */}
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setCamino('todos')}
+                className={[
+                  'text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-all',
+                  camino === 'todos'
+                    ? 'bg-night-2 border-night-border text-slate-200'
+                    : 'border-night-border/50 text-slate-500 hover:text-slate-400',
+                ].join(' ')}
+              >
+                Todos
+              </button>
+              {CAMINOS.map(([key, meta]) => (
+                <button
+                  key={key}
+                  onClick={() => setCamino(key)}
+                  className="text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-all"
+                  style={{
+                    color:           camino === key ? meta.color : undefined,
+                    borderColor:     camino === key ? `${meta.color}40` : undefined,
+                    backgroundColor: camino === key ? `${meta.color}15` : undefined,
+                    opacity:         camino !== key && camino !== 'todos' ? 0.45 : 1,
+                  }}
+                >
+                  {meta.emoji} {meta.label}
+                </button>
+              ))}
+            </div>
+
             {/* Cap diario progress */}
             {xpHoy > 0 && (
               <div>

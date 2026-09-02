@@ -4,7 +4,7 @@ import { useVerificarMision } from '@/hooks/rpg/useMisiones'
 
 interface MisionCardProps {
   mision: MisionRPG
-  onCompletada?: (xp: number) => void
+  onCompletada?: (xp: number, nivelNuevo?: number) => void
 }
 
 const TIPO_CONFIG: Record<string, { label: string; dotColor: string; barColor: string; textColor: string; bgColor: string }> = {
