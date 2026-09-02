@@ -49,7 +49,7 @@ export function CultivationTree({ stats: statsProp }: CultivationTreeProps) {
   const stage     = treeStageFromLevel(nivel)
 
   return (
-    <Card padding="none" className="relative isolate overflow-hidden bg-[#11101A] border-[#3D3B50]/80">
+    <Card padding="none" className="relative isolate overflow-hidden bg-background border-night-border/80">
 
       {/* Fondo ambiental — espacio del universo cultivation */}
       <div
