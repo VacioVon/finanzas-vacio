@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import {
   Wallet, Tag, Target, PiggyBank, CreditCard, ShoppingBag,
-  RefreshCw, CalendarDays, Settings, ChevronRight, HandCoins, Sprout, TrendingUp
+  RefreshCw, CalendarDays, Settings, ChevronRight, HandCoins, TrendingUp
 } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'

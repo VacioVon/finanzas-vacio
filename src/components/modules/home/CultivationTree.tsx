@@ -98,7 +98,7 @@ export function CultivationTree({ stats: statsProp }: CultivationTreeProps) {
             <div className="w-full h-0.5 rounded-full bg-night-border/60">
               <div
                 className="h-full rounded-full"
-                style={{ width: `${value}%`, backgroundColor: hex, opacity: 0.75 }}
+                style={{ width: `${value}%`, backgroundColor: hex, opacity: 0.80, boxShadow: `0 0 5px ${hex}90` }}
               />
             </div>
             <p className="truncate text-[10px] font-medium text-slate-500 leading-none">{label}</p>
