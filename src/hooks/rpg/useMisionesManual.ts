@@ -91,8 +91,10 @@ export function useCompletarMisionManual() {
     onSuccess: (data) => {
       if (!data.ok || !user?.id) return
       qc.invalidateQueries({ queryKey: KEYS.log(user.id) })
-      qc.invalidateQueries({ queryKey: ['rpg', 'perfil', user.id] })
+      qc.invalidateQueries({ queryKey: ['rpg', 'perfil',  user.id] })
       qc.invalidateQueries({ queryKey: ['rpg', 'eventos', user.id] })
+      // Invalidar logros siempre: el motor puede otorgar logros en cualquier evento
+      qc.invalidateQueries({ queryKey: ['rpg', 'logros',  user.id] })
     },
   })
 }

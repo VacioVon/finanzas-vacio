@@ -10,10 +10,11 @@ import type { TipoMision, CaminoMision } from '@/types/rpg.types'
 type TabId = TipoMision | 'todas' | 'habitos'
 
 const TABS: { tipo: TabId; label: string; emoji: string }[] = [
-  { tipo: 'todas',    label: 'Todas',    emoji: '🗺️' },
-  { tipo: 'diaria',  label: 'Diarias',  emoji: '🌿' },
-  { tipo: 'semanal', label: 'Semanales',emoji: '⚡' },
-  { tipo: 'habitos', label: 'Hábitos',  emoji: '🔱' },
+  { tipo: 'todas',    label: 'Todas',     emoji: '🗺️' },
+  { tipo: 'diaria',  label: 'Diarias',   emoji: '🌿' },
+  { tipo: 'semanal', label: 'Semanales', emoji: '⚡' },
+  { tipo: 'especial',label: 'Especiales',emoji: '🔥' },
+  { tipo: 'habitos', label: 'Hábitos',   emoji: '🔱' },
 ]
 
 const CAMINOS = Object.entries(CAMINO_META) as [CaminoMision, typeof CAMINO_META[CaminoMision]][]
@@ -106,31 +107,33 @@ export function MisionesPanel() {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-5 bg-night-3/40 rounded-xl p-1">
-        {TABS.map(({ tipo, label, emoji }) => {
-          const count = tabCount(tipo)
-          return (
-            <button
-              key={tipo}
-              onClick={() => setTab(tipo)}
-              className={[
-                'flex-1 flex flex-col items-center gap-0.5 py-2 rounded-lg transition-all',
-                tab === tipo
-                  ? 'bg-night-2 text-slate-100 shadow'
-                  : 'text-slate-500 hover:text-slate-400',
-              ].join(' ')}
-            >
-              <span className="text-sm leading-none">{emoji}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">{label}</span>
-              {count > 0 && (
-                <span className={`text-[9px] tabular-nums font-bold leading-none ${tab === tipo ? 'text-xp-400' : 'text-slate-600'}`}>
-                  {count}
-                </span>
-              )}
-            </button>
-          )
-        })}
+      {/* Tabs — scroll horizontal en móvil para caber 5 */}
+      <div className="mb-5 -mx-0.5">
+        <div className="flex gap-1 bg-night-3/40 rounded-xl p-1 overflow-x-auto scrollbar-none">
+          {TABS.map(({ tipo, label, emoji }) => {
+            const count = tabCount(tipo)
+            return (
+              <button
+                key={tipo}
+                onClick={() => setTab(tipo)}
+                className={[
+                  'flex-shrink-0 flex flex-col items-center gap-0.5 py-2 px-3 rounded-lg transition-all min-w-[56px]',
+                  tab === tipo
+                    ? 'bg-night-2 text-slate-100 shadow'
+                    : 'text-slate-500 hover:text-slate-400',
+                ].join(' ')}
+              >
+                <span className="text-sm leading-none">{emoji}</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wide leading-none">{label}</span>
+                {count > 0 && (
+                  <span className={`text-[9px] tabular-nums font-bold leading-none ${tab === tipo ? 'text-xp-400' : 'text-slate-600'}`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* ── Tab Hábitos ── */}
