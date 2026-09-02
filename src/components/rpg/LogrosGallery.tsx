@@ -16,7 +16,7 @@ function LogroChip({
       className={[
         'flex flex-col items-center gap-1.5 rounded-2xl border p-3 text-center transition-colors',
         obtenido
-          ? 'border-[#FFB703]/30 bg-[#FFB703]/8'
+          ? 'border-xp-500/30 bg-xp-500/[8%]'
           : 'border-night-border/40 bg-night-2/40 opacity-40',
       ].join(' ')}
     >
@@ -25,7 +25,7 @@ function LogroChip({
         {catalogo.nombre}
       </p>
       {obtenido && catalogo.xp_bonus > 0 && (
-        <span className="text-[9px] font-medium tabular-nums text-[#FFB703]">+{catalogo.xp_bonus} XP</span>
+        <span className="text-[9px] font-medium tabular-nums text-xp-500">+{catalogo.xp_bonus} XP</span>
       )}
     </div>
   )
@@ -66,7 +66,7 @@ export function LogrosGallery() {
   return (
     <div className="space-y-3">
       {conseguidos.length > 0 && (
-        <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#FFB703]/70">
+        <p className="text-[10px] font-medium uppercase tracking-[.18em] text-xp-500/70">
           Conseguidos · {conseguidos.length}
         </p>
       )}

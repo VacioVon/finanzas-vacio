@@ -101,7 +101,7 @@ export function CultivadorPlaca() {
 
             {/* Qi Vital */}
             <div className="flex items-center gap-2">
-              <div className="h-1.5 flex-1 rounded-full bg-[#3D3B50]">
+              <div className="h-1.5 flex-1 rounded-full bg-night-border">
                 <div
                   className="h-full rounded-full transition-all duration-700"
                   style={{ width: `${vida}%`, backgroundColor: vidaColor }}
@@ -115,18 +115,18 @@ export function CultivadorPlaca() {
             {/* XP progress */}
             {nivel < 20 ? (
               <div className="flex items-center gap-2">
-                <div className="h-1 flex-1 rounded-full bg-[#3D3B50]">
+                <div className="h-1 flex-1 rounded-full bg-night-border">
                   <div
-                    className="h-full rounded-full bg-[#FFB703] transition-all duration-700"
+                    className="h-full rounded-full bg-xp-500 transition-all duration-700"
                     style={{ width: `${pctXP}%` }}
                   />
                 </div>
-                <span className="whitespace-nowrap text-[9px] tabular-nums text-[#FFB703]">
+                <span className="whitespace-nowrap text-[9px] tabular-nums text-xp-500">
                   {xp.toLocaleString()} XP
                 </span>
               </div>
             ) : (
-              <p className="text-[10px] font-medium text-[#FFB703]">
+              <p className="text-[10px] font-medium text-xp-500">
                 {xp.toLocaleString()} XP · Cima alcanzada
               </p>
             )}
@@ -142,7 +142,7 @@ export function CultivadorPlaca() {
           {ultimoLogro && (
             <span
               title={ultimoLogro.descripcion}
-              className="inline-flex items-center gap-1 rounded-full border border-[#FFB703]/20 bg-[#FFB703]/8 px-2.5 py-1 text-[10px] font-medium text-[#FFB703]"
+              className="inline-flex items-center gap-1 rounded-full border border-xp-500/20 bg-xp-500/[8%] px-2.5 py-1 text-[10px] font-medium text-xp-500"
             >
               {ultimoLogro.emoji} {ultimoLogro.nombre}
             </span>

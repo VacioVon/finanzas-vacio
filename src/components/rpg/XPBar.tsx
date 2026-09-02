@@ -15,7 +15,7 @@ export function XPBar({ xpTotal, nivel, compact = false }: XPBarProps) {
   return (
     <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-medium uppercase tracking-[.18em] text-[#FFB703]/70">
+        <span className="text-[10px] font-medium uppercase tracking-[.18em] text-xp-500/70">
           {esMax ? 'Nivel máximo' : 'Experiencia'}
         </span>
         {!esMax && (
@@ -24,14 +24,14 @@ export function XPBar({ xpTotal, nivel, compact = false }: XPBarProps) {
           </span>
         )}
         {esMax && (
-          <span className="text-[10px] tabular-nums text-[#FFB703]">
+          <span className="text-[10px] tabular-nums text-xp-500">
             {xpTotal.toLocaleString()} XP
           </span>
         )}
       </div>
-      <div className="h-1.5 w-full rounded-full bg-[#3D3B50]">
+      <div className="h-1.5 w-full rounded-full bg-night-border">
         <div
-          className="h-full rounded-full bg-[#FFB703] transition-all duration-500"
+          className="h-full rounded-full bg-xp-500 transition-all duration-500"
           style={{ width: `${pct}%` }}
           role="progressbar"
           aria-valuenow={pct}

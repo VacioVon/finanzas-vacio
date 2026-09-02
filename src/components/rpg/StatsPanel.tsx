@@ -15,7 +15,7 @@ function StatRow({ label, value, color }: StatRowProps) {
           {value}
         </span>
       </div>
-      <div className="h-1 w-full rounded-full bg-[#3D3B50]">
+      <div className="h-1 w-full rounded-full bg-night-border">
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{ width: `${value}%`, backgroundColor: color, boxShadow: `0 0 8px ${color}70` }}

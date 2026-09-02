@@ -61,7 +61,7 @@ function RachaCard({ racha }: { racha: RPGRacha }) {
         </div>
       )}
       {!proximoHito && racha.contador >= 12 && (
-        <p className="text-[10px] text-[#FFB703] font-medium">¡Racha máxima alcanzada!</p>
+        <p className="text-[10px] text-xp-500 font-medium">¡Racha máxima alcanzada!</p>
       )}
     </div>
   )

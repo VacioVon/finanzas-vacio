@@ -117,13 +117,13 @@ function AssetBase({ stage, vida }: { stage: TreeStageInfo; vida: number }) {
   if (missing) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center">
-        <div className="rounded-2xl border border-dashed border-[#3D3B50] bg-[#1A1822]/80 px-8 py-10 text-center">
+        <div className="rounded-2xl border border-dashed border-night-border bg-night-0/80 px-8 py-10 text-center">
           <p className="text-[10px] font-medium uppercase tracking-[.25em] text-slate-600">
             Asset pendiente
           </p>
           <p className="mt-3 text-xl font-bold text-slate-400">{stage.label}</p>
           <p className="mt-1.5 font-mono text-[11px] text-slate-600">{stage.file}</p>
-          <p className="mt-1 text-[9px] text-slate-700">/public/assets/rpg/tree/</p>
+          <p className="mt-1 text-[9px] text-slate-500">/public/assets/rpg/tree/</p>
         </div>
       </div>
     )
@@ -565,7 +565,7 @@ function ZoneInfoPanel({ zoneId, stats, nivel, onClose, onNavigate }: {
 
         {/* Barra de progreso — solo zonas con stat */}
         {value !== null && (
-          <div className="mb-2.5 h-[3px] rounded-full bg-[#2D2B3D] overflow-hidden">
+          <div className="mb-2.5 h-[3px] rounded-full bg-night-2 overflow-hidden">
             <div
               className="h-full rounded-full"
               style={{

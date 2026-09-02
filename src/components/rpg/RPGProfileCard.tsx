@@ -13,9 +13,9 @@ type Tab = 'atributos' | 'logros' | 'rachas'
 function Skeleton() {
   return (
     <Card padding="md" className="space-y-4 animate-pulse">
-      <div className="h-4 w-32 rounded bg-[#3D3B50]" />
-      <div className="h-2 rounded bg-[#3D3B50]" />
-      <div className="h-2 w-3/4 rounded bg-[#3D3B50]" />
+      <div className="h-4 w-32 rounded bg-night-border" />
+      <div className="h-2 rounded bg-night-border" />
+      <div className="h-2 w-3/4 rounded bg-night-border" />
     </Card>
   )
 }
@@ -43,18 +43,18 @@ export function RPGProfileCard() {
   ]
 
   return (
-    <Card padding="md" className="space-y-4 bg-[#23212C] border-[#3D3B50]">
+    <Card padding="md" className="space-y-4 bg-night-1 border-night-border">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[.22em] text-[#FFB703]/70">
+          <p className="text-[10px] font-medium uppercase tracking-[.22em] text-xp-500/70">
             Nivel {perfil.nivel}
           </p>
           <h3 className="mt-0.5 text-sm font-semibold text-white text-balance">
             {perfil.rango}
           </h3>
         </div>
-        <div className="rounded-full border border-[#FFB703]/20 bg-[#FFB703]/10 px-2.5 py-1 text-[10px] font-medium tabular-nums text-[#FFB703]">
+        <div className="rounded-full border border-xp-500/20 bg-xp-500/10 px-2.5 py-1 text-[10px] font-medium tabular-nums text-xp-500">
           {perfil.xp_total.toLocaleString()} XP
         </div>
       </div>
@@ -65,10 +65,10 @@ export function RPGProfileCard() {
         <VitalityBar vida={perfil.vida} />
       </div>
 
-      <div className="h-px bg-[#3D3B50]" />
+      <div className="h-px bg-night-border" />
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-xl bg-[#1A1822] p-1">
+      <div className="flex gap-1 rounded-xl bg-night-0 p-1">
         {tabs.map(t => (
           <button
             key={t.id}
@@ -76,13 +76,13 @@ export function RPGProfileCard() {
             className={[
               'flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors',
               tab === t.id
-                ? 'bg-[#2C2A38] text-slate-200 shadow-sm'
+                ? 'bg-night-2 text-slate-200 shadow-sm'
                 : 'text-slate-500 hover:text-slate-400',
             ].join(' ')}
           >
             {t.label}
             {t.badge !== undefined && (
-              <span className="rounded-full bg-[#FFB703]/20 px-1.5 py-0.5 text-[9px] font-semibold tabular-nums text-[#FFB703]">
+              <span className="rounded-full bg-xp-500/20 px-1.5 py-0.5 text-[9px] font-semibold tabular-nums text-xp-500">
                 {t.badge}
               </span>
             )}
