@@ -1,6 +1,7 @@
 export type TipoCuenta = 'bancaria' | 'digital' | 'debito' | 'credito' | 'efectivo' | 'inversion'
 export type TipoMovimiento = 'ingreso' | 'gasto' | 'ahorro' | 'pago_deuda' | 'transferencia' | 'pago_tarjeta'
 export type TipoDeuda = 'credito_consumo' | 'prestamo_personal' | 'credito_comercial' | 'deuda_persona' | 'tarjeta_credito' | 'otra'
+export type ContextoPago = 'deuda_propia' | 'devolucion_prestamo' | 'deuda_compartida' | 'otro'
 export type TipoCategoria = 'gasto' | 'ingreso' | 'ahorro' | 'inversion'
 export type EstadoDeuda = 'activa' | 'pagada' | 'en_mora'
 export type EstadoObjetivo = 'activo' | 'completado' | 'pausado'
@@ -139,6 +140,7 @@ export interface Movimiento {
   movimiento_origen_id: string | null
   capital: number | null           // desglose pago deuda: monto capital
   interes_pago: number | null      // desglose pago deuda: monto interés
+  contexto_pago: ContextoPago | null
   created_at: string
   updated_at: string
   categoria?: Categoria
@@ -181,6 +183,7 @@ export interface Deuda {
   usuario_id: string
   nombre: string
   tipo_deuda: TipoDeuda | null
+  prestamista_nombre: string | null // para tipo_deuda='deuda_persona': a quién se le debe
   categoria_id: string | null
   cuenta_id: string | null
   monto_total: number
@@ -201,9 +204,23 @@ export interface Deuda {
   cuenta?: Cuenta
 }
 
+export interface PagoDeudaHistorial {
+  id:            string
+  fecha:         string
+  monto:         number
+  capital:       number | null
+  interes_pago:  number | null
+  cuenta_id:     string | null
+  cuenta_nombre: string | null
+  nota:          string | null
+  contexto_pago: ContextoPago | null
+  created_at:    string
+}
+
 export interface DeudaFormData {
   nombre: string
   tipo_deuda?: TipoDeuda
+  prestamista_nombre?: string
   categoria_id?: string
   monto_total: number
   cuotas_total?: number
@@ -261,7 +278,10 @@ export interface MovimientoFormData {
   cuenta_destino_id?: string
   objetivo_ahorro_id?: string
   deuda_id?: string
+  contexto_pago?: ContextoPago
   monto: number
+  capital?: number
+  interes_pago?: number
   comercio?: string
   nota?: string
   comprobante_url?: string | null

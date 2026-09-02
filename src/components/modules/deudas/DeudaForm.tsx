@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal } from '@/components/ui/Modal'
@@ -21,17 +21,18 @@ const TIPO_DEUDA_OPTIONS = [
 ]
 
 const schema = z.object({
-  nombre:            z.string().min(1, 'Requerido').max(80),
-  tipo_deuda:        z.string().optional(),
-  categoria_id:      z.string().optional(),
-  monto_total:       z.coerce.number().positive('Debe ser mayor a 0'),
-  cuotas_total:      z.coerce.number().int().min(1).optional(),
-  cuota_mensual:     z.coerce.number().min(0).optional(),
-  interes:           z.coerce.number().min(0).max(200).optional(),
-  fecha_compra:      z.string().min(1, 'Requerido'),
-  fecha_prox_pago:   z.string().optional(),
-  fecha_vencimiento: z.string().optional(),
-  nota:              z.string().max(200).optional()
+  nombre:              z.string().min(1, 'Requerido').max(80),
+  tipo_deuda:          z.string().optional(),
+  prestamista_nombre:  z.string().max(80).optional(),
+  categoria_id:        z.string().optional(),
+  monto_total:         z.coerce.number().positive('Debe ser mayor a 0'),
+  cuotas_total:        z.coerce.number().int().min(1).optional(),
+  cuota_mensual:       z.coerce.number().min(0).optional(),
+  interes:             z.coerce.number().min(0).max(200).optional(),
+  fecha_compra:        z.string().min(1, 'Requerido'),
+  fecha_prox_pago:     z.string().optional(),
+  fecha_vencimiento:   z.string().optional(),
+  nota:                z.string().max(200).optional()
 })
 type FormValues = z.infer<typeof schema>
 
@@ -54,26 +55,30 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
     .filter(c => c.activa)
     .map(c => ({ value: c.id, label: `${c.emoji ?? ''} ${c.nombre}`.trim() }))
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { fecha_compra: todayISO(), interes: 0, cuotas_total: 1 }
   })
+
+  const tipoDeudaWatch = useWatch({ control, name: 'tipo_deuda' })
+  const esDeudaPersona = tipoDeudaWatch === 'deuda_persona'
 
   useEffect(() => {
     if (!isOpen) return
     if (editing) {
       reset({
-        nombre:            editing.nombre,
-        tipo_deuda:        editing.tipo_deuda ?? '',
-        categoria_id:      editing.categoria_id ?? '',
-        monto_total:       editing.monto_total,
-        cuotas_total:      editing.cuotas_total,
-        cuota_mensual:     editing.cuota_mensual ?? undefined,
-        interes:           editing.interes,
-        fecha_compra:      editing.fecha_compra,
-        fecha_prox_pago:   editing.fecha_prox_pago ?? '',
-        fecha_vencimiento: editing.fecha_vencimiento ?? '',
-        nota:              editing.nota ?? ''
+        nombre:              editing.nombre,
+        tipo_deuda:          editing.tipo_deuda ?? '',
+        prestamista_nombre:  editing.prestamista_nombre ?? '',
+        categoria_id:        editing.categoria_id ?? '',
+        monto_total:         editing.monto_total,
+        cuotas_total:        editing.cuotas_total,
+        cuota_mensual:       editing.cuota_mensual ?? undefined,
+        interes:             editing.interes,
+        fecha_compra:        editing.fecha_compra,
+        fecha_prox_pago:     editing.fecha_prox_pago ?? '',
+        fecha_vencimiento:   editing.fecha_vencimiento ?? '',
+        nota:                editing.nota ?? ''
       })
     } else {
       reset({ fecha_compra: todayISO(), interes: 0, cuotas_total: 1 })
@@ -82,17 +87,18 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
 
   async function onSubmit(data: FormValues) {
     const form = {
-      nombre:            data.nombre,
-      tipo_deuda:        (data.tipo_deuda || undefined) as import('@/types/app.types').TipoDeuda | undefined,
-      categoria_id:      data.categoria_id || undefined,
-      monto_total:       data.monto_total,
-      cuotas_total:      data.cuotas_total || 1,
-      cuota_mensual:     data.cuota_mensual || undefined,
-      interes:           data.interes || 0,
-      fecha_compra:      data.fecha_compra,
-      fecha_prox_pago:   data.fecha_prox_pago  || undefined,
-      fecha_vencimiento: data.fecha_vencimiento || undefined,
-      nota:              data.nota || undefined
+      nombre:              data.nombre,
+      tipo_deuda:          (data.tipo_deuda || undefined) as import('@/types/app.types').TipoDeuda | undefined,
+      prestamista_nombre:  esDeudaPersona ? (data.prestamista_nombre?.trim() || undefined) : undefined,
+      categoria_id:        data.categoria_id || undefined,
+      monto_total:         data.monto_total,
+      cuotas_total:        data.cuotas_total || 1,
+      cuota_mensual:       data.cuota_mensual || undefined,
+      interes:             data.interes || 0,
+      fecha_compra:        data.fecha_compra,
+      fecha_prox_pago:     data.fecha_prox_pago  || undefined,
+      fecha_vencimiento:   data.fecha_vencimiento || undefined,
+      nota:                data.nota || undefined
     }
     try {
       if (editing) {
@@ -129,6 +135,14 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
           placeholder="Sin clasificar"
           {...register('tipo_deuda')}
         />
+
+        {esDeudaPersona && (
+          <Input
+            label="¿A quién le debes? (nombre del prestamista)"
+            placeholder="Ej: Juan, Mamá, Empresa X…"
+            {...register('prestamista_nombre')}
+          />
+        )}
 
         <Select
           label="Categoría (opcional)"

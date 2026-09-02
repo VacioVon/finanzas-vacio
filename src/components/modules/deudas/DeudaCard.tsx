@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MoreVertical, Pencil, Trash2, CreditCard, AlertTriangle, CheckCircle } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { HistorialPagosDeuda } from '@/components/modules/deudas/HistorialPagosDeuda'
 import { formatCLP } from '@/utils/currency'
 import { useDeleteDeuda, useUpdateEstadoDeuda } from '@/hooks/useDeudas'
 import type { Deuda } from '@/types/app.types'
@@ -195,6 +196,11 @@ export function DeudaCard({ deuda, onEdit, onPagar }: DeudaCardProps) {
           <p className="text-[10px] text-slate-500">Próx. pago</p>
           <p className="text-xs font-semibold text-slate-300 mt-0.5">{formatFecha(deuda.fecha_prox_pago)}</p>
         </div>
+      </div>
+
+      {/* Historial de pagos — expandible */}
+      <div className="-mx-3 -mb-3 mt-3">
+        <HistorialPagosDeuda deudaId={deuda.id} />
       </div>
     </Card>
   )

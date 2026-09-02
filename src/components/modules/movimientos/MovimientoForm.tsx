@@ -13,9 +13,11 @@ import { useCategoriasByTipo } from '@/hooks/useCategorias'
 import { useCreateMovimiento, useUpdateMovimiento } from '@/hooks/useMovimientos'
 import { useCreateCuota } from '@/hooks/useCuotas'
 import { useCrearGastoTercero } from '@/hooks/useCobros'
+import { useDeudas } from '@/hooks/useDeudas'
+import { ContextoPagoSelector } from '@/components/modules/deudas/ContextoPagoSelector'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
-import type { Movimiento, TipoMovimiento } from '@/types/app.types'
+import type { Movimiento, TipoMovimiento, ContextoPago } from '@/types/app.types'
 
 // ── Tokens visuales por tipo ─────────────────────────────────────
 const TIPO_THEME = {
@@ -164,9 +166,12 @@ export function MovimientoForm({
   const [fechaVencimientoCobro, setFechaVencimientoCobro] = useState('')
   const [fondosTercero,         setFondosTercero]         = useState(false)
   const [comprobanteUrl,  setComprobante]     = useState<string | null>(null)
+  const [contextoPago,    setContextoPago]    = useState<ContextoPago | null>(null)
+  const [deudaVinculada,  setDeudaVinculada]  = useState<string | null>(null)
 
   const { data: cuentas }    = useCuentas()
   const { data: categorias } = useCategoriasByTipo(tipoToCategoriaTipo(tipo))
+  const { data: deudas }     = useDeudas()
   const createMutation            = useCreateMovimiento()
   const updateMutation            = useUpdateMovimiento()
   const createCuotaMutation       = useCreateCuota()
@@ -212,6 +217,8 @@ export function MovimientoForm({
     setTerceroNombre('')
     setFondosTercero(false)
     setPagoDeuda(false)
+    setContextoPago(null)
+    setDeudaVinculada(null)
 
     const source = editingMovimiento ?? duplicateFrom
     if (source) {
@@ -271,6 +278,8 @@ export function MovimientoForm({
 
   // ── Submit ───────────────────────────────────────────────────
   async function submitForm(data: FormValues, skipDetalles = false) {
+    const mostrarContexto = tipoReal === 'pago_tarjeta' || tipoReal === 'pago_deuda'
+
     const formData = {
       tipo:              tipoReal,
       fecha:             data.fecha,
@@ -287,7 +296,9 @@ export function MovimientoForm({
       tercero_nombre:    skipDetalles ? undefined : (mostrarTercero && paraTercero && terceroNombre.trim()
         ? terceroNombre.trim()
         : undefined),
-      fondos_tercero:    skipDetalles ? false : (mostrarFondos ? fondosTercero : false)
+      fondos_tercero:    skipDetalles ? false : (mostrarFondos ? fondosTercero : false),
+      contexto_pago:     (!skipDetalles && mostrarContexto) ? contextoPago ?? undefined : undefined,
+      deuda_id:          (!skipDetalles && mostrarContexto) ? deudaVinculada ?? undefined : undefined,
     }
 
     const cuotaPayload = {
@@ -349,6 +360,8 @@ export function MovimientoForm({
     setFechaVencimientoCobro('')
     setFondosTercero(false)
     setPagoDeuda(false)
+    setContextoPago(null)
+    setDeudaVinculada(null)
     setPaso('principal')
     onClose()
   }
@@ -723,6 +736,17 @@ export function MovimientoForm({
               <p className="text-xs text-slate-500">{cuentaOrigen.nombre}</p>
             )}
           </div>
+
+          {/* Contexto de pago — solo para pago_tarjeta y pago_deuda */}
+          {(tipoReal === 'pago_tarjeta' || tipoReal === 'pago_deuda') && (
+            <ContextoPagoSelector
+              contexto={contextoPago}
+              deudaId={deudaVinculada}
+              deudas={deudas ?? []}
+              onContexto={setContextoPago}
+              onDeudaId={setDeudaVinculada}
+            />
+          )}
 
           {/* Fecha */}
           <div>

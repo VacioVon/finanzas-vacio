@@ -6,7 +6,8 @@ import {
   updateDeuda,
   updateEstadoDeuda,
   deleteDeuda,
-  getTotalDeudasActivas
+  getTotalDeudasActivas,
+  getHistorialPagosDeuda
 } from '@/services/deudas.service'
 import { procesarEventoRPG } from '@/services/rpg/rpg.service'
 import type { DeudaFormData } from '@/types/app.types'
@@ -78,5 +79,15 @@ export function useDeleteDeuda() {
   return useMutation({
     mutationFn: (id: string) => deleteDeuda(id),
     onSuccess:  () => qc.invalidateQueries({ queryKey: [DEUDAS_KEY] })
+  })
+}
+
+export function useHistorialPagosDeuda(deudaId: string | null) {
+  const { user } = useAuthStore()
+  return useQuery({
+    queryKey:  ['deudas', 'historial', deudaId],
+    queryFn:   () => getHistorialPagosDeuda(deudaId!, user!.id),
+    enabled:   !!deudaId && !!user?.id,
+    staleTime: 30_000,
   })
 }

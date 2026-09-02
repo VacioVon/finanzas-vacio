@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Deuda, DeudaFormData } from '@/types/app.types'
+import type { Deuda, DeudaFormData, PagoDeudaHistorial } from '@/types/app.types'
 
 export async function getDeudas(userId: string): Promise<Deuda[]> {
   const { data, error } = await supabase
@@ -16,21 +16,22 @@ export async function createDeuda(userId: string, form: DeudaFormData): Promise<
   const { data, error } = await supabase
     .from('deudas')
     .insert({
-      usuario_id:        userId,
-      nombre:            form.nombre,
-      tipo_deuda:        form.tipo_deuda      ?? null,
-      categoria_id:      form.categoria_id    || null,
-      monto_total:       form.monto_total,
-      monto_pendiente:   form.monto_total,     // empieza igual al total
-      cuotas_total:      form.cuotas_total     ?? 1,
-      cuotas_pagadas:    0,
-      cuota_mensual:     form.cuota_mensual    ?? null,
-      interes:           form.interes          ?? 0,
-      fecha_compra:      form.fecha_compra,
-      fecha_prox_pago:   form.fecha_prox_pago  ?? null,
-      fecha_vencimiento: form.fecha_vencimiento ?? null,
-      nota:              form.nota             ?? null,
-      estado:            'activa'
+      usuario_id:          userId,
+      nombre:              form.nombre,
+      tipo_deuda:          form.tipo_deuda          ?? null,
+      prestamista_nombre:  form.prestamista_nombre  ?? null,
+      categoria_id:        form.categoria_id         || null,
+      monto_total:         form.monto_total,
+      monto_pendiente:     form.monto_total,           // empieza igual al total
+      cuotas_total:        form.cuotas_total           ?? 1,
+      cuotas_pagadas:      0,
+      cuota_mensual:       form.cuota_mensual          ?? null,
+      interes:             form.interes                ?? 0,
+      fecha_compra:        form.fecha_compra,
+      fecha_prox_pago:     form.fecha_prox_pago        ?? null,
+      fecha_vencimiento:   form.fecha_vencimiento      ?? null,
+      nota:                form.nota                   ?? null,
+      estado:              'activa'
     })
     .select('*, categoria:categorias(id,nombre,emoji,color,tipo), cuenta:cuentas(id,nombre,tipo,color)')
     .single()
@@ -54,6 +55,7 @@ export async function updateDeuda(id: string, form: Partial<DeudaFormData>): Pro
       ...(form.fecha_prox_pago    !== undefined && { fecha_prox_pago:   form.fecha_prox_pago || null }),
       ...(form.fecha_vencimiento  !== undefined && { fecha_vencimiento: form.fecha_vencimiento || null }),
       ...(form.nota               !== undefined && { nota:              form.nota || null }),
+      ...(form.prestamista_nombre !== undefined && { prestamista_nombre: form.prestamista_nombre || null }),
       updated_at: new Date().toISOString()
     })
     .eq('id', id)
@@ -83,6 +85,17 @@ export async function deleteDeuda(id: string): Promise<void> {
     .eq('id', id)
 
   if (error) throw error
+}
+
+/** Historial de pagos vinculados a una deuda específica */
+export async function getHistorialPagosDeuda(
+  deudaId: string,
+  userId: string
+): Promise<PagoDeudaHistorial[]> {
+  const { data, error } = await supabase
+    .rpc('obtener_historial_pagos_deuda', { p_deuda_id: deudaId, p_user_id: userId })
+  if (error) throw error
+  return (data ?? []) as PagoDeudaHistorial[]
 }
 
 /** Total pendiente de todas las deudas activas — usado para Patrimonio Neto */
