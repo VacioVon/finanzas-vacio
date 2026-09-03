@@ -75,6 +75,22 @@ export function SuscripcionForm({ isOpen, onClose, editing, onSuccess }: Props) 
   const monto_tipo          = watch('monto_tipo')
   const selectedCategoriaId = watch('categoria_id')
 
+  const DEFAULT_VALUES = {
+    nombre:          '',
+    emoji:           '',
+    monto:           undefined as unknown as number,
+    frecuencia:      'mensual' as const,
+    dia_cobro:       undefined,
+    cuenta_id:       '',
+    categoria_id:    '',
+    subcategoria_id: '',
+    proxima_fecha:   todayISO(),
+    nota:            '',
+    tipo:            'servicio' as const,
+    monto_tipo:      'fijo' as const,
+    fecha_fin:       '',
+  }
+
   useEffect(() => {
     if (!isOpen) return
     if (editing) {
@@ -94,7 +110,7 @@ export function SuscripcionForm({ isOpen, onClose, editing, onSuccess }: Props) 
         fecha_fin:       editing.fecha_fin       ?? '',
       })
     } else {
-      reset({ frecuencia: 'mensual', proxima_fecha: todayISO(), tipo: 'servicio', monto_tipo: 'fijo' })
+      reset({ ...DEFAULT_VALUES, proxima_fecha: todayISO() })
     }
   }, [isOpen, editing]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -121,6 +137,7 @@ export function SuscripcionForm({ isOpen, onClose, editing, onSuccess }: Props) 
         await createMutation.mutateAsync(form)
       }
       onSuccess?.()
+      reset({ ...DEFAULT_VALUES, proxima_fecha: todayISO() })
       onClose()
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Error al guardar')
