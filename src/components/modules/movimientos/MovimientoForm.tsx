@@ -16,6 +16,7 @@ import { useCrearGastoTercero } from '@/hooks/useCobros'
 import { useDeudas } from '@/hooks/useDeudas'
 import { useSuscripciones } from '@/hooks/useSuscripciones'
 import { ContextoPagoSelector } from '@/components/modules/deudas/ContextoPagoSelector'
+import { CategoryPicker } from './CategoryPicker'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
 import type { Movimiento, TipoMovimiento, ContextoPago } from '@/types/app.types'
@@ -494,43 +495,17 @@ export function MovimientoForm({
             )}
           </div>
 
-          {/* Categoría */}
+          {/* Categoría — selector visual RPG */}
           {mostrarCategoria && (
-            <div className="space-y-3">
-              <div>
-                <label className={labelDark}>Categoría</label>
-                <div className="relative mt-1">
-                  <select
-                    {...register('categoria_id')}
-                    className={`w-full h-11 rounded-xl border pl-3 pr-9 text-sm appearance-none outline-none transition-all ${inputDark} ${errors.categoria_id ? 'border-danger-500/60' : ''}`}
-                  >
-                    <option value="" className="bg-night-2">Selecciona una categoría</option>
-                    {categoriaOptions.map(o => (
-                      <option key={o.value} value={o.value} className="bg-night-2">{o.label}</option>
-                    ))}
-                  </select>
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">▾</span>
-                </div>
-                {errors.categoria_id && <p className="text-xs text-danger-400 mt-1">{errors.categoria_id.message}</p>}
-              </div>
-              {subcategoriaOptions.length > 0 && (
-                <div>
-                  <label className={labelDark}>Subcategoría <span className="text-slate-600">(opcional)</span></label>
-                  <div className="relative mt-1">
-                    <select
-                      {...register('subcategoria_id')}
-                      className={`w-full h-11 rounded-xl border pl-3 pr-9 text-sm appearance-none outline-none transition-all ${inputDark}`}
-                    >
-                      <option value="" className="bg-night-2">Sin subcategoría</option>
-                      {subcategoriaOptions.map(o => (
-                        <option key={o.value} value={o.value} className="bg-night-2">{o.label}</option>
-                      ))}
-                    </select>
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">▾</span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <CategoryPicker
+              categories={categorias ?? []}
+              selectedId={selectedCategoriaId ?? ''}
+              selectedSubId={watch('subcategoria_id') ?? ''}
+              onSelect={id => setValue('categoria_id', id, { shouldValidate: true })}
+              onSelectSub={id => setValue('subcategoria_id', id)}
+              error={errors.categoria_id?.message}
+              tipoColor={TIPO_ACCENT_HEX[tipoReal]}
+            />
           )}
 
           {/* Cuenta */}
