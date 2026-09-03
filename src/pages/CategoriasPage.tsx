@@ -16,15 +16,15 @@ import type { Categoria } from '@/types/app.types'
 const tipoLabel: Record<string, string> = {
   gasto:     'Gastos',
   ingreso:   'Ingresos',
-  ahorro:    'Ahorros',
-  inversion: 'Inversiones'
+  ahorro:    'Finanzas',
+  inversion: 'Patrimonio',
 }
 
 const tipoColor: Record<string, string> = {
   gasto:     'bg-gasto-500/15 text-gasto-400',
   ingreso:   'bg-ingreso-500/15 text-ingreso-400',
   ahorro:    'bg-ahorro-500/15 text-ahorro-400',
-  inversion: 'bg-xp-500/15 text-xp-400'
+  inversion: 'bg-xp-500/15 text-xp-400',
 }
 
 function CategoriaItem({ categoria }: { categoria: Categoria }) {
@@ -212,7 +212,7 @@ export function CategoriasPage() {
   const [filtro,   setFiltro]   = useState<string>('todos')
   const [formOpen, setFormOpen] = useState(false)
 
-  const tiposDisponibles = ['todos', 'gasto', 'ingreso', 'ahorro']
+  const tiposDisponibles = ['todos', 'gasto', 'ingreso', 'ahorro', 'inversion']
 
   const categoriasFiltradas = (categorias ?? []).filter(
     c => filtro === 'todos' || c.tipo === filtro

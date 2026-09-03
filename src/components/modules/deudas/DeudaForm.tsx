@@ -51,8 +51,10 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
   const updateMutation = useUpdateDeuda()
   const { data: categorias } = useCategorias()
 
+  // Para deudas: mostrar Finanzas (ahorro) + Patrimonio (inversion)
+  // Son los contextos más relevantes para clasificar obligaciones financieras
   const catOptions = (categorias ?? [])
-    .filter(c => c.activa)
+    .filter(c => c.activa && (c.tipo === 'ahorro' || c.tipo === 'inversion'))
     .map(c => ({ value: c.id, label: `${c.emoji ?? ''} ${c.nombre}`.trim() }))
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm<FormValues>({
@@ -146,12 +148,17 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
           />
         )}
 
-        <Select
-          label="Categoría (opcional)"
-          options={catOptions}
-          placeholder="Sin categoría"
-          {...register('categoria_id')}
-        />
+        <div>
+          <Select
+            label="Categoría — Finanzas / Patrimonio"
+            options={catOptions}
+            placeholder="Sin categoría (opcional)"
+            {...register('categoria_id')}
+          />
+          <p className="text-[10px] text-slate-600 mt-0.5">
+            Opcional. Clasificar según tipo de obligación financiera.
+          </p>
+        </div>
 
         {/* Monto total */}
         <div>

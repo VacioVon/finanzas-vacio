@@ -20,10 +20,10 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 const TIPOS = [
-  { value: 'gasto',    label: '💸 Gasto' },
-  { value: 'ingreso',  label: '💰 Ingreso' },
-  { value: 'ahorro',   label: '🏦 Ahorro' },
-  { value: 'inversion',label: '📈 Inversión' }
+  { value: 'gasto',    label: '💸 Gastos' },
+  { value: 'ingreso',  label: '💰 Ingresos' },
+  { value: 'ahorro',   label: '🏦 Finanzas (ahorro)' },
+  { value: 'inversion',label: '📈 Patrimonio (inversión)' },
 ]
 
 interface CategoriaFormProps {

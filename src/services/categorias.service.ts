@@ -1,6 +1,20 @@
 import { supabase } from '@/lib/supabase'
 import type { Categoria, Subcategoria, CategoriaFormData } from '@/types/app.types'
 
+// ─── Deduplicación ───────────────────────────────────────────
+// La query devuelve categorías del usuario + defaults; si existe
+// una categoría con el mismo nombre y tipo, se prefiere la del usuario.
+
+function deduplicar(cats: Categoria[]): Categoria[] {
+  const visto = new Map<string, Categoria>()
+  for (const c of cats) {
+    const key  = `${c.tipo}|${c.nombre.toLowerCase().trim()}`
+    const prev = visto.get(key)
+    if (!prev || prev.es_default) visto.set(key, c)
+  }
+  return [...visto.values()].sort((a, b) => a.orden - b.orden)
+}
+
 // ─── Lectura ─────────────────────────────────────────────────
 
 export async function getCategorias(userId: string): Promise<Categoria[]> {
@@ -12,7 +26,7 @@ export async function getCategorias(userId: string): Promise<Categoria[]> {
     .order('orden', { ascending: true })
 
   if (error) throw error
-  return data as Categoria[]
+  return deduplicar(data as Categoria[])
 }
 
 export async function getCategoriasByTipo(userId: string, tipo: string): Promise<Categoria[]> {
@@ -25,7 +39,7 @@ export async function getCategoriasByTipo(userId: string, tipo: string): Promise
     .order('orden', { ascending: true })
 
   if (error) throw error
-  return data as Categoria[]
+  return deduplicar(data as Categoria[])
 }
 
 export async function getSubcategorias(categoriaId: string): Promise<Subcategoria[]> {
