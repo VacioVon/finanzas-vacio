@@ -202,6 +202,10 @@ export interface Deuda {
   updated_at: string
   categoria?: Categoria
   cuenta?: Cuenta
+  /** Suma real de pagos registrados en movimientos — computado en frontend, no viene de la DB */
+  monto_pagado_real?:    number
+  /** monto_total - monto_pagado_real, siempre >= 0 */
+  monto_pendiente_real?: number
 }
 
 export interface PagoDeudaHistorial {

@@ -31,7 +31,8 @@ export function DeudaCard({ deuda, onEdit, onPagar }: DeudaCardProps) {
   const deleteMutation = useDeleteDeuda()
   const estadoMutation = useUpdateEstadoDeuda()
 
-  const pagado     = deuda.monto_total - deuda.monto_pendiente
+  const pagado     = deuda.monto_pagado_real    ?? Math.max(0, deuda.monto_total - deuda.monto_pendiente)
+  const pendiente  = deuda.monto_pendiente_real ?? Math.max(0, deuda.monto_total - pagado)
   const porcentaje = deuda.monto_total > 0
     ? Math.min(100, (pagado / deuda.monto_total) * 100)
     : 0
@@ -166,7 +167,7 @@ export function DeudaCard({ deuda, onEdit, onPagar }: DeudaCardProps) {
       <div className="mt-3 flex items-end justify-between">
         <div>
           <p className="text-[10px] text-slate-500 uppercase tracking-wide">Pendiente</p>
-          <p className="text-lg font-bold text-white tabular-nums">{formatCLP(deuda.monto_pendiente)}</p>
+          <p className="text-lg font-bold text-white tabular-nums">{formatCLP(pendiente)}</p>
         </div>
         <div className="text-right">
           <p className="text-[10px] text-slate-500">de {formatCLP(deuda.monto_total)}</p>

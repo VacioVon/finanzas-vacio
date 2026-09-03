@@ -2,14 +2,34 @@ import { supabase } from '@/lib/supabase'
 import type { Deuda, DeudaFormData, PagoDeudaHistorial } from '@/types/app.types'
 
 export async function getDeudas(userId: string): Promise<Deuda[]> {
-  const { data, error } = await supabase
-    .from('deudas')
-    .select('*, categoria:categorias(id,nombre,emoji,color,tipo), cuenta:cuentas(id,nombre,tipo,color)')
-    .eq('usuario_id', userId)
-    .order('created_at', { ascending: false })
+  const [{ data, error }, { data: pagos, error: pagosError }] = await Promise.all([
+    supabase
+      .from('deudas')
+      .select('*, categoria:categorias(id,nombre,emoji,color,tipo), cuenta:cuentas(id,nombre,tipo,color)')
+      .eq('usuario_id', userId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('movimientos')
+      .select('deuda_id, monto')
+      .eq('usuario_id', userId)
+      .eq('tipo', 'pago_deuda')
+      .not('deuda_id', 'is', null)
+  ])
 
-  if (error) throw error
-  return data as Deuda[]
+  if (error)      throw error
+  if (pagosError) throw pagosError
+
+  // Sumar pagos reales por deuda_id
+  const pagadoMap: Record<string, number> = {}
+  for (const p of pagos ?? []) {
+    if (p.deuda_id) pagadoMap[p.deuda_id] = (pagadoMap[p.deuda_id] ?? 0) + p.monto
+  }
+
+  return (data as Deuda[]).map(d => ({
+    ...d,
+    monto_pagado_real:    pagadoMap[d.id] ?? 0,
+    monto_pendiente_real: Math.max(0, d.monto_total - (pagadoMap[d.id] ?? 0)),
+  }))
 }
 
 export async function createDeuda(userId: string, form: DeudaFormData): Promise<Deuda> {

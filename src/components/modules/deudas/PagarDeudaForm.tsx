@@ -39,14 +39,17 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
     .filter(c => c.activa && c.tipo !== 'inversion')
     .map(c => ({ value: c.id, label: c.nombre }))
 
+  const realPagado    = deuda.monto_pagado_real    ?? Math.max(0, deuda.monto_total - deuda.monto_pendiente)
+  const realPendiente = deuda.monto_pendiente_real ?? Math.max(0, deuda.monto_total - realPagado)
+
   const porcentajePagado = deuda.monto_total > 0
-    ? Math.min(100, ((deuda.monto_total - deuda.monto_pendiente) / deuda.monto_total) * 100)
+    ? Math.min(100, (realPagado / deuda.monto_total) * 100)
     : 0
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      monto: deuda.cuota_mensual ?? deuda.monto_pendiente,
+      monto: deuda.cuota_mensual ?? realPendiente,
       fecha: todayISO()
     }
   })
@@ -54,7 +57,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
   useEffect(() => {
     if (isOpen) {
       reset({
-        monto:     deuda.cuota_mensual ?? deuda.monto_pendiente,
+        monto:     deuda.cuota_mensual ?? realPendiente,
         fecha:     todayISO(),
         cuenta_id: '',
         nota:      ''
@@ -94,14 +97,14 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
           <div className="flex items-center gap-2 mt-1">
             <div className="flex-1">
               <ProgressBar
-                value={deuda.monto_total - deuda.monto_pendiente}
+                value={realPagado}
                 max={deuda.monto_total}
                 color="green"
                 size="sm"
               />
             </div>
             <span className="text-xs text-slate-400 flex-shrink-0 tabular-nums">
-              {formatCLP(deuda.monto_pendiente)} pendiente
+              {formatCLP(realPendiente)} pendiente
             </span>
           </div>
         </div>
@@ -141,7 +144,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
           </div>
           {errors.monto && <p className="text-xs text-gasto-400 mt-1">{errors.monto.message}</p>}
 
-          {deuda.cuota_mensual && deuda.cuota_mensual !== deuda.monto_pendiente && (
+          {deuda.cuota_mensual && deuda.cuota_mensual !== realPendiente && (
             <div className="flex gap-2 mt-2">
               <button
                 type="button"
@@ -152,10 +155,10 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
               </button>
               <button
                 type="button"
-                onClick={() => reset(v => ({ ...v, monto: deuda.monto_pendiente }))}
+                onClick={() => reset(v => ({ ...v, monto: realPendiente }))}
                 className="flex-1 py-1.5 text-xs bg-night-3 text-slate-300 rounded-xl border border-night-border hover:bg-night-2 transition-colors tabular-nums"
               >
-                Total: {formatCLP(deuda.monto_pendiente)}
+                Total: {formatCLP(realPendiente)}
               </button>
             </div>
           )}

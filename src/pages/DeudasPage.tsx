@@ -31,9 +31,8 @@ export function DeudasPage() {
   const lista = (deudas ?? []).filter(d => filtro === 'todas' || d.estado === filtro)
 
   const activas        = (deudas ?? []).filter(d => d.estado === 'activa' || d.estado === 'en_mora')
-  const totalPendiente = activas.reduce((s, d) => s + d.monto_pendiente, 0)
-  const totalOriginal  = activas.reduce((s, d) => s + d.monto_total, 0)
-  const totalPagado    = totalOriginal - totalPendiente
+  const totalPendiente = activas.reduce((s, d) => s + (d.monto_pendiente_real ?? Math.max(0, d.monto_total - (d.monto_pagado_real ?? 0))), 0)
+  const totalPagado    = activas.reduce((s, d) => s + (d.monto_pagado_real ?? 0), 0)
 
   return (
     <AppLayout nebula="#F4645F">

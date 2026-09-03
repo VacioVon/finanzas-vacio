@@ -17,7 +17,7 @@ export function DeudasWidget() {
   const enMora  = (deudas ?? []).filter(d => d.estado === 'en_mora')
   const todas   = [...enMora, ...activas]
 
-  const totalPendiente = todas.reduce((s, d) => s + d.monto_pendiente, 0)
+  const totalPendiente = todas.reduce((s, d) => s + (d.monto_pendiente_real ?? Math.max(0, d.monto_total - (d.monto_pagado_real ?? 0))), 0)
 
   if (todas.length === 0) {
     return (
@@ -63,7 +63,7 @@ export function DeudasWidget() {
 
         {/* Filas de deuda — cada una navegable */}
         {todas.slice(0, 3).map((deuda, i) => {
-          const pagado  = deuda.monto_total - deuda.monto_pendiente
+          const pagado  = deuda.monto_pagado_real ?? Math.max(0, deuda.monto_total - deuda.monto_pendiente)
           const pct     = deuda.monto_total > 0
             ? Math.min(100, (pagado / deuda.monto_total) * 100)
             : 0
@@ -87,7 +87,7 @@ export function DeudasWidget() {
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-slate-300 truncate">{deuda.nombre}</p>
                   <p className="text-xs font-bold text-gasto-400 flex-shrink-0 ml-2">
-                    {formatCLP(deuda.monto_pendiente)}
+                    {formatCLP(deuda.monto_pendiente_real ?? Math.max(0, deuda.monto_total - pagado))}
                   </p>
                 </div>
                 <div className="mt-1 h-1 bg-night-3 rounded-full overflow-hidden">
