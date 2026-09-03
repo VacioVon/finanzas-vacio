@@ -27,6 +27,13 @@ const tipoColor: Record<string, string> = {
   inversion: 'bg-xp-500/15 text-xp-400',
 }
 
+const TIPO_HEX: Record<string, string> = {
+  gasto:     '#F4645F',
+  ingreso:   '#10D97F',
+  ahorro:    '#9B5DE5',
+  inversion: '#FFB703',
+}
+
 function CategoriaItem({ categoria }: { categoria: Categoria }) {
   const [expanded,     setExpanded]     = useState(false)
   const [addSubOpen,   setAddSubOpen]   = useState(false)
@@ -59,28 +66,45 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
     deleteMutation.mutate(categoria.id)
   }
 
+  const color = categoria.color ?? TIPO_HEX[categoria.tipo] ?? '#64748B'
+
   return (
     <>
-      <Card padding="none" className="overflow-hidden">
+      {/* Card con gradiente semántico */}
+      <div
+        className="relative rounded-2xl overflow-hidden border"
+        style={{
+          background:  `linear-gradient(145deg, ${color}0A 0%, #23212C 60%)`,
+          borderColor: `${color}22`,
+        }}
+      >
+        {/* Acento superior */}
+        <div
+          className="absolute top-0 left-0 right-0 h-[2px]"
+          style={{ background: `linear-gradient(90deg, ${color}AA 0%, transparent 65%)` }}
+        />
+
         {/* Cabecera — botón expandir */}
         <button
-          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-night-3/30 transition-colors text-left"
+          className="relative w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/4 transition-colors text-left"
           onClick={() => setExpanded(e => !e)}
           aria-expanded={expanded}
         >
-          {/* Emoji con fondo de color semántico */}
           <div
             className="size-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-            style={{ backgroundColor: `${categoria.color ?? '#6B7280'}18` }}
+            style={{
+              backgroundColor: `${color}18`,
+              boxShadow:       `0 0 10px ${color}28`,
+            }}
           >
             {categoria.emoji ?? '📁'}
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="text-sm font-semibold text-slate-200 leading-tight">{categoria.nombre}</p>
+              <p className="text-sm font-semibold text-slate-100 leading-tight">{categoria.nombre}</p>
               {isDefault && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-night-3 text-slate-600">
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-night-3 text-slate-500">
                   Sistema
                 </span>
               )}
@@ -92,8 +116,10 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
             </p>
           </div>
 
-          {/* Badge tipo — semántico */}
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${tipoColor[categoria.tipo] ?? 'bg-night-3 text-slate-500'}`}>
+          <span
+            className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: `${color}18`, color }}
+          >
             {tipoLabel[categoria.tipo] ?? categoria.tipo}
           </span>
 
@@ -105,7 +131,7 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
 
         {/* Panel expandido */}
         {expanded && (
-          <div className="border-t border-night-border/40 px-4 py-3 bg-night-1/40">
+          <div className="border-t px-4 py-3 bg-night-1/50" style={{ borderColor: `${color}15` }}>
 
             {/* Acciones de categoría propia */}
             {!isDefault && (
@@ -196,7 +222,7 @@ function CategoriaItem({ categoria }: { categoria: Categoria }) {
             )}
           </div>
         )}
-      </Card>
+      </div>
 
       <CategoriaForm
         isOpen={editOpen}
