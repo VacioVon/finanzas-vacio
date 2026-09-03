@@ -17,6 +17,7 @@ import { useDeudas } from '@/hooks/useDeudas'
 import { useSuscripciones } from '@/hooks/useSuscripciones'
 import { ContextoPagoSelector } from '@/components/modules/deudas/ContextoPagoSelector'
 import { CategoryPicker } from './CategoryPicker'
+import { AccountPicker } from '@/components/ui/AccountPicker'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
 import type { Movimiento, TipoMovimiento, ContextoPago } from '@/types/app.types'
@@ -509,51 +510,28 @@ export function MovimientoForm({
           )}
 
           {/* Cuenta */}
-          <div>
-            <label className={labelDark}>{mostrarTransf ? 'Cuenta origen' : 'Cuenta'}</label>
-            <div className="relative mt-1">
-              <select
-                {...register('cuenta_id')}
-                className={`w-full h-11 rounded-xl border pl-3 pr-9 text-sm appearance-none outline-none transition-all ${inputDark} ${errors.cuenta_id ? 'border-danger-500/60' : ''}`}
-              >
-                <option value="" className="bg-night-2">Selecciona una cuenta</option>
-                {cuentaOptions.map(o => (
-                  <option key={o.value} value={o.value} className="bg-night-2">{o.label}</option>
-                ))}
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">▾</span>
-            </div>
-            {errors.cuenta_id && <p className="text-xs text-danger-400 mt-1">{errors.cuenta_id.message}</p>}
-          </div>
+          <AccountPicker
+            cuentas={cuentas ?? []}
+            selectedId={selectedCuentaId ?? ''}
+            onChange={id => setValue('cuenta_id', id, { shouldValidate: true })}
+            label={mostrarTransf ? 'Cuenta origen' : 'Cuenta'}
+            error={errors.cuenta_id?.message}
+            exclude={['inversion']}
+          />
 
           {/* Transferencia / Pago tarjeta — cuenta destino + preview */}
           {mostrarTransf && (
             <>
-              <div>
-                <label className={labelDark}>
-                  {tipo === 'pago_tarjeta' ? 'Tarjeta de crédito a pagar' : 'Cuenta destino'}
-                </label>
-                <div className="relative mt-1">
-                  <select
-                    {...register('cuenta_destino_id')}
-                    className={`w-full h-11 rounded-xl border pl-3 pr-9 text-sm appearance-none outline-none transition-all ${inputDark} ${errors.cuenta_destino_id ? 'border-danger-500/60' : ''}`}
-                  >
-                    <option value="" className="bg-night-2">
-                      {tipo === 'pago_tarjeta' ? 'Selecciona tarjeta' : 'Selecciona cuenta destino'}
-                    </option>
-                    {(tipo === 'pago_tarjeta'
-                      ? (cuentas ?? []).filter(c => c.tipo === 'credito' && c.activa)
-                      : (cuentas ?? [])
-                    ).map(c => (
-                      <option key={c.id} value={c.id} className="bg-night-2">
-                        {c.nombre}{c.tipo === 'credito' ? ' 💳' : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">▾</span>
-                </div>
-                {errors.cuenta_destino_id && <p className="text-xs text-danger-400 mt-1">{errors.cuenta_destino_id.message}</p>}
-              </div>
+              <AccountPicker
+                cuentas={(tipo === 'pago_tarjeta'
+                  ? (cuentas ?? []).filter(c => c.tipo === 'credito' && c.activa)
+                  : (cuentas ?? []).filter(c => c.activa && c.id !== selectedCuentaId && c.tipo !== 'inversion')
+                )}
+                selectedId={selectedDestId ?? ''}
+                onChange={id => setValue('cuenta_destino_id', id, { shouldValidate: true })}
+                label={tipo === 'pago_tarjeta' ? 'Tarjeta de crédito a pagar' : 'Cuenta destino'}
+                error={errors.cuenta_destino_id?.message}
+              />
               {cuentaOrigen && cuentaDest && monto > 0 && (
                 <div className={`rounded-xl border p-3 space-y-2 ${tipo === 'pago_tarjeta' ? 'border-brand-500/20 bg-brand-500/5' : 'border-mover-500/20 bg-mover-500/5'}`}>
                   <div className="flex justify-between text-xs">

@@ -19,16 +19,17 @@ export async function createObjetivo(
   const { data, error } = await supabase
     .from('objetivos_ahorro')
     .insert({
-      usuario_id:     userId,
-      nombre:         form.nombre,
-      emoji:          form.emoji || null,
-      color:          form.color,
-      imagen_url:     form.imagen_url || null,
-      monto_objetivo: form.monto_objetivo,
-      monto_actual:   0,
-      fecha_objetivo: form.fecha_objetivo || null,
-      descripcion:    form.descripcion || null,
-      estado:         'activo'
+      usuario_id:          userId,
+      nombre:              form.nombre,
+      emoji:               form.emoji || null,
+      color:               form.color,
+      imagen_url:          form.imagen_url || null,
+      monto_objetivo:      form.monto_objetivo,
+      monto_actual:        0,
+      fecha_objetivo:      form.fecha_objetivo || null,
+      descripcion:         form.descripcion || null,
+      cuenta_vinculada_id: form.cuenta_vinculada_id || null,
+      estado:              'activo'
     })
     .select()
     .single()
@@ -44,12 +45,13 @@ export async function updateObjetivo(
   const { data, error } = await supabase
     .from('objetivos_ahorro')
     .update({
-      ...(form.nombre         !== undefined && { nombre:         form.nombre }),
-      ...(form.emoji          !== undefined && { emoji:          form.emoji || null }),
-      ...(form.color          !== undefined && { color:          form.color }),
-      ...(form.monto_objetivo !== undefined && { monto_objetivo: form.monto_objetivo }),
-      ...(form.fecha_objetivo !== undefined && { fecha_objetivo: form.fecha_objetivo || null }),
-      ...(form.descripcion    !== undefined && { descripcion:    form.descripcion || null }),
+      ...(form.nombre               !== undefined && { nombre:              form.nombre }),
+      ...(form.emoji                !== undefined && { emoji:               form.emoji || null }),
+      ...(form.color                !== undefined && { color:               form.color }),
+      ...(form.monto_objetivo       !== undefined && { monto_objetivo:      form.monto_objetivo }),
+      ...(form.fecha_objetivo       !== undefined && { fecha_objetivo:      form.fecha_objetivo || null }),
+      ...(form.descripcion          !== undefined && { descripcion:         form.descripcion || null }),
+      ...(form.cuenta_vinculada_id  !== undefined && { cuenta_vinculada_id: form.cuenta_vinculada_id || null }),
       updated_at: new Date().toISOString()
     })
     .eq('id', id)

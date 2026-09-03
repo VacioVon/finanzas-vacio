@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Info } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { Select } from '@/components/ui/Select'
+import { AccountPicker } from '@/components/ui/AccountPicker'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useCuentas } from '@/hooks/useCuentas'
 import { useCreateMovimiento } from '@/hooks/useMovimientos'
@@ -35,9 +35,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
   const { data: cuentas } = useCuentas()
   const createMov         = useCreateMovimiento()
 
-  const cuentaOptions = (cuentas ?? [])
-    .filter(c => c.activa && c.tipo !== 'inversion')
-    .map(c => ({ value: c.id, label: c.nombre }))
+  const cuentasPago = (cuentas ?? []).filter(c => c.activa && c.tipo !== 'inversion')
 
   const realPagado    = deuda.monto_pagado_real    ?? Math.max(0, deuda.monto_total - deuda.monto_pendiente)
   const realPendiente = deuda.monto_pendiente_real ?? Math.max(0, deuda.monto_total - realPagado)
@@ -46,7 +44,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
     ? Math.min(100, (realPagado / deuda.monto_total) * 100)
     : 0
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       monto: deuda.cuota_mensual ?? realPendiente,
@@ -164,12 +162,13 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
           )}
         </div>
 
-        <Select
+        <AccountPicker
+          cuentas={cuentasPago}
+          selectedId={watch('cuenta_id') ?? ''}
+          onChange={id => setValue('cuenta_id', id, { shouldValidate: true })}
           label="Pagar desde"
-          options={cuentaOptions}
-          placeholder="Selecciona una cuenta"
           error={errors.cuenta_id?.message}
-          {...register('cuenta_id')}
+          exclude={['inversion']}
         />
 
         {/* Fecha */}

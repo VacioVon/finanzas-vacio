@@ -161,6 +161,8 @@ export interface ObjetivoAhorro {
   fecha_objetivo: string | null
   descripcion: string | null
   estado: EstadoObjetivo
+  /** UUID de la cuenta de inversión vinculada (columna opcional en DB) */
+  cuenta_vinculada_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -340,13 +342,14 @@ export interface PresupuestoConProgreso extends Presupuesto {
 }
 
 export interface ObjetivoFormData {
-  nombre:          string
-  emoji?:          string
-  color:           string
-  imagen_url?:     string
-  monto_objetivo:  number
-  fecha_objetivo?: string
-  descripcion?:    string
+  nombre:               string
+  emoji?:               string
+  color:                string
+  imagen_url?:          string
+  monto_objetivo:       number
+  fecha_objetivo?:      string
+  descripcion?:         string
+  cuenta_vinculada_id?: string | null
 }
 
 // ── Cuotas de tarjeta de crédito ─────────────────────────────
