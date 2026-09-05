@@ -138,9 +138,10 @@ export interface PagoCompromisoData {
 }
 
 /**
- * Registra el pago de un compromiso:
- * 1. Crea un movimiento tipo `gasto` vinculado via compromiso_id
- * 2. Avanza proxima_fecha al siguiente ciclo
+ * Registra el pago de un compromiso atómicamente:
+ * 1. Crea movimiento tipo `gasto` vinculado via compromiso_id
+ * 2. Llama procesar_movimiento para descontar el saldo de la cuenta
+ * 3. Avanza proxima_fecha al siguiente ciclo
  */
 export async function registrarPagoCompromiso(
   userId: string,
@@ -151,24 +152,34 @@ export async function registrarPagoCompromiso(
   const { error: movErr } = await supabase
     .from('movimientos')
     .insert({
-      usuario_id:    userId,
-      tipo:          'gasto',
-      fecha:         pago.fecha,
-      monto:         pago.monto,
-      cuenta_id:     pago.cuenta_id,
-      categoria_id:  pago.categoria_id  || compromiso.categoria_id || null,
+      usuario_id:      userId,
+      tipo:            'gasto',
+      fecha:           pago.fecha,
+      monto:           pago.monto,
+      cuenta_id:       pago.cuenta_id,
+      categoria_id:    pago.categoria_id    || compromiso.categoria_id    || null,
       subcategoria_id: pago.subcategoria_id || compromiso.subcategoria_id || null,
-      nota:          pago.nota ?? `Pago: ${compromiso.nombre}`,
-      compromiso_id: compromiso.id,
+      nota:            pago.nota ?? `Pago: ${compromiso.nombre}`,
+      compromiso_id:   compromiso.id,
     })
 
   if (movErr) throw movErr
 
-  // 2. Avanzar proxima_fecha
+  // 2. Descontar saldo de la cuenta (era el paso faltante que causaba el bug)
+  const { error: rpcError } = await supabase.rpc('procesar_movimiento', {
+    p_tipo:              'gasto',
+    p_cuenta_id:         pago.cuenta_id,
+    p_cuenta_destino_id: null,
+    p_objetivo_id:       null,
+    p_deuda_id:          null,
+    p_monto:             pago.monto,
+  })
+  if (rpcError) throw rpcError
+
+  // 3. Avanzar proxima_fecha
   const base      = compromiso.proxima_fecha ? parseISO(compromiso.proxima_fecha) : new Date()
   const siguiente = avanzarFecha(base, compromiso.frecuencia, compromiso.dia_cobro)
 
-  // Auto-desactivar si pasó la fecha_fin
   const updates: Record<string, unknown> = {
     proxima_fecha: format(siguiente, 'yyyy-MM-dd')
   }
