@@ -227,12 +227,12 @@ export function AnalisisPage() {
 
               {/* Gastos por categoría — donut */}
               <Card variant="ocean">
-                <p className="text-sm font-semibold text-slate-200 mb-4">Gastos por categoría</p>
+                <p className="text-sm font-semibold text-slate-200 mb-3">Gastos por categoría</p>
                 {catData.length === 0 ? (
                   <p className="text-sm text-slate-500 text-center py-6">Sin gastos este período</p>
                 ) : (
-                  <div className="flex flex-col items-center gap-4">
-                    <ResponsiveContainer width="100%" height={160}>
+                  <div className="flex flex-col items-center gap-3">
+                    <ResponsiveContainer width="100%" height={140}>
                       <PieChart>
                         <Pie
                           data={catData}
@@ -240,8 +240,8 @@ export function AnalisisPage() {
                           nameKey="nombre"
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={72}
+                          innerRadius={44}
+                          outerRadius={64}
                           strokeWidth={0}
                         >
                           {catData.map((entry, i) => (
@@ -254,16 +254,16 @@ export function AnalisisPage() {
                         <Tooltip content={<DarkTooltip />} />
                       </PieChart>
                     </ResponsiveContainer>
-                    {/* Leyenda */}
-                    <div className="w-full grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    {/* Leyenda — 1 col en móvil, 2 en desktop */}
+                    <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
                       {catData.map((cat, i) => {
                         const pct = totalGastos > 0 ? Math.round(cat.monto / totalGastos * 100) : 0
                         const clr = cat.color && cat.color !== '#6B7280' ? cat.color : PIE_COLORS[i % PIE_COLORS.length]
                         return (
-                          <div key={cat.id} className="flex items-center gap-2 min-w-0">
+                          <div key={cat.id} className="flex items-center gap-2 min-w-0 py-0.5">
                             <span className="inline-block size-2 rounded-full flex-shrink-0" style={{ backgroundColor: clr }} />
                             <span className="text-xs text-slate-300 truncate flex-1">{cat.emoji} {cat.nombre}</span>
-                            <span className="text-xs text-slate-500 tabular-nums flex-shrink-0">{pct}%</span>
+                            <span className="text-[11px] text-slate-500 tabular-nums flex-shrink-0">{pct}% · {formatCLP(cat.monto)}</span>
                           </div>
                         )
                       })}
@@ -279,21 +279,21 @@ export function AnalisisPage() {
               {!evolucion || evolucion.every(e => e.ingresos === 0 && e.gastos === 0) ? (
                 <p className="text-sm text-slate-500 text-center py-6">Sin datos históricos aún</p>
               ) : (
-                <ResponsiveContainer width="100%" height={220} className="lg:!h-[280px]">
-                  <BarChart data={evolucion} barCategoryGap="30%" barGap={2}>
+                <ResponsiveContainer width="100%" height={200} className="lg:!h-[260px]">
+                  <BarChart data={evolucion} barCategoryGap="30%" barGap={2} margin={{ left: -8, right: 4, top: 4, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#2E6070" vertical={false} />
                     <XAxis
                       dataKey="mes"
-                      tick={{ fill: '#64748b', fontSize: 11 }}
+                      tick={{ fill: '#64748b', fontSize: 10 }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
-                      tick={{ fill: '#64748b', fontSize: 10 }}
+                      tick={{ fill: '#64748b', fontSize: 9 }}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={v => v >= 1000000 ? `${(v/1000000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)}
-                      width={42}
+                      width={36}
                     />
                     <Tooltip content={<DarkTooltip />} cursor={{ fill: '#1F3A45', radius: 6 }} />
                     <Bar dataKey="ingresos" name="Ingresos" fill="#10D97F" radius={[4,4,0,0]} />

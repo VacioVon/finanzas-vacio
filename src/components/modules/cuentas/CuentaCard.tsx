@@ -39,9 +39,9 @@ export function CuentaCard({ cuenta, onEdit, onActualizarValor, valorizaciones }
     ?.filter(v => v.cuenta_id === cuenta.id)
     .slice(-6) ?? []
 
-  // Para crédito: saldo_actual es negativo (deuda) → cupo = límite + saldo
+  // cupoDisponible es robusto a ambos signos de saldo_actual (la DB puede tener positivo o negativo)
   const cupoDisponible = isCreditCard && cuenta.limite
-    ? cuenta.limite + cuenta.saldo_actual
+    ? Math.max(0, cuenta.limite - Math.abs(cuenta.saldo_actual))
     : null
 
   // Rentabilidad inversión
@@ -178,7 +178,7 @@ export function CuentaCard({ cuenta, onEdit, onActualizarValor, valorizaciones }
                 Vence día {cuenta.dia_vencimiento}
               </div>
             )}
-            {cuenta.pago_minimo_pct && cuenta.pago_minimo_pct > 0 && cuenta.saldo_actual < 0 && (
+            {cuenta.pago_minimo_pct && cuenta.pago_minimo_pct > 0 && cuenta.saldo_actual !== 0 && (
               <div className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-gasto-500/10 text-gasto-400">
                 <Percent className="h-3 w-3" />
                 Mín: {formatCLP(Math.ceil(Math.abs(cuenta.saldo_actual) * cuenta.pago_minimo_pct / 100))}

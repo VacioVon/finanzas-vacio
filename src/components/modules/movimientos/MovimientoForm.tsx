@@ -575,7 +575,7 @@ export function MovimientoForm({
                   </div>
                   {tipo === 'pago_tarjeta' && cuentaDest.limite && (
                     <p className="text-[10px] text-brand-400/70">
-                      Cupo disponible después: {formatCLP(cuentaDest.limite + (cuentaDest.saldo_actual + monto))}
+                      Cupo disponible después: {formatCLP(Math.max(0, cuentaDest.limite - Math.max(0, Math.abs(cuentaDest.saldo_actual) - monto)))}
                     </p>
                   )}
                 </div>
