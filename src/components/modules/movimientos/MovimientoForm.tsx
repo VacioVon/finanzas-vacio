@@ -20,7 +20,7 @@ import { CategoryPicker } from './CategoryPicker'
 import { AccountPicker } from '@/components/ui/AccountPicker'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
-import type { Movimiento, TipoMovimiento, ContextoPago } from '@/types/app.types'
+import type { Movimiento, TipoMovimiento, ContextoPago, OrigenDinero } from '@/types/app.types'
 
 // ── Tokens visuales por tipo ─────────────────────────────────────
 const TIPO_ACCENT_HEX: Record<string, string> = {
@@ -181,6 +181,7 @@ export function MovimientoForm({
   const [contextoPago,       setContextoPago]       = useState<ContextoPago | null>(null)
   const [deudaVinculada,     setDeudaVinculada]     = useState<string | null>(null)
   const [compromisoVinculado, setCompromisoVinculado] = useState<string | null>(null)
+  const [origenDinero,        setOrigenDinero]        = useState<OrigenDinero | null>(null)
 
   const { data: cuentas }       = useCuentas()
   const { data: categorias }    = useCategoriasByTipo(tipoToCategoriaTipo(tipo))
@@ -234,6 +235,7 @@ export function MovimientoForm({
     setContextoPago(null)
     setDeudaVinculada(null)
     setCompromisoVinculado(null)
+    setOrigenDinero(null)
 
     const source = editingMovimiento ?? duplicateFrom
     if (source) {
@@ -315,6 +317,7 @@ export function MovimientoForm({
       contexto_pago:     (!skipDetalles && mostrarContexto) ? contextoPago ?? undefined : undefined,
       deuda_id:          (!skipDetalles && mostrarContexto) ? deudaVinculada ?? undefined : undefined,
       compromiso_id:     (!skipDetalles && tipo === 'gasto' && !pagoDeuda) ? compromisoVinculado ?? undefined : undefined,
+      origen_dinero:     skipDetalles ? undefined : (origenDinero ?? undefined),
     }
 
     const cuotaPayload = {
@@ -379,6 +382,7 @@ export function MovimientoForm({
     setContextoPago(null)
     setDeudaVinculada(null)
     setCompromisoVinculado(null)
+    setOrigenDinero(null)
     setPaso('principal')
     onClose()
   }
@@ -748,6 +752,48 @@ export function MovimientoForm({
               className={`w-full mt-1 h-11 px-3 rounded-xl border text-sm outline-none ${inputDark}`}
             />
           </div>
+
+          {/* Origen del dinero — gastos y pagos de deuda */}
+          {(tipo === 'gasto' || pagoDeuda) && (
+            <div>
+              <p className={`${labelDark} mb-2`}>
+                Origen del dinero{' '}
+                <span className="text-slate-600 font-normal normal-case">(opcional)</span>
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { value: 'sueldo'               as OrigenDinero, label: 'Sueldo',       emoji: '💼' },
+                  { value: 'ahorro'               as OrigenDinero, label: 'Ahorro',        emoji: '🏦' },
+                  { value: 'transferencia_externa' as OrigenDinero, label: 'Transferencia', emoji: '📥' },
+                  { value: 'objetivo'             as OrigenDinero, label: 'Objetivo',      emoji: '🎯' },
+                  { value: 'prestamo'             as OrigenDinero, label: 'Préstamo',      emoji: '🤝' },
+                  { value: 'otro'                 as OrigenDinero, label: 'Otro',          emoji: '📦' },
+                ] as const).map(op => {
+                  const active = origenDinero === op.value
+                  return (
+                    <button
+                      key={op.value}
+                      type="button"
+                      onClick={() => setOrigenDinero(active ? null : op.value)}
+                      className="flex flex-col items-center gap-1 p-2.5 rounded-xl border text-center transition-all"
+                      style={{
+                        borderColor:     active ? '#2979FF50' : '#3D3B50',
+                        backgroundColor: active ? '#2979FF12' : 'transparent',
+                      }}
+                    >
+                      <span className="text-base">{op.emoji}</span>
+                      <span
+                        className="text-[10px] font-semibold leading-tight"
+                        style={{ color: active ? '#2979FF' : '#64748B' }}
+                      >
+                        {op.label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Para tercero */}
           {mostrarTercero && (

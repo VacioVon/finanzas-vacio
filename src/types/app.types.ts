@@ -9,6 +9,11 @@ export type FrecuenciaSuscripcion = 'semanal' | 'quincenal' | 'mensual' | 'bimes
 export type TipoCompromiso = 'servicio' | 'gasto_fijo'
 export type MontoTipoCompromiso = 'fijo' | 'estimado'
 
+// ── Motor financiero ──────────────────────────────────────────
+export type OrigenDinero = 'sueldo' | 'ahorro' | 'transferencia_externa' | 'objetivo' | 'prestamo' | 'otro'
+export type PropositoTipo = 'deuda' | 'compra' | 'objetivo' | 'ahorro' | 'emergencia' | 'otro'
+export type PersonaTipo = 'persona' | 'empresa' | 'banco' | 'otro'
+
 // ── Planificaciones ───────────────────────────────────────────
 export type TipoPlanificacion = 'gasto' | 'ingreso' | 'ahorro' | 'mover'
 export type EstadoPlanificacion = 'pendiente' | 'realizado' | 'cancelado'
@@ -141,12 +146,17 @@ export interface Movimiento {
   capital: number | null           // desglose pago deuda: monto capital
   interes_pago: number | null      // desglose pago deuda: monto interés
   contexto_pago: ContextoPago | null
+  // Motor financiero
+  origen_dinero: OrigenDinero | null
+  ingreso_origen_id: string | null
+  dinero_asignado_id: string | null
   created_at: string
   updated_at: string
   categoria?: Categoria
   subcategoria?: Subcategoria
   cuenta?: Cuenta
   cuenta_destino?: Cuenta
+  transferencia_externa?: TransferenciaExterna
 }
 
 export interface ObjetivoAhorro {
@@ -296,6 +306,68 @@ export interface MovimientoFormData {
   para_tercero?: boolean
   tercero_nombre?: string
   fondos_tercero?: boolean
+  // Motor financiero
+  origen_dinero?: OrigenDinero
+  ingreso_origen_id?: string
+  dinero_asignado_id?: string
+}
+
+// ── Transferencias Externas ───────────────────────────────────
+export interface TransferenciaExterna {
+  id: string
+  usuario_id: string
+  movimiento_id: string
+  persona_nombre: string
+  persona_tipo: PersonaTipo
+  proposito: string | null
+  es_devolucion: boolean
+  deuda_origen_id: string | null
+  created_at: string
+}
+
+export interface TransferenciaExternaFormData {
+  persona_nombre: string
+  persona_tipo: PersonaTipo
+  proposito?: string
+  es_devolucion?: boolean
+  deuda_origen_id?: string
+  // Campos del movimiento asociado
+  monto: number
+  fecha: string
+  cuenta_id: string
+  nota?: string
+}
+
+// ── Dinero Asignado (Sobres) ──────────────────────────────────
+export interface DineroAsignado {
+  id: string
+  usuario_id: string
+  cuenta_id: string
+  nombre: string
+  emoji: string
+  color: string
+  monto_reservado: number
+  monto_usado: number
+  proposito_tipo: PropositoTipo
+  referencia_id: string | null
+  descripcion: string | null
+  fecha_limite: string | null
+  activo: boolean
+  created_at: string
+  updated_at: string
+  cuenta?: Cuenta
+}
+
+export interface DineroAsignadoFormData {
+  cuenta_id: string
+  nombre: string
+  emoji?: string
+  color?: string
+  monto_reservado: number
+  proposito_tipo: PropositoTipo
+  referencia_id?: string
+  descripcion?: string
+  fecha_limite?: string
 }
 
 export interface Valorizacion {

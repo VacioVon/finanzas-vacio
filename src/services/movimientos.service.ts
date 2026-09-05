@@ -136,7 +136,11 @@ export async function createMovimiento(
     comision:           form.comision ?? 0,
     para_tercero:       form.para_tercero ?? false,
     tercero_nombre:     form.tercero_nombre || null,
-    fondos_tercero:     form.fondos_tercero ?? false
+    fondos_tercero:     form.fondos_tercero ?? false,
+    // Motor financiero
+    origen_dinero:      form.origen_dinero || null,
+    ingreso_origen_id:  form.ingreso_origen_id || null,
+    dinero_asignado_id: form.dinero_asignado_id || null,
   }
 
   const { data, error } = await supabase
