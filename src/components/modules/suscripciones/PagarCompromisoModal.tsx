@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
+import { AccountPicker } from '@/components/ui/AccountPicker'
 import { useCuentas } from '@/hooks/useCuentas'
 import { useRegistrarPagoCompromiso } from '@/hooks/useSuscripciones'
 import { todayISO } from '@/utils/dates'
@@ -31,7 +31,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   const pagarMutation       = useRegistrarPagoCompromiso()
   const [error, setError]   = useState<string | null>(null)
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       fecha:     todayISO(),
@@ -40,12 +40,8 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
     }
   })
 
-  // Sync monto default cuando cambia el compromiso
   const defaultMonto = compromiso?.monto ?? 0
-
-  const cuentaOptions = (cuentas ?? [])
-    .filter(c => c.activa)
-    .map(c => ({ value: c.id, label: c.nombre }))
+  const cuentaIdSeleccionada = watch('cuenta_id')
 
   async function onSubmit(data: FormValues) {
     if (!compromiso) return
@@ -117,12 +113,12 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
           {errors.monto && <p className="text-xs text-gasto-400 mt-1">{errors.monto.message}</p>}
         </div>
 
-        <Select
-          label="Cuenta"
-          options={cuentaOptions}
-          placeholder="Selecciona la cuenta"
+        <AccountPicker
+          label="Pagar desde"
+          cuentas={(cuentas ?? []).filter(c => c.activa && c.tipo !== 'credito')}
+          selectedId={cuentaIdSeleccionada}
+          onChange={id => setValue('cuenta_id', id, { shouldValidate: true })}
           error={errors.cuenta_id?.message}
-          {...register('cuenta_id')}
         />
 
         <Input

@@ -105,7 +105,9 @@ export function AccountPicker({
             const color    = cuenta.color || cfg.color
             const isSelected = cuenta.id === selectedId
             const esCredito  = cuenta.tipo === 'credito'
-            const saldo      = esCredito ? (cuenta.limite ?? 0) + cuenta.saldo_actual : cuenta.saldo_actual
+            const saldo      = esCredito
+              ? Math.max(0, (cuenta.limite ?? 0) - Math.abs(cuenta.saldo_actual))
+              : cuenta.saldo_actual
             const saldoColor = esCredito
               ? '#2979FF'
               : saldo >= 0 ? '#10D97F' : '#F4645F'
