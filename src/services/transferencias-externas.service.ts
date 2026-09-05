@@ -4,11 +4,24 @@ import type { TransferenciaExterna, TransferenciaExternaFormData } from '@/types
 export async function getTransferenciasExternas(userId: string): Promise<TransferenciaExterna[]> {
   const { data, error } = await supabase
     .from('transferencias_externas')
-    .select('*')
+    .select(`
+      *,
+      movimiento:movimientos!transferencias_externas_movimiento_id_fkey(monto, fecha, cuenta_id)
+    `)
     .eq('usuario_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
-  return (data ?? []) as TransferenciaExterna[]
+  // Aplanar datos del movimiento vinculado
+  return ((data ?? []) as unknown[]).map((row: unknown) => {
+    const r = row as Record<string, unknown>
+    const mov = (r.movimiento as Record<string, unknown> | null) ?? {}
+    const result = { ...r } as Record<string, unknown>
+    result.monto     = (mov.monto     as number)      ?? 0
+    result.fecha     = (mov.fecha     as string)      ?? ''
+    result.cuenta_id = (mov.cuenta_id as string|null) ?? null
+    delete result.movimiento
+    return result as unknown as TransferenciaExterna
+  })
 }
 
 export async function createTransferenciaExterna(

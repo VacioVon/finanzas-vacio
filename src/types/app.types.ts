@@ -14,6 +14,30 @@ export type OrigenDinero = 'sueldo' | 'ahorro' | 'transferencia_externa' | 'obje
 export type PropositoTipo = 'deuda' | 'compra' | 'objetivo' | 'ahorro' | 'emergencia' | 'otro'
 export type PersonaTipo = 'persona' | 'empresa' | 'banco' | 'otro'
 
+export interface Participante {
+  nombre: string
+  monto:  number
+}
+
+export interface GastoCompartido {
+  id:            string
+  movimiento_id: string
+  usuario_id:    string
+  monto_total:   number
+  monto_usuario: number
+  participantes: Participante[]
+  descripcion:   string | null
+  created_at:    string
+}
+
+export interface GastoCompartidoFormData {
+  movimiento_id: string
+  monto_total:   number
+  monto_usuario: number
+  participantes: Participante[]
+  descripcion?:  string
+}
+
 // ── Planificaciones ───────────────────────────────────────────
 export type TipoPlanificacion = 'gasto' | 'ingreso' | 'ahorro' | 'mover'
 export type EstadoPlanificacion = 'pendiente' | 'realizado' | 'cancelado'
@@ -323,6 +347,10 @@ export interface TransferenciaExterna {
   es_devolucion: boolean
   deuda_origen_id: string | null
   created_at: string
+  // Campos del movimiento vinculado (JOIN)
+  monto: number
+  fecha: string
+  cuenta_id: string | null
 }
 
 export interface TransferenciaExternaFormData {

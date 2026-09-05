@@ -91,15 +91,10 @@ export function CuentaCard({ cuenta, onEdit, onActualizarValor, valorizaciones }
           <div className="text-right flex-shrink-0">
             {isCreditCard ? (
               <>
-                <p className="text-[10px] text-slate-500 mb-0.5">Deuda</p>
-                <p className="text-sm font-bold tabular-nums text-gasto-400">
+                <p className="text-[10px] text-slate-500 mb-0.5">Deuda actual</p>
+                <p className="text-base font-bold tabular-nums text-gasto-400">
                   {formatCLP(Math.abs(cuenta.saldo_actual))}
                 </p>
-                {cuenta.limite && (
-                  <p className="text-[10px] text-slate-500 tabular-nums mt-0.5">
-                    Cupo: <span className="text-brand-400">{formatCLP(cupoDisponible ?? 0)}</span>
-                  </p>
-                )}
               </>
             ) : (
               <>
@@ -119,6 +114,48 @@ export function CuentaCard({ cuenta, onEdit, onActualizarValor, valorizaciones }
             )}
           </div>
         </div>
+
+        {/* Breakdown cupo — solo tarjetas de crédito */}
+        {isCreditCard && cuenta.limite && (
+          <div className="mt-3 pt-3 border-t space-y-2" style={{ borderColor: `${color}20` }}>
+            {/* Barra de utilización */}
+            {(() => {
+              const deuda    = Math.abs(cuenta.saldo_actual)
+              const utilPct  = Math.min(100, (deuda / cuenta.limite!) * 100)
+              const barColor = utilPct > 80 ? '#F4645F' : utilPct > 50 ? '#FFB703' : '#10D97F'
+              return (
+                <>
+                  <div className="flex h-1.5 bg-night-0 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${utilPct}%`, backgroundColor: barColor }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-1 text-center">
+                    <div>
+                      <p className="text-[9px] text-slate-500">Utilizado</p>
+                      <p className="text-[11px] font-bold tabular-nums text-gasto-400">
+                        {formatCLP(deuda)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500">Disponible</p>
+                      <p className="text-[11px] font-bold tabular-nums text-ingreso-400">
+                        {formatCLP(cupoDisponible ?? 0)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500">Cupo total</p>
+                      <p className="text-[11px] font-bold tabular-nums text-slate-300">
+                        {formatCLP(cuenta.limite!)}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        )}
 
         {/* Metadata tarjeta de crédito */}
         {isCreditCard && (cuenta.dia_facturacion || cuenta.dia_vencimiento || cuenta.pago_minimo_pct) && (

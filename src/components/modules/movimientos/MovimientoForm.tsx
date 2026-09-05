@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ChevronLeft, ChevronRight, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Users, Plus, X } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -20,7 +20,8 @@ import { CategoryPicker } from './CategoryPicker'
 import { AccountPicker } from '@/components/ui/AccountPicker'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
-import type { Movimiento, TipoMovimiento, ContextoPago, OrigenDinero } from '@/types/app.types'
+import { useCreateGastoCompartido } from '@/hooks/useGastosCompartidos'
+import type { Movimiento, TipoMovimiento, ContextoPago, OrigenDinero, Participante } from '@/types/app.types'
 
 // ── Tokens visuales por tipo ─────────────────────────────────────
 const TIPO_ACCENT_HEX: Record<string, string> = {
@@ -182,15 +183,18 @@ export function MovimientoForm({
   const [deudaVinculada,     setDeudaVinculada]     = useState<string | null>(null)
   const [compromisoVinculado, setCompromisoVinculado] = useState<string | null>(null)
   const [origenDinero,        setOrigenDinero]        = useState<OrigenDinero | null>(null)
+  const [esCompartido,        setEsCompartido]        = useState(false)
+  const [participantes,       setParticipantes]       = useState<Participante[]>([{ nombre: '', monto: 0 }])
 
   const { data: cuentas }       = useCuentas()
   const { data: categorias }    = useCategoriasByTipo(tipoToCategoriaTipo(tipo))
   const { data: deudas }        = useDeudas()
   const { data: suscripciones } = useSuscripciones()
-  const createMutation            = useCreateMovimiento()
-  const updateMutation            = useUpdateMovimiento()
-  const createCuotaMutation       = useCreateCuota()
-  const crearGastoTerceroMutation = useCrearGastoTercero()
+  const createMutation              = useCreateMovimiento()
+  const updateMutation              = useUpdateMovimiento()
+  const createCuotaMutation         = useCreateCuota()
+  const crearGastoTerceroMutation   = useCrearGastoTercero()
+  const createGastoCompartidoMutation = useCreateGastoCompartido()
 
   const {
     register, handleSubmit, watch, reset, setValue,
@@ -236,6 +240,8 @@ export function MovimientoForm({
     setDeudaVinculada(null)
     setCompromisoVinculado(null)
     setOrigenDinero(null)
+    setEsCompartido(false)
+    setParticipantes([{ nombre: '', monto: 0 }])
 
     const source = editingMovimiento ?? duplicateFrom
     if (source) {
@@ -356,8 +362,21 @@ export function MovimientoForm({
         })
         if (registrarCuota) await createCuotaMutation.mutateAsync(cuotaPayload)
       } else {
-        await createMutation.mutateAsync(formData)
+        const nuevoMov = await createMutation.mutateAsync(formData)
         if (registrarCuota) await createCuotaMutation.mutateAsync(cuotaPayload)
+        // Gasto compartido: registrar participantes
+        if (!skipDetalles && esCompartido && tipoReal === 'gasto' && participantes.length > 0) {
+          const validParts = participantes.filter(p => p.nombre.trim() && p.monto > 0)
+          if (validParts.length > 0) {
+            const montoOtros = validParts.reduce((s, p) => s + p.monto, 0)
+            await createGastoCompartidoMutation.mutateAsync({
+              movimiento_id: nuevoMov.id,
+              monto_total:   data.monto + montoOtros,
+              monto_usuario: data.monto,
+              participantes: validParts,
+            })
+          }
+        }
       }
       handleClose()
       onSuccess?.()
@@ -383,11 +402,13 @@ export function MovimientoForm({
     setDeudaVinculada(null)
     setCompromisoVinculado(null)
     setOrigenDinero(null)
+    setEsCompartido(false)
+    setParticipantes([{ nombre: '', monto: 0 }])
     setPaso('principal')
     onClose()
   }
 
-  const isLoading = createMutation.isPending || updateMutation.isPending || createCuotaMutation.isPending || crearGastoTerceroMutation.isPending
+  const isLoading = createMutation.isPending || updateMutation.isPending || createCuotaMutation.isPending || crearGastoTerceroMutation.isPending || createGastoCompartidoMutation.isPending
 
   const title = editingMovimiento ? 'Editar movimiento'
     : duplicateFrom ? 'Duplicar movimiento'
@@ -753,8 +774,8 @@ export function MovimientoForm({
             />
           </div>
 
-          {/* Origen del dinero — gastos y pagos de deuda */}
-          {(tipo === 'gasto' || pagoDeuda) && (
+          {/* Origen del dinero — gastos, pagos de deuda y pago tarjeta */}
+          {(tipo === 'gasto' || pagoDeuda || tipo === 'pago_tarjeta') && (
             <div>
               <p className={`${labelDark} mb-2`}>
                 Origen del dinero{' '}
@@ -792,6 +813,107 @@ export function MovimientoForm({
                   )
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Gastos compartidos — solo gastos directos, sin tarjeta */}
+          {tipo === 'gasto' && !pagoDeuda && !editingMovimiento && (
+            <div className={[
+              'rounded-2xl border transition-all',
+              esCompartido
+                ? 'border-brand-500/40 bg-brand-500/8'
+                : 'border-night-border bg-night-3'
+            ].join(' ')}>
+              <button
+                type="button"
+                onClick={() => setEsCompartido(v => !v)}
+                className="w-full flex items-center gap-3 px-4 py-3"
+              >
+                <div className={[
+                  'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                  esCompartido ? 'bg-brand-500 border-brand-500' : 'border-slate-600'
+                ].join(' ')}>
+                  {esCompartido && <span className="text-night-0 text-[10px] font-bold">✓</span>}
+                </div>
+                <div className="flex items-center gap-2 flex-1 text-left">
+                  <Users className={`h-4 w-4 ${esCompartido ? 'text-brand-400' : 'text-slate-600'}`} />
+                  <div>
+                    <p className={`text-xs font-semibold ${esCompartido ? 'text-brand-300' : 'text-slate-400'}`}>
+                      Gasto compartido
+                    </p>
+                    <p className="text-[10px] text-slate-600">
+                      Solo tu parte afecta tu saldo
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              {esCompartido && (
+                <div className="px-4 pb-4 border-t border-brand-500/20 pt-3 space-y-3">
+                  <p className="text-[10px] text-slate-500">
+                    El monto ingresado arriba es <span className="text-brand-400 font-semibold">tu parte</span>.
+                    Agrega lo que pagan los demás:
+                  </p>
+
+                  {participantes.map((p, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Nombre"
+                        value={p.nombre}
+                        onChange={e => {
+                          const next = [...participantes]
+                          next[i] = { ...next[i], nombre: e.target.value }
+                          setParticipantes(next)
+                        }}
+                        className="flex-1 h-9 px-3 rounded-xl border border-brand-500/30 bg-night-0 text-sm text-slate-200 outline-none placeholder:text-slate-600"
+                      />
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={p.monto || ''}
+                        onChange={e => {
+                          const next = [...participantes]
+                          next[i] = { ...next[i], monto: Number(e.target.value) || 0 }
+                          setParticipantes(next)
+                        }}
+                        className="w-28 h-9 px-3 rounded-xl border border-brand-500/30 bg-night-0 text-sm text-slate-200 outline-none tabular-nums"
+                      />
+                      {participantes.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setParticipantes(ps => ps.filter((_, j) => j !== i))}
+                          className="size-7 flex items-center justify-center rounded-full hover:bg-gasto-500/10 transition-colors flex-shrink-0"
+                        >
+                          <X className="h-3.5 w-3.5 text-slate-500 hover:text-gasto-400" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setParticipantes(ps => [...ps, { nombre: '', monto: 0 }])}
+                    className="flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Agregar participante
+                  </button>
+
+                  {(() => {
+                    const montoOtros = participantes.reduce((s, p) => s + (p.monto || 0), 0)
+                    const total      = monto + montoOtros
+                    if (total <= 0) return null
+                    return (
+                      <div className="rounded-xl px-3 py-2 bg-brand-500/10 border border-brand-500/20 flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400">Total del gasto</span>
+                        <span className="text-sm font-bold tabular-nums text-brand-300">{formatCLP(total)}</span>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
             </div>
           )}
 

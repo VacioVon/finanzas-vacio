@@ -19,6 +19,7 @@ import { AjustesPage }   from '@/pages/AjustesPage'
 import { AnalisisPage }  from '@/pages/AnalisisPage'
 import { CobrosPage }              from '@/pages/CobrosPage'
 import { IngresosRecurrentesPage } from '@/pages/IngresosRecurrentesPage'
+import { FinanzasPage }            from '@/pages/FinanzasPage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthStore()
@@ -103,6 +104,7 @@ export function App() {
       <Route path="/analisis" element={<PrivateRoute><AnalisisPage /></PrivateRoute>} />
       <Route path="/cobros"              element={<PrivateRoute><CobrosPage /></PrivateRoute>} />
       <Route path="/ingresos-recurrentes" element={<PrivateRoute><IngresosRecurrentesPage /></PrivateRoute>} />
+      <Route path="/finanzas"            element={<PrivateRoute><FinanzasPage /></PrivateRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

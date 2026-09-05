@@ -30,8 +30,8 @@ const OPCIONES: ContextoOption[] = [
   },
   {
     value:       'deuda_compartida',
-    label:       'Deuda compartida',
-    sublabel:    'Pago de gasto en común',
+    label:       'Gasto compartido',
+    sublabel:    'Pagas por otros o dividen el gasto',
     icon:        <Users className="size-4" />,
     color:       'text-brand-400 border-brand-500/40 bg-brand-500/10',
     filterTipos: null,
@@ -117,7 +117,7 @@ export function ContextoPagoSelector({ contexto, deudaId, deudas, onContexto, on
           <p className="text-[11px] text-slate-500 mb-1.5">
             {contexto === 'deuda_propia'        && 'Selecciona la deuda que estás pagando'}
             {contexto === 'devolucion_prestamo' && 'Selecciona a quién le estás devolviendo'}
-            {contexto === 'deuda_compartida'    && 'Selecciona la deuda compartida'}
+            {contexto === 'deuda_compartida'    && 'Selecciona el gasto compartido vinculado'}
           </p>
 
           {deudosFiltradas.length === 0 ? (

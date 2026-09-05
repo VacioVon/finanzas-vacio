@@ -1,7 +1,7 @@
 ﻿import { useNavigate } from 'react-router-dom'
 import {
   Wallet, Tag, Target, PiggyBank, CreditCard, ShoppingBag,
-  RefreshCw, CalendarDays, Settings, ChevronRight, HandCoins, TrendingUp
+  RefreshCw, CalendarDays, Settings, ChevronRight, HandCoins, TrendingUp, Zap
 } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -97,6 +97,13 @@ export function MasPage() {
 
           {/* Herramientas */}
           <Card padding="none" className="divide-y divide-night-border/40">
+            <MenuItem
+              icon={<Zap className="h-4 w-4" />}
+              label="Motor financiero"
+              description="Transferencias externas y sobres de dinero"
+              onClick={() => navigate('/finanzas')}
+              accent="bg-ingreso-500/15 text-ingreso-400"
+            />
             <MenuItem
               icon={<TrendingUp className="h-4 w-4" />}
               label="Ingresos recurrentes"
