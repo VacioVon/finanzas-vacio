@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react'
-import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp } from 'lucide-react'
 import {
   PieChart, Pie, Cell,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -17,6 +17,7 @@ import {
   labelMesAnio,
   navegarMes
 } from '@/utils/periodo'
+import { formatDate } from '@/utils/dates'
 import type { Movimiento } from '@/types/app.types'
 
 // ─── Tooltip Deep Ocean para Recharts ────────────────────────────────────────
@@ -70,6 +71,46 @@ function StatCard({ label, valor, color, sub }: {
       {sub && <p className="text-[10px] text-slate-500 leading-none">{sub}</p>}
     </div>
   )
+}
+
+// ─── Flujo del período ───────────────────────────────────────────────────────
+
+interface FlujoRow {
+  id:        string
+  fecha:     string
+  label:     string
+  emoji:     string
+  delta:     number   // positivo = entrada, negativo = salida
+  tipo:      string
+  saldo:     number   // saldo acumulado después de este movimiento
+}
+
+function buildFlujoRows(movimientos: Movimiento[]): FlujoRow[] {
+  const sorted = [...movimientos]
+    .filter(m => m.tipo !== 'transferencia')              // transferencia interna = neutro
+    .filter(m => !(m.tipo === 'gasto' && m.para_tercero)) // gasto para tercero = no es plata tuya
+    .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+
+  let saldo = 0
+  return sorted.map(m => {
+    const esEntrada = m.tipo === 'ingreso'
+    const delta     = esEntrada ? m.monto : -m.monto
+    saldo += delta
+
+    const emoji = m.tipo === 'ingreso'      ? (m.categoria?.emoji ?? '💰')
+                : m.tipo === 'ahorro'        ? '🏦'
+                : m.tipo === 'pago_deuda'    ? '🏦'
+                : m.tipo === 'pago_tarjeta'  ? '💳'
+                : (m.categoria?.emoji ?? '💸')
+
+    const label = m.tipo === 'pago_tarjeta' ? `Pago tarjeta${m.nota ? ` · ${m.nota}` : ''}`
+                : m.tipo === 'pago_deuda'   ? `Pago deuda${m.nota ? ` · ${m.nota}` : ''}`
+                : m.tipo === 'ahorro'       ? `Ahorro${m.nota ? ` · ${m.nota}` : ''}`
+                : (m.categoria?.nombre ?? (m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'))
+                  + (m.nota ? ` · ${m.nota}` : '')
+
+    return { id: m.id, fecha: m.fecha, label, emoji, delta, tipo: m.tipo, saldo }
+  })
 }
 
 // ─── Helpers de análisis ─────────────────────────────────────────────────────
@@ -129,10 +170,15 @@ export function AnalisisPage() {
     .filter(m => m.tipo === 'gasto' && !m.para_tercero)
     .reduce((s, m) => s + m.monto, 0)
 
-  const flujo     = ingresos - gastos
+  const flujo      = ingresos - gastos
   const tasaAhorro = ingresos > 0 ? Math.round(Math.max(0, flujo / ingresos * 100)) : 0
   const catData    = agruparPorCategoria(movimientos ?? [])
   const totalGastos = catData.reduce((s, c) => s + c.monto, 0)
+  const flujoRows  = buildFlujoRows(movimientos ?? [])
+
+  const [flujoExpandido, setFlujoExpandido] = useState(false)
+  const FILAS_VISIBLES = 6
+  const filasAMostrar  = flujoExpandido ? flujoRows : flujoRows.slice(-FILAS_VISIBLES)
 
   return (
     <AppLayout nebula="#2979FF">
@@ -189,6 +235,89 @@ export function AnalisisPage() {
                 sub={ingresos > 0 ? 'del ingreso' : 'sin ingresos'}
               />
             </div>
+
+            {/* Flujo del período — waterfall running balance */}
+            {flujoRows.length > 0 && (
+              <Card variant="ocean">
+                {/* Encabezado */}
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-200">Flujo del período</p>
+                    <p className="text-[10px] text-slate-500">
+                      Desde día {fechaSueldo} · {flujoRows.length} movimientos
+                    </p>
+                  </div>
+                  {/* Saldo final del período */}
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-500">Resultado</p>
+                    <p className={`text-sm font-bold tabular-nums ${flujoRows[flujoRows.length - 1].saldo >= 0 ? 'text-ingreso-400' : 'text-gasto-400'}`}>
+                      {flujoRows[flujoRows.length - 1].saldo >= 0 ? '+' : ''}{formatCLP(flujoRows[flujoRows.length - 1].saldo)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Filas */}
+                <div className="divide-y divide-night-border/30">
+                  {flujoRows.length > FILAS_VISIBLES && !flujoExpandido && (
+                    <button
+                      onClick={() => setFlujoExpandido(true)}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                      Ver {flujoRows.length - FILAS_VISIBLES} movimientos anteriores
+                    </button>
+                  )}
+                  {filasAMostrar.map((row, idx) => {
+                    const esEntrada = row.delta > 0
+                    const isLast    = idx === filasAMostrar.length - 1
+                    return (
+                      <div
+                        key={row.id}
+                        className={`flex items-center gap-2.5 py-2 ${isLast ? 'pb-0' : ''}`}
+                      >
+                        {/* Línea de tiempo */}
+                        <div className="flex flex-col items-center flex-shrink-0 w-5">
+                          <div
+                            className="size-2 rounded-full mt-1 flex-shrink-0"
+                            style={{ backgroundColor: esEntrada ? '#10D97F' : row.tipo === 'ahorro' ? '#9B5DE5' : row.tipo === 'pago_deuda' || row.tipo === 'pago_tarjeta' ? '#FFB703' : '#F4645F' }}
+                          />
+                          {!isLast && <div className="w-px flex-1 bg-night-border/40 mt-0.5 min-h-[16px]" />}
+                        </div>
+
+                        {/* Emoji */}
+                        <span className="text-sm flex-shrink-0">{row.emoji}</span>
+
+                        {/* Label + fecha */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-slate-300 truncate">{row.label}</p>
+                          <p className="text-[10px] text-slate-600">{formatDate(row.fecha)}</p>
+                        </div>
+
+                        {/* Delta + saldo */}
+                        <div className="text-right flex-shrink-0">
+                          <p className={`text-xs font-semibold tabular-nums ${esEntrada ? 'text-ingreso-400' : 'text-gasto-400'}`}>
+                            {esEntrada ? '+' : '-'}{formatCLP(Math.abs(row.delta))}
+                          </p>
+                          <p className={`text-[10px] tabular-nums ${row.saldo >= 0 ? 'text-slate-500' : 'text-gasto-500'}`}>
+                            = {formatCLP(row.saldo)}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {flujoExpandido && flujoRows.length > FILAS_VISIBLES && (
+                  <button
+                    onClick={() => setFlujoExpandido(false)}
+                    className="w-full flex items-center justify-center gap-1.5 pt-3 text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                    Colapsar
+                  </button>
+                )}
+              </Card>
+            )}
 
             {/* Desktop: tasa de ahorro + donut en 2 col / Móvil: stack */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
