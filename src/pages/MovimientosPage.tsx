@@ -26,9 +26,10 @@ export function MovimientosPage() {
 
   const { data: movimientosMes } = useMovimientosDelMes()
 
-  const ingresos = (movimientosMes ?? []).filter(m => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0)
+  const ingresos  = (movimientosMes ?? []).filter(m => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0)
   // Excluir gastos para terceros del resumen personal (igual que HomePage)
-  const gastos   = (movimientosMes ?? []).filter(m => m.tipo === 'gasto' && !m.para_tercero).reduce((s, m) => s + m.monto, 0)
+  const gastos    = (movimientosMes ?? []).filter(m => m.tipo === 'gasto' && !m.para_tercero).reduce((s, m) => s + m.monto, 0)
+  const flujoNeto = ingresos - gastos
 
   return (
     <AppLayout nebula="#2979FF">
@@ -45,15 +46,42 @@ export function MovimientosPage() {
       <div className="space-y-3 pt-4">
         {/* Resumen del mes */}
         {(ingresos > 0 || gastos > 0) && (
-          <div className="px-4 lg:px-0 grid grid-cols-2 gap-3">
-            <div className="bg-ingreso-500/10 border border-ingreso-500/20 rounded-2xl p-3">
-              <p className="text-xs text-ingreso-400 font-medium">Ingresos este mes</p>
-              <p className="text-base font-bold text-ingreso-300 mt-0.5 tabular-nums">{formatCLP(ingresos)}</p>
+          <div className="px-4 lg:px-0 space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-ingreso-500/10 border border-ingreso-500/20 rounded-2xl p-3">
+                <p className="text-[10px] text-ingreso-400 font-semibold uppercase tracking-wide">Ingresos</p>
+                <p className="text-sm font-bold text-ingreso-300 mt-0.5 tabular-nums">{formatCLP(ingresos)}</p>
+              </div>
+              <div className="bg-gasto-500/10 border border-gasto-500/20 rounded-2xl p-3">
+                <p className="text-[10px] text-gasto-400 font-semibold uppercase tracking-wide">Gastos</p>
+                <p className="text-sm font-bold text-gasto-300 mt-0.5 tabular-nums">{formatCLP(gastos)}</p>
+              </div>
             </div>
-            <div className="bg-gasto-500/10 border border-gasto-500/20 rounded-2xl p-3">
-              <p className="text-xs text-gasto-400 font-medium">Gastos este mes</p>
-              <p className="text-base font-bold text-gasto-300 mt-0.5 tabular-nums">{formatCLP(gastos)}</p>
-            </div>
+            {/* Barra de progreso gasto vs ingreso */}
+            {ingresos > 0 && (
+              <div className="rounded-2xl border border-night-border bg-night-2 px-3 py-2.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">
+                    {flujoNeto >= 0 ? 'Disponible del período' : 'Déficit del período'}
+                  </p>
+                  <p className={`text-sm font-bold tabular-nums ${flujoNeto >= 0 ? 'text-ingreso-400' : 'text-gasto-400'}`}>
+                    {flujoNeto >= 0 ? '' : '-'}{formatCLP(Math.abs(flujoNeto))}
+                  </p>
+                </div>
+                <div className="h-1.5 bg-night-0 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, ingresos > 0 ? (gastos / ingresos) * 100 : 0)}%`,
+                      backgroundColor: gastos / ingresos > 0.9 ? '#F4645F' : gastos / ingresos > 0.7 ? '#FFB703' : '#10D97F',
+                    }}
+                  />
+                </div>
+                <p className="text-[9px] text-slate-600 mt-1 tabular-nums">
+                  {ingresos > 0 ? Math.round((gastos / ingresos) * 100) : 0}% del ingreso utilizado
+                </p>
+              </div>
+            )}
           </div>
         )}
 

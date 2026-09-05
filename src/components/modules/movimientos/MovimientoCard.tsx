@@ -17,7 +17,17 @@ const tipoLabel: Record<string, string> = {
   gasto:         'Gasto',
   ahorro:        'Ahorro',
   pago_deuda:    'Pago deuda',
-  transferencia: 'Transferencia'
+  transferencia: 'Transferencia',
+  pago_tarjeta:  'Pag. tarjeta',
+}
+
+const ORIGEN_LABEL: Record<string, string> = {
+  sueldo:               '💼 Sueldo',
+  ahorro:               '🏦 Ahorro',
+  transferencia_externa:'📨 Tercero',
+  objetivo:             '🎯 Objetivo',
+  prestamo:             '🤝 Préstamo',
+  otro:                 '📦 Otro',
 }
 
 
@@ -198,6 +208,11 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
             )}
             {mov.nota && (
               <p className="text-xs text-slate-400 mt-0.5 truncate italic">"{mov.nota}"</p>
+            )}
+            {mov.origen_dinero && mov.tipo !== 'ingreso' && (
+              <p className="text-[10px] text-slate-500 mt-0.5">
+                Salió de: <span className="text-slate-400 font-medium">{ORIGEN_LABEL[mov.origen_dinero] ?? mov.origen_dinero}</span>
+              </p>
             )}
           </div>
 
