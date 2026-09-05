@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Plus, CheckCircle2, XCircle, Loader2, CreditCard, AlertTriangle } from 'lucide-react'
+import { Plus, CheckCircle2, XCircle, Loader2, CreditCard, AlertTriangle, PlusCircle } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { PlanificacionForm } from './PlanificacionForm'
+import { MovimientoForm } from '@/components/modules/movimientos/MovimientoForm'
 import { PagarCompromisoModal } from '@/components/modules/suscripciones/PagarCompromisoModal'
 import { usePlanificaciones } from '@/hooks/usePlanificaciones'
 import { useSuscripciones } from '@/hooks/useSuscripciones'
@@ -46,6 +47,7 @@ interface Props {
 
 export function DiaSheet({ isOpen, onClose, fecha, eventos }: Props) {
   const [mostrarFormPlan,    setMostrarFormPlan]    = useState(false)
+  const [mostrarFormMov,     setMostrarFormMov]     = useState(false)
   const [confirmando,        setConfirmando]        = useState<string | null>(null)
   const [pagandoCompromiso,  setPagandoCompromiso]  = useState<Suscripcion | null>(null)
   const [alertaDuplicado,    setAlertaDuplicado]    = useState(false)
@@ -276,15 +278,24 @@ export function DiaSheet({ isOpen, onClose, fecha, eventos }: Props) {
               </div>
             )}
 
-            {/* Botón planificar */}
+            {/* Botones de acción */}
             {!alertaDuplicado && (
-              <button
-                className="w-full mt-2 py-2.5 rounded-xl border border-dashed border-night-border text-slate-500 hover:border-brand-500/50 hover:text-brand-400 transition-colors flex items-center justify-center gap-1.5 text-xs"
-                onClick={handlePlanificar}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Planificar para este día
-              </button>
+              <div className="flex gap-2 mt-2">
+                <button
+                  className="flex-1 py-2.5 rounded-xl border border-brand-500/40 bg-brand-500/8 text-brand-400 hover:bg-brand-500/15 transition-colors flex items-center justify-center gap-1.5 text-xs font-medium"
+                  onClick={() => setMostrarFormMov(true)}
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  Registrar movimiento
+                </button>
+                <button
+                  className="flex-1 py-2.5 rounded-xl border border-dashed border-night-border text-slate-500 hover:border-brand-500/50 hover:text-brand-400 transition-colors flex items-center justify-center gap-1.5 text-xs"
+                  onClick={handlePlanificar}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Planificar
+                </button>
+              </div>
             )}
           </section>
 
@@ -308,6 +319,13 @@ export function DiaSheet({ isOpen, onClose, fecha, eventos }: Props) {
         isOpen={mostrarFormPlan}
         onClose={() => setMostrarFormPlan(false)}
         fechaInicial={fecha}
+      />
+
+      <MovimientoForm
+        isOpen={mostrarFormMov}
+        onClose={() => setMostrarFormMov(false)}
+        onSuccess={() => setMostrarFormMov(false)}
+        defaultFecha={fecha}
       />
     </>
   )

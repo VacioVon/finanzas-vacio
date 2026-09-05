@@ -156,6 +156,7 @@ interface Props {
   onClose:             () => void
   onSuccess?:          () => void
   defaultTipo?:        TipoMovimiento
+  defaultFecha?:       string
   editingMovimiento?:  Movimiento | null
   duplicateFrom?:      Movimiento | null
 }
@@ -165,6 +166,7 @@ export function MovimientoForm({
   onClose,
   onSuccess,
   defaultTipo = 'gasto',
+  defaultFecha,
   editingMovimiento,
   duplicateFrom
 }: Props) {
@@ -201,7 +203,7 @@ export function MovimientoForm({
     formState: { errors }
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { tipo: defaultTipo, fecha: todayISO(), monto: 0 }
+    defaultValues: { tipo: defaultTipo, fecha: defaultFecha ?? todayISO(), monto: 0 }
   })
 
   const selectedCategoriaId = watch('categoria_id')
@@ -264,7 +266,7 @@ export function MovimientoForm({
     } else {
       setTipo(defaultTipo)
       setComprobante(null)
-      reset({ tipo: defaultTipo, fecha: todayISO(), monto: 0 })
+      reset({ tipo: defaultTipo, fecha: defaultFecha ?? todayISO(), monto: 0 })
     }
   }, [isOpen, editingMovimiento, duplicateFrom]) // eslint-disable-line react-hooks/exhaustive-deps
 
