@@ -93,47 +93,40 @@ export function CuentasPage() {
                 ))}
               </div>
 
-              {/* Tarjeta virtual: saldo de dinero de terceros */}
+              {/* Tarjeta virtual: dinero de terceros — dos bloques independientes */}
               {terceros && (terceros.fondos > 0 || terceros.gastos > 0) && (
-                <div className="rounded-2xl border border-dashed border-slate-600/50 bg-night-2/60 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="size-10 rounded-xl bg-slate-700/50 flex items-center justify-center text-lg flex-shrink-0">
-                        🤝
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide leading-none mb-1">
-                          Dinero de terceros
-                        </p>
-                        <p className="text-[11px] text-slate-600 leading-snug">
-                          Saldo virtual · no afecta tus cuentas
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p
-                        className="text-base font-bold tabular-nums leading-none"
-                        style={{ color: terceros.neto >= 0 ? '#10D97F' : '#F4645F' }}
-                      >
-                        {formatCLP(Math.abs(terceros.neto))}
-                      </p>
-                      <p className="text-[10px] text-slate-600 mt-0.5">
-                        {terceros.neto >= 0 ? 'por devolver' : 'por cobrar'}
-                      </p>
-                    </div>
+                <div className="rounded-2xl border border-dashed border-slate-600/50 bg-night-2/60 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🤝</span>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                      Dinero de terceros
+                    </p>
+                    <span className="text-[10px] text-slate-600 ml-auto">Saldo virtual</span>
                   </div>
-                  {terceros.fondos > 0 && terceros.gastos > 0 && (
-                    <div className="mt-3 flex gap-3 pt-3 border-t border-slate-700/40">
-                      <div className="flex-1">
-                        <p className="text-[10px] text-slate-500 mb-0.5">Recibido de terceros</p>
-                        <p className="text-xs font-semibold tabular-nums text-slate-300">{formatCLP(terceros.fondos)}</p>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Por devolver — fondos recibidos que pertenecen a otros */}
+                    {terceros.fondos > 0 && (
+                      <div className="rounded-xl bg-night-3/60 border border-gasto-500/20 px-3 py-2.5">
+                        <p className="text-[10px] text-slate-500 mb-1 leading-none">Debo devolver</p>
+                        <p className="text-sm font-bold tabular-nums text-gasto-400 leading-none">
+                          {formatCLP(terceros.fondos)}
+                        </p>
+                        <p className="text-[10px] text-slate-600 mt-0.5">plata de otros en tu cuenta</p>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-[10px] text-slate-500 mb-0.5">Gastado por terceros</p>
-                        <p className="text-xs font-semibold tabular-nums text-slate-300">{formatCLP(terceros.gastos)}</p>
+                    )}
+
+                    {/* Por cobrar — lo que gastaste para otros */}
+                    {terceros.gastos > 0 && (
+                      <div className="rounded-xl bg-night-3/60 border border-ingreso-500/20 px-3 py-2.5">
+                        <p className="text-[10px] text-slate-500 mb-1 leading-none">Por cobrar</p>
+                        <p className="text-sm font-bold tabular-nums text-ingreso-400 leading-none">
+                          {formatCLP(terceros.gastos)}
+                        </p>
+                        <p className="text-[10px] text-slate-600 mt-0.5">otros te deben a ti</p>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
             </div>
