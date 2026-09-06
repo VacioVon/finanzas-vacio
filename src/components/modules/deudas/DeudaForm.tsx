@@ -122,7 +122,7 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
       }
       onClose()
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Error al guardar deuda')
+      alert(e instanceof Error ? e.message : ((e as { message?: string })?.message ?? 'Error al guardar deuda'))
     }
   }
 

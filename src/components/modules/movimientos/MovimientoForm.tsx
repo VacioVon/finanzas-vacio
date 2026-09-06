@@ -383,7 +383,7 @@ export function MovimientoForm({
       handleClose()
       onSuccess?.()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
+      const msg = e instanceof Error ? e.message : ((e as { message?: string })?.message ?? String(e))
       alert(`Error al guardar:\n\n${msg}`)
     }
   }

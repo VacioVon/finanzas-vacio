@@ -81,7 +81,7 @@ export function ObjetivoForm({ isOpen, onClose, editing }: ObjetivoFormProps) {
       }
       onClose()
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Error al guardar')
+      alert(e instanceof Error ? e.message : ((e as { message?: string })?.message ?? 'Error al guardar'))
     }
   }
 
