@@ -181,7 +181,8 @@ export async function registrarPagoCompromiso(
   const siguiente = avanzarFecha(base, compromiso.frecuencia, compromiso.dia_cobro)
 
   const updates: Record<string, unknown> = {
-    proxima_fecha: format(siguiente, 'yyyy-MM-dd')
+    proxima_fecha:     format(siguiente, 'yyyy-MM-dd'),
+    ultimo_pago_fecha: pago.fecha,
   }
   if (compromiso.fecha_fin && siguiente > parseISO(compromiso.fecha_fin)) {
     updates.activa = false

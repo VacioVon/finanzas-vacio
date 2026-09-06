@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Pencil, Trash2, ToggleLeft, ToggleRight, CreditCard } from 'lucide-react'
+import { Pencil, Trash2, ToggleLeft, ToggleRight, CreditCard, CheckCircle2 } from 'lucide-react'
 import { formatCLP } from '@/utils/currency'
 import { useDeleteSuscripcion, useToggleSuscripcion } from '@/hooks/useSuscripciones'
 import { SuscripcionForm } from './SuscripcionForm'
 import { PagarCompromisoModal } from './PagarCompromisoModal'
 import type { Suscripcion } from '@/types/app.types'
-import { format, parseISO, differenceInDays } from 'date-fns'
+import { format, parseISO, differenceInDays, isSameMonth, isSameYear } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 const TIPO_COLOR: Record<string, string> = {
@@ -72,6 +72,15 @@ export function SuscripcionCard({ suscripcion: s }: Props) {
   const esEstimado = s.monto_tipo === 'estimado'
   const color      = s.activa ? (TIPO_COLOR[s.tipo ?? 'servicio'] ?? '#00C2CB') : '#475569'
   const tipoLabel  = TIPO_LABEL[s.tipo ?? 'servicio'] ?? s.tipo
+
+  // Detectar si ya está pagado para el período actual
+  const hoy = new Date()
+  const pagadoEstePeriodo = s.ultimo_pago_fecha
+    ? isSameMonth(parseISO(s.ultimo_pago_fecha), hoy) && isSameYear(parseISO(s.ultimo_pago_fecha), hoy)
+    : false
+  const proximaLabel = s.proxima_fecha
+    ? format(parseISO(s.proxima_fecha), 'MMMM', { locale: es })
+    : null
 
   function handleDelete() {
     if (!confirm(`¿Eliminar compromiso "${s.nombre}"?`)) return
@@ -183,14 +192,26 @@ export function SuscripcionCard({ suscripcion: s }: Props) {
             className="flex items-center gap-1 pt-3 mt-3 border-t"
             style={{ borderColor: `${color}15` }}
           >
-            <button
-              onClick={() => setPagarOpen(true)}
-              className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg transition-colors"
-              style={{ color, backgroundColor: `${color}0D` }}
-            >
-              <CreditCard className="h-3.5 w-3.5" />
-              Registrar pago
-            </button>
+            {pagadoEstePeriodo ? (
+              <div className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg"
+                style={{ color: '#10D97F', backgroundColor: '#10D97F0D' }}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Pagado
+                {proximaLabel && (
+                  <span className="text-slate-500 font-normal">· próximo {proximaLabel}</span>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setPagarOpen(true)}
+                className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+                style={{ color, backgroundColor: `${color}0D` }}
+              >
+                <CreditCard className="h-3.5 w-3.5" />
+                Registrar pago
+              </button>
+            )}
             <div className="flex-1" />
             <button
               onClick={handleToggle}

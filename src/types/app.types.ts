@@ -291,6 +291,7 @@ export interface Suscripcion {
   tipo: TipoCompromiso
   monto_tipo: MontoTipoCompromiso
   fecha_fin: string | null
+  ultimo_pago_fecha: string | null
   created_at: string
   updated_at: string
   cuenta?: Cuenta
