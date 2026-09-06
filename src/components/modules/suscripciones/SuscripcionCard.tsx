@@ -6,7 +6,7 @@ import type { PagoCompromisoHistorial } from '@/hooks/useSuscripciones'
 import { SuscripcionForm } from './SuscripcionForm'
 import { PagarCompromisoModal } from './PagarCompromisoModal'
 import type { Suscripcion } from '@/types/app.types'
-import { format, parseISO, differenceInDays, isSameMonth, isSameYear } from 'date-fns'
+import { format, parseISO, differenceInDays } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 const TIPO_COLOR: Record<string, string> = {
@@ -77,11 +77,14 @@ export function SuscripcionCard({ suscripcion: s, historial = [] }: Props) {
   const color      = s.activa ? (TIPO_COLOR[s.tipo ?? 'servicio'] ?? '#00C2CB') : '#475569'
   const tipoLabel  = TIPO_LABEL[s.tipo ?? 'servicio'] ?? s.tipo
 
-  // Detectar si ya está pagado para el período actual
+  // Detectar si ya está pagado para el período actual:
+  // si hay pago registrado Y la próxima fecha es futura → ya se pagó este ciclo
   const hoy = new Date()
-  const pagadoEstePeriodo = s.ultimo_pago_fecha
-    ? isSameMonth(parseISO(s.ultimo_pago_fecha), hoy) && isSameYear(parseISO(s.ultimo_pago_fecha), hoy)
-    : false
+  const pagadoEstePeriodo = !!(
+    s.ultimo_pago_fecha &&
+    s.proxima_fecha &&
+    differenceInDays(parseISO(s.proxima_fecha), hoy) > 0
+  )
   const proximaLabel = s.proxima_fecha
     ? format(parseISO(s.proxima_fecha), 'MMMM', { locale: es })
     : null
