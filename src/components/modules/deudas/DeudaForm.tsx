@@ -6,8 +6,10 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { AccountPicker } from '@/components/ui/AccountPicker'
 import { useCreateDeuda, useUpdateDeuda } from '@/hooks/useDeudas'
 import { useCategorias } from '@/hooks/useCategorias'
+import { useCuentas } from '@/hooks/useCuentas'
 import { todayISO } from '@/utils/dates'
 import type { Deuda } from '@/types/app.types'
 
@@ -25,6 +27,7 @@ const schema = z.object({
   tipo_deuda:          z.string().optional(),
   prestamista_nombre:  z.string().max(80).optional(),
   categoria_id:        z.string().optional(),
+  cuenta_id:           z.string().optional(),
   monto_total:         z.coerce.number().positive('Debe ser mayor a 0'),
   cuotas_total:        z.coerce.number().int().min(1).optional(),
   cuota_mensual:       z.coerce.number().min(0).optional(),
@@ -50,6 +53,7 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
   const createMutation = useCreateDeuda()
   const updateMutation = useUpdateDeuda()
   const { data: categorias } = useCategorias()
+  const { data: cuentas }    = useCuentas()
 
   // Para deudas: mostrar Finanzas (ahorro) + Patrimonio (inversion)
   // Son los contextos más relevantes para clasificar obligaciones financieras
@@ -57,13 +61,17 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
     .filter(c => c.activa && (c.tipo === 'ahorro' || c.tipo === 'inversion'))
     .map(c => ({ value: c.id, label: `${c.emoji ?? ''} ${c.nombre}`.trim() }))
 
-  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, control, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { fecha_compra: todayISO(), interes: 0, cuotas_total: 1 }
   })
 
-  const tipoDeudaWatch = useWatch({ control, name: 'tipo_deuda' })
-  const esDeudaPersona = tipoDeudaWatch === 'deuda_persona'
+  const tipoDeudaWatch   = useWatch({ control, name: 'tipo_deuda' })
+  const cuentaIdWatch    = useWatch({ control, name: 'cuenta_id' })
+  const esDeudaPersona   = tipoDeudaWatch === 'deuda_persona'
+  const esTarjetaCredito = tipoDeudaWatch === 'tarjeta_credito'
+
+  const tarjetasCredito = (cuentas ?? []).filter(c => c.activa && c.tipo === 'credito')
 
   useEffect(() => {
     if (!isOpen) return
@@ -73,6 +81,7 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
         tipo_deuda:          editing.tipo_deuda ?? '',
         prestamista_nombre:  editing.prestamista_nombre ?? '',
         categoria_id:        editing.categoria_id ?? '',
+        cuenta_id:           editing.cuenta_id ?? '',
         monto_total:         editing.monto_total,
         cuotas_total:        editing.cuotas_total,
         cuota_mensual:       editing.cuota_mensual ?? undefined,
@@ -91,8 +100,9 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
     const form = {
       nombre:              data.nombre,
       tipo_deuda:          (data.tipo_deuda || undefined) as import('@/types/app.types').TipoDeuda | undefined,
-      prestamista_nombre:  esDeudaPersona ? (data.prestamista_nombre?.trim() || undefined) : undefined,
+      prestamista_nombre:  esDeudaPersona   ? (data.prestamista_nombre?.trim() || undefined) : undefined,
       categoria_id:        data.categoria_id || undefined,
+      cuenta_id:           esTarjetaCredito  ? (data.cuenta_id || undefined) : undefined,
       monto_total:         data.monto_total,
       cuotas_total:        data.cuotas_total || 1,
       cuota_mensual:       data.cuota_mensual || undefined,
@@ -146,6 +156,21 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
             placeholder="Ej: Juan, Mamá, Empresa X…"
             {...register('prestamista_nombre')}
           />
+        )}
+
+        {esTarjetaCredito && (
+          <div>
+            <AccountPicker
+              label="Tarjeta de crédito vinculada"
+              cuentas={tarjetasCredito}
+              selectedId={cuentaIdWatch ?? ''}
+              onChange={id => setValue('cuenta_id', id, { shouldValidate: true })}
+              error={undefined}
+            />
+            <p className="text-[10px] text-slate-500 mt-1">
+              Al pagar esta deuda, el cupo disponible de la tarjeta se recuperará automáticamente.
+            </p>
+          </div>
         )}
 
         <div>

@@ -41,6 +41,7 @@ export async function createDeuda(userId: string, form: DeudaFormData): Promise<
       tipo_deuda:          form.tipo_deuda          ?? null,
       prestamista_nombre:  form.prestamista_nombre  ?? null,
       categoria_id:        form.categoria_id         || null,
+      cuenta_id:           form.cuenta_id            || null,
       monto_total:         form.monto_total,
       monto_pendiente:     form.monto_total,           // empieza igual al total
       cuotas_total:        form.cuotas_total           ?? 1,
@@ -76,6 +77,7 @@ export async function updateDeuda(id: string, form: Partial<DeudaFormData>): Pro
       ...(form.fecha_vencimiento  !== undefined && { fecha_vencimiento: form.fecha_vencimiento || null }),
       ...(form.nota               !== undefined && { nota:              form.nota || null }),
       ...(form.prestamista_nombre !== undefined && { prestamista_nombre: form.prestamista_nombre || null }),
+      ...(form.cuenta_id          !== undefined && { cuenta_id:          form.cuenta_id          || null }),
       updated_at: new Date().toISOString()
     })
     .eq('id', id)

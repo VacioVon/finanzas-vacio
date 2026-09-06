@@ -263,6 +263,7 @@ export interface DeudaFormData {
   tipo_deuda?: TipoDeuda
   prestamista_nombre?: string
   categoria_id?: string
+  cuenta_id?: string              // tarjeta de crédito vinculada
   monto_total: number
   cuotas_total?: number
   cuota_mensual?: number
