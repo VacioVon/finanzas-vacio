@@ -11,11 +11,27 @@ import { es } from 'date-fns/locale'
 const TIPO_COLOR: Record<string, string> = {
   servicio:   '#00C2CB',
   gasto_fijo: '#FFB703',
+  membresia:  '#9B5DE5',
+  seguro:     '#2979FF',
+  arriendo:   '#F4645F',
+  educacion:  '#10D97F',
+  salud:      '#F4645F',
+  pareja:     '#9B5DE5',
+  mascotas:   '#10D97F',
+  otro:       '#64748B',
 }
 
 const TIPO_LABEL: Record<string, string> = {
   servicio:   'Servicio',
-  gasto_fijo: 'Gasto fijo',
+  gasto_fijo: 'Hogar',
+  membresia:  'Membresía',
+  seguro:     'Seguro',
+  arriendo:   'Arriendo',
+  educacion:  'Educación',
+  salud:      'Salud',
+  pareja:     'Pareja',
+  mascotas:   'Mascotas',
+  otro:       'Otro',
 }
 
 const FRECUENCIA_LABEL: Record<string, string> = {
