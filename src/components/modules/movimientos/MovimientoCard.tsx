@@ -214,11 +214,20 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
                 Salió de: <span className="text-slate-400 font-medium">{ORIGEN_LABEL[mov.origen_dinero] ?? mov.origen_dinero}</span>
               </p>
             )}
-            {mov.saldo_anterior != null && (
-              <p className="text-[10px] text-slate-600 mt-0.5 tabular-nums">
-                Saldo previo: {mov.saldo_anterior.toLocaleString('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 })}
-              </p>
-            )}
+            {mov.saldo_anterior != null && (() => {
+              const sign = ['ingreso'].includes(mov.tipo) ? 1 : -1
+              const posterior = mov.saldo_anterior + sign * mov.monto
+              const fmt = (n: number) => n.toLocaleString('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 })
+              return (
+                <p className="text-[10px] text-slate-600 mt-0.5 tabular-nums">
+                  {fmt(mov.saldo_anterior)}
+                  <span className="mx-1 text-slate-700">→</span>
+                  <span className={posterior >= mov.saldo_anterior ? 'text-ingreso-500' : 'text-gasto-500'}>
+                    {fmt(posterior)}
+                  </span>
+                </p>
+              )
+            })()}
           </div>
 
           {/* Monto + acciones */}
