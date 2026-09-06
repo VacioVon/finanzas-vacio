@@ -8,12 +8,17 @@ import {
   deleteSuscripcion,
   avanzarProximaFecha,
   registrarPagoCompromiso,
-  type PagoCompromisoData
+  getPagosCompromiso,
+  type PagoCompromisoData,
+  type PagoCompromisoHistorial,
 } from '@/services/suscripciones.service'
 import { procesarEventoRPG } from '@/services/rpg/rpg.service'
 import type { Suscripcion, SuscripcionFormData } from '@/types/app.types'
 
-const KEY = ['suscripciones'] as const
+export type { PagoCompromisoHistorial }
+
+const KEY     = ['suscripciones'] as const
+const KEY_PAG = ['pagos-compromisos'] as const
 
 export function useSuscripciones() {
   const { user } = useAuthStore()
@@ -78,8 +83,18 @@ export function useRegistrarPagoCompromiso() {
       registrarPagoCompromiso(user!.id, compromiso, pago),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY })
+      qc.invalidateQueries({ queryKey: KEY_PAG })
       qc.invalidateQueries({ queryKey: ['movimientos'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
     }
+  })
+}
+
+export function usePagosCompromiso() {
+  const { user } = useAuthStore()
+  return useQuery({
+    queryKey: KEY_PAG,
+    queryFn:  () => getPagosCompromiso(user!.id),
+    enabled:  !!user,
   })
 }

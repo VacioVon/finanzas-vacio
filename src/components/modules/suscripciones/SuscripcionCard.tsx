@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Pencil, Trash2, ToggleLeft, ToggleRight, CreditCard, CheckCircle2 } from 'lucide-react'
 import { formatCLP } from '@/utils/currency'
 import { useDeleteSuscripcion, useToggleSuscripcion } from '@/hooks/useSuscripciones'
+import type { PagoCompromisoHistorial } from '@/hooks/useSuscripciones'
 import { SuscripcionForm } from './SuscripcionForm'
 import { PagarCompromisoModal } from './PagarCompromisoModal'
 import type { Suscripcion } from '@/types/app.types'
@@ -58,9 +59,12 @@ function badgeDias(dias: number | null) {
   return           { label: `En ${dias}d`,                           bg: '#35334430', color: '#64748B' }
 }
 
-interface Props { suscripcion: Suscripcion }
+interface Props {
+  suscripcion: Suscripcion
+  historial?:  PagoCompromisoHistorial[]
+}
 
-export function SuscripcionCard({ suscripcion: s }: Props) {
+export function SuscripcionCard({ suscripcion: s, historial = [] }: Props) {
   const [editOpen,  setEditOpen]  = useState(false)
   const [pagarOpen, setPagarOpen] = useState(false)
 
@@ -241,6 +245,33 @@ export function SuscripcionCard({ suscripcion: s }: Props) {
             </button>
           </div>
         </div>
+
+        {/* Histórico de pagos */}
+        {historial.length > 0 && (
+          <div
+            className="mx-3.5 pb-3 pt-2 border-t"
+            style={{ borderColor: `${color}15` }}
+          >
+            <p className="text-[9px] font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
+              Pagos anteriores
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {historial.slice(0, 5).map(p => (
+                <div
+                  key={p.id}
+                  className="flex flex-col items-center px-2 py-1 rounded-lg bg-night-3 border border-night-border/50"
+                >
+                  <span className="text-[9px] text-slate-500 capitalize leading-none">
+                    {format(parseISO(p.fecha), 'MMM', { locale: es })}
+                  </span>
+                  <span className="text-[11px] font-semibold tabular-nums text-slate-300 leading-snug">
+                    {formatCLP(p.monto)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <SuscripcionForm

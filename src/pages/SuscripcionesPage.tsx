@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { Plus } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -6,8 +6,26 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { SuscripcionCard } from '@/components/modules/suscripciones/SuscripcionCard'
 import { SuscripcionForm } from '@/components/modules/suscripciones/SuscripcionForm'
-import { useSuscripciones } from '@/hooks/useSuscripciones'
+import { useSuscripciones, usePagosCompromiso } from '@/hooks/useSuscripciones'
 import { formatCLP } from '@/utils/currency'
+import type { TipoCompromiso } from '@/types/app.types'
+
+const TIPO_ORDER: TipoCompromiso[] = [
+  'servicio', 'gasto_fijo', 'membresia', 'seguro',
+  'arriendo', 'educacion',  'salud',     'pareja', 'mascotas', 'otro',
+]
+const TIPO_SECCION: Record<string, string> = {
+  servicio:   'Servicios digitales',
+  gasto_fijo: 'Gastos del hogar',
+  membresia:  'Membresías',
+  seguro:     'Seguros',
+  arriendo:   'Arriendos',
+  educacion:  'Educación',
+  salud:      'Salud',
+  pareja:     'Pareja',
+  mascotas:   'Mascotas',
+  otro:       'Otros',
+}
 
 function mensualEquivalente(monto: number, frecuencia: string): number {
   switch (frecuencia) {
@@ -25,12 +43,20 @@ function mensualEquivalente(monto: number, frecuencia: string): number {
 export function SuscripcionesPage() {
   const [formOpen, setFormOpen] = useState(false)
   const { data: suscripciones, isLoading } = useSuscripciones()
+  const { data: pagosRaw }                 = usePagosCompromiso()
 
   const activas  = (suscripciones ?? []).filter(s => s.activa)
   const pausadas = (suscripciones ?? []).filter(s => !s.activa)
 
-  const servicios   = activas.filter(s => (s.tipo ?? 'servicio') === 'servicio')
-  const gastosFijos = activas.filter(s => s.tipo === 'gasto_fijo')
+  // Mapa compromisoId → pagos ordenados más recientes primero
+  const pagosMap = useMemo(() => {
+    const map: Record<string, typeof pagosRaw> = {}
+    for (const p of pagosRaw ?? []) {
+      if (!p.compromiso_id) continue
+      ;(map[p.compromiso_id] ??= []).push(p)
+    }
+    return map
+  }, [pagosRaw])
 
   const vencidos = activas.filter(s => {
     if (!s.proxima_fecha) return false
@@ -109,27 +135,26 @@ export function SuscripcionesPage() {
           />
         ) : (
           <>
-            {servicios.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">
-                  Servicios
-                </p>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                  {servicios.map(s => <SuscripcionCard key={s.id} suscripcion={s} />)}
+            {TIPO_ORDER.map(tipo => {
+              const items = activas.filter(s => s.tipo === tipo)
+              if (!items.length) return null
+              return (
+                <div key={tipo}>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">
+                    {TIPO_SECCION[tipo] ?? tipo}
+                  </p>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {items.map(s => (
+                      <SuscripcionCard
+                        key={s.id}
+                        suscripcion={s}
+                        historial={pagosMap[s.id] ?? []}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {gastosFijos.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">
-                  Gastos fijos
-                </p>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                  {gastosFijos.map(s => <SuscripcionCard key={s.id} suscripcion={s} />)}
-                </div>
-              </div>
-            )}
+              )
+            })}
 
             {pausadas.length > 0 && (
               <div>
@@ -137,7 +162,13 @@ export function SuscripcionesPage() {
                   Pausados
                 </p>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                  {pausadas.map(s => <SuscripcionCard key={s.id} suscripcion={s} />)}
+                  {pausadas.map(s => (
+                    <SuscripcionCard
+                      key={s.id}
+                      suscripcion={s}
+                      historial={pagosMap[s.id] ?? []}
+                    />
+                  ))}
                 </div>
               </div>
             )}

@@ -2,6 +2,14 @@ import { supabase } from '@/lib/supabase'
 import type { Suscripcion, SuscripcionFormData } from '@/types/app.types'
 import { addDays, addMonths, addWeeks, addYears, format, parseISO, setDate } from 'date-fns'
 
+export interface PagoCompromisoHistorial {
+  id:            string
+  compromiso_id: string
+  monto:         number
+  fecha:         string
+  nota:          string | null
+}
+
 const SUSCRIPCION_SELECT = '*, cuenta:cuentas(id, nombre, tipo, color), categoria:categorias(id, nombre, emoji, tipo, color, subcategorias(*)), subcategoria:subcategorias(id, nombre)'
 
 function avanzarFecha(base: Date, frecuencia: string, dia_cobro: number | null | undefined): Date {
@@ -194,4 +202,17 @@ export async function registrarPagoCompromiso(
     .eq('id', compromiso.id)
 
   if (updErr) throw updErr
+}
+
+export async function getPagosCompromiso(userId: string): Promise<PagoCompromisoHistorial[]> {
+  const { data, error } = await supabase
+    .from('movimientos')
+    .select('id, compromiso_id, monto, fecha, nota')
+    .eq('usuario_id', userId)
+    .eq('tipo', 'gasto')
+    .not('compromiso_id', 'is', null)
+    .order('fecha', { ascending: false })
+    .limit(200)
+  if (error) throw error
+  return (data ?? []) as PagoCompromisoHistorial[]
 }
