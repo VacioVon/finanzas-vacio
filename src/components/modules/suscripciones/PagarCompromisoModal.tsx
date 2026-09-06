@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -37,6 +37,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   const [cuentaFinal, setCuentaFinal] = useState<Cuenta | null>(null)
   const [saldoAntes, setSaldoAntes]   = useState<number>(0)
   const [montoFinal, setMontoFinal]   = useState<number>(0)
+  const wasOpen = useRef(false)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -51,16 +52,18 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   const montoActual          = watch('monto')
   const esEstimado           = compromiso?.monto_tipo === 'estimado'
 
-  // Re-inicializar cuando cambia el compromiso o se abre
+  // Re-inicializar solo cuando el modal pasa de cerrado a abierto
   useEffect(() => {
-    if (!isOpen) return
-    setPaso('formulario')
-    setError(null)
-    reset({
-      fecha:     todayISO(),
-      monto:     compromiso?.monto ?? 0,
-      cuenta_id: compromiso?.cuenta_id ?? '',
-    })
+    if (isOpen && !wasOpen.current) {
+      setPaso('formulario')
+      setError(null)
+      reset({
+        fecha:     todayISO(),
+        monto:     compromiso?.monto ?? 0,
+        cuenta_id: compromiso?.cuenta_id ?? '',
+      })
+    }
+    wasOpen.current = isOpen
   }, [isOpen, compromiso, reset])
 
   function handleClose() {
