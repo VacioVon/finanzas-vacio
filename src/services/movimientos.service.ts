@@ -151,14 +151,15 @@ export async function createMovimiento(
 
   if (error) throw error
 
-  // Actualizar saldos en cascada (RPC atómica)
+  // Actualizar saldos en cascada (RPC atómica) — pasa el id para guardar saldo_anterior
   const { error: rpcError } = await supabase.rpc('procesar_movimiento', {
     p_tipo:              form.tipo,
     p_cuenta_id:         form.cuenta_id || null,
     p_cuenta_destino_id: form.cuenta_destino_id || null,
     p_objetivo_id:       form.objetivo_ahorro_id || null,
     p_deuda_id:          form.deuda_id || null,
-    p_monto:             form.monto
+    p_monto:             form.monto,
+    p_movimiento_id:     data.id,
   })
   if (rpcError) throw rpcError
 

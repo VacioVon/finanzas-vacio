@@ -166,6 +166,7 @@ export interface Movimiento {
   para_tercero: boolean            // gasto realizado para otra persona
   tercero_nombre: string | null    // nombre de quien debe reembolsar
   fondos_tercero: boolean          // ingreso recibido en nombre de otra persona
+  saldo_anterior: number | null    // saldo de la cuenta justo antes del movimiento
   movimiento_origen_id: string | null
   capital: number | null           // desglose pago deuda: monto capital
   interes_pago: number | null      // desglose pago deuda: monto interés
