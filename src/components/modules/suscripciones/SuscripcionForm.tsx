@@ -13,17 +13,17 @@ import { useCreateSuscripcion, useUpdateSuscripcion } from '@/hooks/useSuscripci
 import { todayISO } from '@/utils/dates'
 import type { Suscripcion, TipoCompromiso } from '@/types/app.types'
 
-const TIPO_CARDS: { value: TipoCompromiso; emoji: string; label: string; sub: string }[] = [
-  { value: 'servicio',   emoji: '📱', label: 'Digital',   sub: 'Netflix, Spotify…' },
-  { value: 'gasto_fijo', emoji: '🏠', label: 'Hogar',     sub: 'Luz, agua, gas…' },
-  { value: 'membresia',  emoji: '🏋️', label: 'Membresía', sub: 'Gym, club…' },
-  { value: 'seguro',     emoji: '🛡️', label: 'Seguro',    sub: 'Auto, vida…' },
-  { value: 'arriendo',   emoji: '🔑', label: 'Arriendo',  sub: 'Dpto, casa…' },
-  { value: 'educacion',  emoji: '📚', label: 'Educación', sub: 'Colegio, univ…' },
-  { value: 'salud',      emoji: '❤️', label: 'Salud',     sub: 'Isapre, médico…' },
-  { value: 'pareja',     emoji: '💑', label: 'Pareja',    sub: 'Gastos juntos…' },
-  { value: 'mascotas',   emoji: '🐾', label: 'Mascotas',  sub: 'Vet, comida…' },
-  { value: 'otro',       emoji: '📋', label: 'Otro',      sub: '' },
+const TIPO_CARDS: { value: TipoCompromiso; emoji: string; label: string; desc: string; ejemplo: string }[] = [
+  { value: 'servicio',   emoji: '📱', label: 'Digital',   desc: 'Suscripciones digitales o en línea que se cobran de forma periódica.',           ejemplo: 'Netflix, Spotify, ChatGPT, iCloud, YouTube Premium' },
+  { value: 'gasto_fijo', emoji: '🏠', label: 'Hogar',     desc: 'Gastos básicos del hogar que llegan mes a mes de forma fija o estimada.',        ejemplo: 'Luz, agua, gas, internet, dividendo, arriendo' },
+  { value: 'membresia',  emoji: '🏋️', label: 'Membresía', desc: 'Membresías a clubes, gimnasios u organizaciones con cuota periódica.',           ejemplo: 'Gym, club de fútbol, asociación profesional, club de lectura' },
+  { value: 'seguro',     emoji: '🛡️', label: 'Seguro',    desc: 'Pólizas de seguro de cualquier tipo con prima mensual, trimestral o anual.',     ejemplo: 'Seguro auto, vida, hogar, SOAP, viaje, dental' },
+  { value: 'arriendo',   emoji: '🔑', label: 'Arriendo',  desc: 'Arriendo de un inmueble, vehículo, bodega u otro bien con pago recurrente.',     ejemplo: 'Dpto, oficina, bodega, cochera, auto, trastero' },
+  { value: 'educacion',  emoji: '📚', label: 'Educación', desc: 'Cuotas educacionales o cursos con pago regular.',                                ejemplo: 'Colegio, universidad, jardín infantil, curso online, idiomas' },
+  { value: 'salud',      emoji: '❤️', label: 'Salud',     desc: 'Gastos de salud recurrentes como isapre, tratamientos o controles periódicos.',  ejemplo: 'Isapre, Fonasa, kinesiología, psicólogo, dentista fijo' },
+  { value: 'pareja',     emoji: '💑', label: 'Pareja',    desc: 'Gastos compartidos o compromisos en pareja que asumes tú de forma periódica.',   ejemplo: 'Plan de datos compartido, suscripción familiar, cena mensual' },
+  { value: 'mascotas',   emoji: '🐾', label: 'Mascotas',  desc: 'Gastos periódicos asociados al cuidado de tus mascotas.',                        ejemplo: 'Comida mensual, peluquería, control veterinario, seguro mascota' },
+  { value: 'otro',       emoji: '📋', label: 'Otro',      desc: 'Cualquier compromiso recurrente que no encaje en las categorías anteriores.',     ejemplo: 'Cuota club, donación mensual, suscripción revista, app nicho' },
 ]
 
 const schema = z.object({
@@ -193,12 +193,18 @@ export function SuscripcionForm({ isOpen, onClose, editing, onSuccess }: Props) 
               )
             })}
           </div>
-          {/* sublabel del tipo seleccionado */}
+          {/* info del tipo seleccionado */}
           {tipoWatch && (() => {
             const card = TIPO_CARDS.find(c => c.value === tipoWatch)
-            return card?.sub ? (
-              <p className="text-[10px] text-slate-500 mt-1.5 text-center">{card.sub}</p>
-            ) : null
+            if (!card) return null
+            return (
+              <div className="mt-2 px-3 py-2.5 rounded-xl border border-mover-500/25 bg-mover-500/8">
+                <p className="text-xs text-slate-300 leading-snug">{card.desc}</p>
+                <p className="text-[11px] text-mover-300 mt-1">
+                  <span className="text-slate-500">Ej: </span>{card.ejemplo}
+                </p>
+              </div>
+            )
           })()}
           {errors.tipo && <p className="text-xs text-gasto-400 mt-1">{errors.tipo.message}</p>}
         </div>
