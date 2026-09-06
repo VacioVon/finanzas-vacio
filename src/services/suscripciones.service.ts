@@ -137,12 +137,13 @@ export async function avanzarProximaFecha(suscripcion: Suscripcion): Promise<voi
 }
 
 export interface PagoCompromisoData {
-  cuenta_id:   string
-  monto:       number   // puede ser distinto al compromiso.monto si es estimado
-  fecha:       string
-  categoria_id?: string
+  cuenta_id:       string
+  monto:           number   // puede ser distinto al compromiso.monto si es estimado
+  fecha:           string
+  categoria_id?:   string
   subcategoria_id?: string
-  nota?: string
+  nota?:           string
+  fondos_tercero?: boolean
 }
 
 /**
@@ -169,6 +170,7 @@ export async function registrarPagoCompromiso(
       subcategoria_id: pago.subcategoria_id || compromiso.subcategoria_id || null,
       nota:            pago.nota ?? `Pago: ${compromiso.nombre}`,
       compromiso_id:   compromiso.id,
+      fondos_tercero:  pago.fondos_tercero ?? false,
     })
 
   if (movErr) throw new Error(movErr.message)

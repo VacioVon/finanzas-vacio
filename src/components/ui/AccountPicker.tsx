@@ -32,21 +32,29 @@ function useAcPickCSS() {
   }, [])
 }
 
+export interface VirtualTerceros {
+  disponible:         number
+  primaryCuentaId:    string | null
+  primaryCuentaNombre: string | null
+}
+
 interface AccountPickerProps {
-  cuentas:    Cuenta[]
-  selectedId: string
-  onChange:   (id: string) => void
-  error?:     string
-  label?:     string
-  exclude?:   TipoCuenta[]
-  only?:      TipoCuenta[]
-  allowNull?: boolean
-  nullLabel?:  string
+  cuentas:          Cuenta[]
+  selectedId:       string
+  onChange:         (id: string) => void
+  error?:           string
+  label?:           string
+  exclude?:         TipoCuenta[]
+  only?:            TipoCuenta[]
+  allowNull?:       boolean
+  nullLabel?:       string
+  virtualTerceros?: VirtualTerceros | null
 }
 
 export function AccountPicker({
   cuentas, selectedId, onChange, error, label,
-  exclude, only, allowNull, nullLabel = 'Sin vincular'
+  exclude, only, allowNull, nullLabel = 'Sin vincular',
+  virtualTerceros,
 }: AccountPickerProps) {
   useAcPickCSS()
 
@@ -99,6 +107,47 @@ export function AccountPicker({
               <p className="text-xs text-slate-600">—</p>
             </button>
           )}
+
+          {virtualTerceros && virtualTerceros.disponible > 0 && (() => {
+            const TERCEROS_ID = 'terceros-virtual'
+            const isSelected  = selectedId === TERCEROS_ID
+            const color       = '#F4645F'
+            return (
+              <button
+                key={TERCEROS_ID}
+                type="button"
+                id={`acp-${TERCEROS_ID}`}
+                onClick={() => { onChange(TERCEROS_ID); bounce(TERCEROS_ID) }}
+                className={[
+                  'relative flex flex-col items-start gap-1.5 p-3 rounded-2xl border transition-all text-left',
+                  isSelected
+                    ? 'border-2 bg-night-2'
+                    : 'border border-dashed border-night-border bg-night-3 hover:bg-night-2 hover:border-slate-600'
+                ].join(' ')}
+                style={isSelected ? {
+                  borderColor: color,
+                  borderStyle: 'dashed',
+                  boxShadow:   `0 0 14px ${color}28`,
+                } : undefined}
+              >
+                {isSelected && (
+                  <div className="absolute top-2 right-2 size-2 rounded-full" style={{ backgroundColor: color }} />
+                )}
+                <div className="flex items-center gap-2">
+                  <span className="text-lg leading-none">🔄</span>
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${color}1A`, color }}>
+                    Virtual
+                  </span>
+                </div>
+                <p className="text-sm font-semibold text-slate-200 leading-tight truncate w-full">
+                  Dinero de terceros
+                </p>
+                <p className="text-xs font-bold tabular-nums" style={{ color }}>
+                  {formatCLP(virtualTerceros.disponible)}
+                </p>
+              </button>
+            )
+          })()}
 
           {filtered.map(cuenta => {
             const cfg      = TIPO_CONFIG[cuenta.tipo]

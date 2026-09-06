@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { FileUploader } from '@/components/ui/FileUploader'
-import { useCuentas } from '@/hooks/useCuentas'
+import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
 import { useCategoriasByTipo } from '@/hooks/useCategorias'
 import { useCreateMovimiento, useUpdateMovimiento } from '@/hooks/useMovimientos'
 import { useCreateCuota } from '@/hooks/useCuotas'
@@ -188,8 +188,9 @@ export function MovimientoForm({
   const [esCompartido,        setEsCompartido]        = useState(false)
   const [participantes,       setParticipantes]       = useState<Participante[]>([{ nombre: '', monto: 0 }])
 
-  const { data: cuentas }       = useCuentas()
-  const { data: categorias }    = useCategoriasByTipo(tipoToCategoriaTipo(tipo))
+  const { data: cuentas }        = useCuentas()
+  const { data: saldoTerceros }  = useSaldoTerceros()
+  const { data: categorias }     = useCategoriasByTipo(tipoToCategoriaTipo(tipo))
   const { data: deudas }        = useDeudas()
   const { data: suscripciones } = useSuscripciones()
   const createMutation              = useCreateMovimiento()
@@ -223,6 +224,16 @@ export function MovimientoForm({
   const mostrarFondos    = tipo === 'ingreso' && !editingMovimiento
   const mostrarTransf    = tipo === 'transferencia' || tipo === 'pago_tarjeta'
   const mostrarCategoria = tipo !== 'transferencia' && tipo !== 'pago_tarjeta' && !pagoDeuda
+
+  const TERCEROS_VIRTUAL = 'terceros-virtual'
+
+  const primaryCuentaNombreForm = saldoTerceros?.primaryCuentaId
+    ? (cuentas ?? []).find(c => c.id === saldoTerceros.primaryCuentaId)?.nombre ?? null
+    : null
+
+  const virtualTercerosForm = tipo === 'gasto' && saldoTerceros && saldoTerceros.disponible > 0
+    ? { disponible: saldoTerceros.disponible, primaryCuentaId: saldoTerceros.primaryCuentaId, primaryCuentaNombre: primaryCuentaNombreForm }
+    : null
 
   const montoCuota     = monto > 0 && cuotasTotal >= 1 ? Math.ceil(monto / cuotasTotal) : 0
   const registrarCuota = mostrarCuotas && cuotasTotal >= 1
@@ -304,6 +315,8 @@ export function MovimientoForm({
   // ── Submit ───────────────────────────────────────────────────
   async function submitForm(data: FormValues, skipDetalles = false) {
     const mostrarContexto = tipoReal === 'pago_tarjeta' || tipoReal === 'pago_deuda'
+    const esTerceros      = data.cuenta_id === TERCEROS_VIRTUAL
+    const cuentaIdFinal   = esTerceros ? (saldoTerceros?.primaryCuentaId ?? data.cuenta_id) : data.cuenta_id
 
     const formData = {
       tipo:              tipoReal,
@@ -312,7 +325,7 @@ export function MovimientoForm({
       comercio:          skipDetalles ? undefined : (data.comercio?.trim() || undefined),
       categoria_id:      mostrarCategoria ? (data.categoria_id ?? '') : '',
       subcategoria_id:   mostrarCategoria ? data.subcategoria_id : undefined,
-      cuenta_id:         data.cuenta_id,
+      cuenta_id:         cuentaIdFinal,
       cuenta_destino_id: mostrarTransf ? data.cuenta_destino_id : undefined,
       nota:              skipDetalles ? undefined : data.nota,
       comprobante_url:   skipDetalles ? null : comprobanteUrl,
@@ -321,7 +334,7 @@ export function MovimientoForm({
       tercero_nombre:    skipDetalles ? undefined : (mostrarTercero && paraTercero && terceroNombre.trim()
         ? terceroNombre.trim()
         : undefined),
-      fondos_tercero:    skipDetalles ? false : (mostrarFondos ? fondosTercero : false),
+      fondos_tercero:    esTerceros ? true : (skipDetalles ? false : (mostrarFondos ? fondosTercero : false)),
       contexto_pago:     (!skipDetalles && mostrarContexto) ? contextoPago ?? undefined : undefined,
       deuda_id:          (!skipDetalles && mostrarContexto) ? deudaVinculada ?? undefined : undefined,
       compromiso_id:     (!skipDetalles && tipo === 'gasto' && !pagoDeuda) ? compromisoVinculado ?? undefined : undefined,
@@ -544,7 +557,20 @@ export function MovimientoForm({
             label={mostrarTransf ? 'Cuenta origen' : 'Cuenta'}
             error={errors.cuenta_id?.message}
             exclude={['inversion']}
+            virtualTerceros={virtualTercerosForm}
           />
+
+          {selectedCuentaId === TERCEROS_VIRTUAL && primaryCuentaNombreForm && (
+            <div className="flex items-start gap-2 p-3 rounded-xl border border-dashed"
+              style={{ borderColor: '#F4645F40', backgroundColor: '#F4645F08' }}>
+              <span className="text-base flex-shrink-0">⚠️</span>
+              <p className="text-xs leading-relaxed" style={{ color: '#F4645FAA' }}>
+                Este dinero está físicamente en{' '}
+                <span className="font-semibold text-white">{primaryCuentaNombreForm}</span>.
+                El pago se descontará de esa cuenta pero no afectará tus gráficos personales.
+              </p>
+            </div>
+          )}
 
           {/* Transferencia / Pago tarjeta — cuenta destino + preview */}
           {mostrarTransf && (

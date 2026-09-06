@@ -7,7 +7,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { AccountPicker } from '@/components/ui/AccountPicker'
-import { useCuentas } from '@/hooks/useCuentas'
+import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
 import { useRegistrarPagoCompromiso } from '@/hooks/useSuscripciones'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
@@ -29,9 +29,20 @@ interface Props {
   compromiso: Suscripcion | null
 }
 
+const TERCEROS_VIRTUAL = 'terceros-virtual'
+
 export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
-  const { data: cuentas }   = useCuentas()
-  const pagarMutation        = useRegistrarPagoCompromiso()
+  const { data: cuentas }       = useCuentas()
+  const { data: saldoTerceros } = useSaldoTerceros()
+  const pagarMutation            = useRegistrarPagoCompromiso()
+
+  const primaryCuentaNombre = saldoTerceros?.primaryCuentaId
+    ? (cuentas ?? []).find(c => c.id === saldoTerceros.primaryCuentaId)?.nombre ?? null
+    : null
+
+  const virtualTerceros = saldoTerceros && saldoTerceros.disponible > 0
+    ? { disponible: saldoTerceros.disponible, primaryCuentaId: saldoTerceros.primaryCuentaId, primaryCuentaNombre }
+    : null
   const [paso, setPaso]      = useState<Paso>('formulario')
   const [error, setError]    = useState<string | null>(null)
   const [cuentaFinal, setCuentaFinal] = useState<Cuenta | null>(null)
@@ -75,7 +86,9 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
 
   // Paso 1 → 2: validar y mostrar confirmación
   function irAConfirmar(data: FormValues) {
-    const cuenta = (cuentas ?? []).find(c => c.id === data.cuenta_id) ?? null
+    const esTerceros   = data.cuenta_id === TERCEROS_VIRTUAL
+    const realCuentaId = esTerceros ? (saldoTerceros?.primaryCuentaId ?? '') : data.cuenta_id
+    const cuenta       = (cuentas ?? []).find(c => c.id === realCuentaId) ?? null
     setCuentaFinal(cuenta)
     setSaldoAntes(cuenta?.saldo_actual ?? 0)
     setMontoFinal(data.monto)
@@ -86,12 +99,14 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   async function ejecutarPago() {
     if (!compromiso || !cuentaFinal) return
     setError(null)
+    const esTerceros = watch('cuenta_id') === TERCEROS_VIRTUAL
     try {
       const data = {
-        cuenta_id: cuentaFinal.id,
-        monto:     montoFinal,
-        fecha:     watch('fecha'),
-        nota:      watch('nota') || undefined,
+        cuenta_id:      cuentaFinal.id,
+        monto:          montoFinal,
+        fecha:          watch('fecha'),
+        nota:           watch('nota') || undefined,
+        fondos_tercero: esTerceros,
       }
       await pagarMutation.mutateAsync({ compromiso, pago: data })
       setPaso('exito')
@@ -177,7 +192,20 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
             selectedId={cuentaIdSeleccionada}
             onChange={id => setValue('cuenta_id', id, { shouldValidate: true })}
             error={errors.cuenta_id?.message}
+            virtualTerceros={virtualTerceros}
           />
+
+          {cuentaIdSeleccionada === TERCEROS_VIRTUAL && primaryCuentaNombre && (
+            <div className="flex items-start gap-2 p-3 rounded-xl border border-dashed"
+              style={{ borderColor: '#F4645F40', backgroundColor: '#F4645F08' }}>
+              <span className="text-base flex-shrink-0">⚠️</span>
+              <p className="text-xs leading-relaxed" style={{ color: '#F4645FAA' }}>
+                Este dinero está físicamente en{' '}
+                <span className="font-semibold text-white">{primaryCuentaNombre}</span>.
+                El pago se descontará de esa cuenta pero no afectará tus gráficos personales.
+              </p>
+            </div>
+          )}
 
           {/* Fecha */}
           <Input

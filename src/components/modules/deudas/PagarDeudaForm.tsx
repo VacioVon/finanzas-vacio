@@ -9,6 +9,7 @@ import { AccountPicker } from '@/components/ui/AccountPicker'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useCuentas } from '@/hooks/useCuentas'
 import { useCreateMovimiento } from '@/hooks/useMovimientos'
+import { useSaldoTerceros } from '@/hooks/useCuentas'
 import { formatCLP } from '@/utils/currency'
 import { todayISO } from '@/utils/dates'
 import type { Deuda } from '@/types/app.types'
@@ -31,11 +32,22 @@ const inputBase   = 'w-full rounded-xl border bg-night-3 text-white outline-none
 const inputRing   = 'focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500'
 const inputBorder = 'border-night-border hover:border-brand-500/40'
 
+const TERCEROS_VIRTUAL = 'terceros-virtual'
+
 export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) {
-  const { data: cuentas } = useCuentas()
-  const createMov         = useCreateMovimiento()
+  const { data: cuentas }        = useCuentas()
+  const { data: saldoTerceros }  = useSaldoTerceros()
+  const createMov                = useCreateMovimiento()
 
   const cuentasPago = (cuentas ?? []).filter(c => c.activa && c.tipo !== 'inversion')
+
+  const primaryCuentaNombre = saldoTerceros?.primaryCuentaId
+    ? (cuentas ?? []).find(c => c.id === saldoTerceros.primaryCuentaId)?.nombre ?? null
+    : null
+
+  const virtualTerceros = saldoTerceros && saldoTerceros.disponible > 0
+    ? { disponible: saldoTerceros.disponible, primaryCuentaId: saldoTerceros.primaryCuentaId, primaryCuentaNombre }
+    : null
 
   const realPagado    = deuda.monto_pagado_real    ?? Math.max(0, deuda.monto_total - deuda.monto_pendiente)
   const realPendiente = deuda.monto_pendiente_real ?? Math.max(0, deuda.monto_total - realPagado)
@@ -64,14 +76,18 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
   }, [isOpen, deuda, reset])
 
   async function onSubmit(data: FormValues) {
+    const esTerceros  = data.cuenta_id === TERCEROS_VIRTUAL
+    const cuentaFinal = esTerceros ? (saldoTerceros?.primaryCuentaId ?? '') : data.cuenta_id
+    if (!cuentaFinal) { alert('No hay cuenta real vinculada a los fondos de tercero'); return }
     try {
       await createMov.mutateAsync({
-        tipo:      'pago_deuda',
-        fecha:     data.fecha,
-        monto:     data.monto,
-        cuenta_id: data.cuenta_id,
-        deuda_id:  deuda.id,
-        nota:      data.nota || undefined
+        tipo:           'pago_deuda',
+        fecha:          data.fecha,
+        monto:          data.monto,
+        cuenta_id:      cuentaFinal,
+        deuda_id:       deuda.id,
+        nota:           data.nota || undefined,
+        fondos_tercero: esTerceros,
       })
       onClose()
     } catch (e: unknown) {
@@ -169,7 +185,20 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
           label="Pagar desde"
           error={errors.cuenta_id?.message}
           exclude={['inversion']}
+          virtualTerceros={virtualTerceros}
         />
+
+        {watch('cuenta_id') === TERCEROS_VIRTUAL && primaryCuentaNombre && (
+          <div className="flex items-start gap-2 p-3 rounded-xl border border-dashed"
+            style={{ borderColor: '#F4645F40', backgroundColor: '#F4645F08' }}>
+            <span className="text-base flex-shrink-0">⚠️</span>
+            <p className="text-xs leading-relaxed" style={{ color: '#F4645FAA' }}>
+              Este dinero está físicamente en{' '}
+              <span className="font-semibold text-white">{primaryCuentaNombre}</span>.
+              El pago se descontará de esa cuenta pero no afectará tus gráficos personales.
+            </p>
+          </div>
+        )}
 
         {/* Fecha */}
         <div>

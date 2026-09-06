@@ -151,8 +151,9 @@ export async function createMovimiento(
 
   if (error) throw error
 
-  // fondos_tercero = plata recibida que pertenece a otro → no impacta el saldo real
-  if (!form.fondos_tercero) {
+  // fondos_tercero ingreso = plata de otro que llega → no suma al saldo real
+  // fondos_tercero gasto  = usamos esa plata para pagar → SÍ descuenta del saldo real
+  if (!(form.fondos_tercero && form.tipo === 'ingreso')) {
     const { error: rpcError } = await supabase.rpc('procesar_movimiento', {
       p_tipo:              form.tipo,
       p_cuenta_id:         form.cuenta_id || null,
@@ -251,15 +252,18 @@ export async function uploadComprobante(
 }
 
 export interface SaldoTerceros {
-  fondos:  number  // sum of ingresos fondos_tercero
-  gastos:  number  // sum of gastos para_tercero
-  neto:    number  // fondos - gastos
+  fondos:          number   // ingresos fondos_tercero
+  gastos:          number   // gastos para_tercero
+  neto:            number   // fondos - gastos
+  gastadoTerceros: number   // fondos_tercero gastos (ya usados)
+  disponible:      number   // fondos - gastadoTerceros (saldo real disponible en virtual)
+  primaryCuentaId: string | null  // cuenta real que recibió más fondos tercero
 }
 
 export async function getSaldoTerceros(userId: string): Promise<SaldoTerceros> {
   const { data, error } = await supabase
     .from('movimientos')
-    .select('monto, fondos_tercero, para_tercero')
+    .select('monto, tipo, fondos_tercero, para_tercero, cuenta_id')
     .eq('usuario_id', userId)
     .or('fondos_tercero.eq.true,para_tercero.eq.true')
 
@@ -267,11 +271,29 @@ export async function getSaldoTerceros(userId: string): Promise<SaldoTerceros> {
 
   let fondos = 0
   let gastos = 0
+  let gastadoTerceros = 0
+  const fondosByCuenta: Record<string, number> = {}
+
   for (const m of data ?? []) {
-    if (m.fondos_tercero) fondos += m.monto
-    if (m.para_tercero)   gastos += m.monto
+    if (m.fondos_tercero && m.tipo === 'ingreso') {
+      fondos += m.monto
+      if (m.cuenta_id) fondosByCuenta[m.cuenta_id] = (fondosByCuenta[m.cuenta_id] ?? 0) + m.monto
+    }
+    if (m.fondos_tercero && m.tipo !== 'ingreso') gastadoTerceros += m.monto
+    if (m.para_tercero)  gastos += m.monto
   }
-  return { fondos, gastos, neto: fondos - gastos }
+
+  const primaryCuentaId = Object.entries(fondosByCuenta)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+
+  return {
+    fondos,
+    gastos,
+    neto:            fondos - gastos,
+    gastadoTerceros,
+    disponible:      fondos - gastadoTerceros,
+    primaryCuentaId,
+  }
 }
 
 export async function deleteComprobante(url: string): Promise<void> {
