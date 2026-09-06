@@ -248,6 +248,30 @@ export async function uploadComprobante(
   return data.publicUrl
 }
 
+export interface SaldoTerceros {
+  fondos:  number  // sum of ingresos fondos_tercero
+  gastos:  number  // sum of gastos para_tercero
+  neto:    number  // fondos - gastos
+}
+
+export async function getSaldoTerceros(userId: string): Promise<SaldoTerceros> {
+  const { data, error } = await supabase
+    .from('movimientos')
+    .select('monto, fondos_tercero, para_tercero')
+    .eq('usuario_id', userId)
+    .or('fondos_tercero.eq.true,para_tercero.eq.true')
+
+  if (error) throw error
+
+  let fondos = 0
+  let gastos = 0
+  for (const m of data ?? []) {
+    if (m.fondos_tercero) fondos += m.monto
+    if (m.para_tercero)   gastos += m.monto
+  }
+  return { fondos, gastos, neto: fondos - gastos }
+}
+
 export async function deleteComprobante(url: string): Promise<void> {
   // Extraer el path desde la URL pública
   const parts = url.split('/comprobantes/')

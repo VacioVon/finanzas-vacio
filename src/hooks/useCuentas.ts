@@ -6,6 +6,7 @@ import {
   updateCuenta,
   deleteCuenta
 } from '@/services/cuentas.service'
+import { getSaldoTerceros } from '@/services/movimientos.service'
 import type { CuentaFormData } from '@/types/app.types'
 import type { CuentaUpdateData } from '@/services/cuentas.service'
 
@@ -47,5 +48,14 @@ export function useDeleteCuenta() {
   return useMutation({
     mutationFn: (id: string) => deleteCuenta(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: [CUENTAS_KEY] })
+  })
+}
+
+export function useSaldoTerceros() {
+  const { user } = useAuthStore()
+  return useQuery({
+    queryKey: ['saldo-terceros', user?.id],
+    queryFn:  () => getSaldoTerceros(user!.id),
+    enabled:  !!user?.id,
   })
 }

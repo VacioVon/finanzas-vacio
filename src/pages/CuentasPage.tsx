@@ -9,7 +9,7 @@ import { SkeletonList } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { useCuentas } from '@/hooks/useCuentas'
+import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
 import { useValorizaciones } from '@/hooks/useValorizaciones'
 import type { Cuenta } from '@/types/app.types'
 import { formatCLP } from '@/utils/currency'
@@ -21,6 +21,7 @@ export function CuentasPage() {
 
   const { data: cuentas, isLoading } = useCuentas()
   const { data: valorizaciones } = useValorizaciones()
+  const { data: terceros } = useSaldoTerceros()
 
   const totalDisponible = (cuentas ?? [])
     .filter(c => c.tipo !== 'inversion' && c.tipo !== 'credito')
@@ -79,16 +80,62 @@ export function CuentasPage() {
               action={{ label: 'Agregar cuenta', onClick: () => setShowForm(true) }}
             />
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {cuentas.map(cuenta => (
-                <CuentaCard
-                  key={cuenta.id}
-                  cuenta={cuenta}
-                  onEdit={handleEdit}
-                  onActualizarValor={setValorizandoCuenta}
-                  valorizaciones={valorizaciones}
-                />
-              ))}
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {cuentas.map(cuenta => (
+                  <CuentaCard
+                    key={cuenta.id}
+                    cuenta={cuenta}
+                    onEdit={handleEdit}
+                    onActualizarValor={setValorizandoCuenta}
+                    valorizaciones={valorizaciones}
+                  />
+                ))}
+              </div>
+
+              {/* Tarjeta virtual: saldo de dinero de terceros */}
+              {terceros && (terceros.fondos > 0 || terceros.gastos > 0) && (
+                <div className="rounded-2xl border border-dashed border-slate-600/50 bg-night-2/60 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 rounded-xl bg-slate-700/50 flex items-center justify-center text-lg flex-shrink-0">
+                        🤝
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide leading-none mb-1">
+                          Dinero de terceros
+                        </p>
+                        <p className="text-[11px] text-slate-600 leading-snug">
+                          Saldo virtual · no afecta tus cuentas
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p
+                        className="text-base font-bold tabular-nums leading-none"
+                        style={{ color: terceros.neto >= 0 ? '#10D97F' : '#F4645F' }}
+                      >
+                        {formatCLP(Math.abs(terceros.neto))}
+                      </p>
+                      <p className="text-[10px] text-slate-600 mt-0.5">
+                        {terceros.neto >= 0 ? 'por devolver' : 'por cobrar'}
+                      </p>
+                    </div>
+                  </div>
+                  {terceros.fondos > 0 && terceros.gastos > 0 && (
+                    <div className="mt-3 flex gap-3 pt-3 border-t border-slate-700/40">
+                      <div className="flex-1">
+                        <p className="text-[10px] text-slate-500 mb-0.5">Recibido de terceros</p>
+                        <p className="text-xs font-semibold tabular-nums text-slate-300">{formatCLP(terceros.fondos)}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[10px] text-slate-500 mb-0.5">Gastado por terceros</p>
+                        <p className="text-xs font-semibold tabular-nums text-slate-300">{formatCLP(terceros.gastos)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
