@@ -6,7 +6,7 @@ export type TipoCategoria = 'gasto' | 'ingreso' | 'ahorro' | 'inversion'
 export type EstadoDeuda = 'activa' | 'pagada' | 'en_mora'
 export type EstadoObjetivo = 'activo' | 'completado' | 'pausado'
 export type FrecuenciaSuscripcion = 'semanal' | 'quincenal' | 'mensual' | 'bimestral' | 'trimestral' | 'semestral' | 'anual'
-export type TipoCompromiso = 'servicio' | 'gasto_fijo' | 'membresia' | 'seguro' | 'arriendo' | 'educacion' | 'salud' | 'otro'
+export type TipoCompromiso = 'servicio' | 'gasto_fijo' | 'membresia' | 'seguro' | 'arriendo' | 'educacion' | 'salud' | 'pareja' | 'mascotas' | 'otro'
 export type MontoTipoCompromiso = 'fijo' | 'estimado'
 
 // ── Motor financiero ──────────────────────────────────────────

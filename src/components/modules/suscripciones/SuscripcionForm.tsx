@@ -21,6 +21,8 @@ const TIPO_CARDS: { value: TipoCompromiso; emoji: string; label: string; sub: st
   { value: 'arriendo',   emoji: '🔑', label: 'Arriendo',  sub: 'Dpto, casa…' },
   { value: 'educacion',  emoji: '📚', label: 'Educación', sub: 'Colegio, univ…' },
   { value: 'salud',      emoji: '❤️', label: 'Salud',     sub: 'Isapre, médico…' },
+  { value: 'pareja',     emoji: '💑', label: 'Pareja',    sub: 'Gastos juntos…' },
+  { value: 'mascotas',   emoji: '🐾', label: 'Mascotas',  sub: 'Vet, comida…' },
   { value: 'otro',       emoji: '📋', label: 'Otro',      sub: '' },
 ]
 
@@ -35,7 +37,7 @@ const schema = z.object({
   subcategoria_id: z.string().optional(),
   proxima_fecha:   z.string().optional(),
   nota:            z.string().optional(),
-  tipo:            z.enum(['servicio', 'gasto_fijo', 'membresia', 'seguro', 'arriendo', 'educacion', 'salud', 'otro']),
+  tipo:            z.enum(['servicio', 'gasto_fijo', 'membresia', 'seguro', 'arriendo', 'educacion', 'salud', 'pareja', 'mascotas', 'otro']),
   monto_tipo:      z.enum(['fijo', 'estimado']),
   fecha_fin:       z.string().optional(),
 })
