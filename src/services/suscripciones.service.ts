@@ -171,9 +171,9 @@ export async function registrarPagoCompromiso(
       compromiso_id:   compromiso.id,
     })
 
-  if (movErr) throw movErr
+  if (movErr) throw new Error(movErr.message)
 
-  // 2. Descontar saldo de la cuenta (era el paso faltante que causaba el bug)
+  // 2. Descontar saldo de la cuenta
   const { error: rpcError } = await supabase.rpc('procesar_movimiento', {
     p_tipo:              'gasto',
     p_cuenta_id:         pago.cuenta_id,
@@ -181,8 +181,9 @@ export async function registrarPagoCompromiso(
     p_objetivo_id:       null,
     p_deuda_id:          null,
     p_monto:             pago.monto,
+    p_movimiento_id:     null,
   })
-  if (rpcError) throw rpcError
+  if (rpcError) throw new Error(rpcError.message)
 
   // 3. Avanzar proxima_fecha
   const base      = compromiso.proxima_fecha ? parseISO(compromiso.proxima_fecha) : new Date()
@@ -201,7 +202,7 @@ export async function registrarPagoCompromiso(
     .update(updates)
     .eq('id', compromiso.id)
 
-  if (updErr) throw updErr
+  if (updErr) throw new Error(updErr.message)
 }
 
 export async function getPagosCompromiso(userId: string): Promise<PagoCompromisoHistorial[]> {
