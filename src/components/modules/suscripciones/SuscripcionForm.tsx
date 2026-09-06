@@ -1,5 +1,5 @@
 ﻿import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal } from '@/components/ui/Modal'
@@ -11,7 +11,18 @@ import { useCuentas } from '@/hooks/useCuentas'
 import { useCategoriasByTipo } from '@/hooks/useCategorias'
 import { useCreateSuscripcion, useUpdateSuscripcion } from '@/hooks/useSuscripciones'
 import { todayISO } from '@/utils/dates'
-import type { Suscripcion } from '@/types/app.types'
+import type { Suscripcion, TipoCompromiso } from '@/types/app.types'
+
+const TIPO_CARDS: { value: TipoCompromiso; emoji: string; label: string; sub: string }[] = [
+  { value: 'servicio',   emoji: '📱', label: 'Digital',   sub: 'Netflix, Spotify…' },
+  { value: 'gasto_fijo', emoji: '🏠', label: 'Hogar',     sub: 'Luz, agua, gas…' },
+  { value: 'membresia',  emoji: '🏋️', label: 'Membresía', sub: 'Gym, club…' },
+  { value: 'seguro',     emoji: '🛡️', label: 'Seguro',    sub: 'Auto, vida…' },
+  { value: 'arriendo',   emoji: '🔑', label: 'Arriendo',  sub: 'Dpto, casa…' },
+  { value: 'educacion',  emoji: '📚', label: 'Educación', sub: 'Colegio, univ…' },
+  { value: 'salud',      emoji: '❤️', label: 'Salud',     sub: 'Isapre, médico…' },
+  { value: 'otro',       emoji: '📋', label: 'Otro',      sub: '' },
+]
 
 const schema = z.object({
   nombre:          z.string().min(1, 'Requerido'),
@@ -24,17 +35,12 @@ const schema = z.object({
   subcategoria_id: z.string().optional(),
   proxima_fecha:   z.string().optional(),
   nota:            z.string().optional(),
-  tipo:            z.enum(['servicio', 'gasto_fijo']),
+  tipo:            z.enum(['servicio', 'gasto_fijo', 'membresia', 'seguro', 'arriendo', 'educacion', 'salud', 'otro']),
   monto_tipo:      z.enum(['fijo', 'estimado']),
   fecha_fin:       z.string().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
-
-const TIPO_OPTIONS = [
-  { value: 'servicio',   label: 'Servicio — Netflix, Spotify, gym…' },
-  { value: 'gasto_fijo', label: 'Gasto fijo — Luz, agua, dividendo…' },
-]
 
 const FRECUENCIA_OPTIONS = [
   { value: 'mensual',    label: 'Mensual' },
@@ -59,7 +65,7 @@ export function SuscripcionForm({ isOpen, onClose, editing, onSuccess }: Props) 
   const createMutation       = useCreateSuscripcion()
   const updateMutation       = useUpdateSuscripcion()
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } =
+  const { register, handleSubmit, watch, setValue, reset, control, formState: { errors } } =
     useForm<FormValues>({
       resolver:      zodResolver(schema),
       defaultValues: {
@@ -74,6 +80,7 @@ export function SuscripcionForm({ isOpen, onClose, editing, onSuccess }: Props) 
   const emoji               = watch('emoji')
   const monto_tipo          = watch('monto_tipo')
   const selectedCategoriaId = watch('categoria_id')
+  const tipoWatch           = useWatch({ control, name: 'tipo' })
 
   const DEFAULT_VALUES = {
     nombre:          '',
@@ -156,13 +163,43 @@ export function SuscripcionForm({ isOpen, onClose, editing, onSuccess }: Props) 
     <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar compromiso' : 'Nuevo compromiso'} theme="dark" accent="#00C2CB">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-        {/* Tipo de compromiso */}
-        <Select
-          label="Tipo"
-          options={TIPO_OPTIONS}
-          {...register('tipo')}
-          error={errors.tipo?.message}
-        />
+        {/* Tipo de compromiso — grid visual */}
+        <div>
+          <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+            Tipo de compromiso
+          </label>
+          <div className="grid grid-cols-4 gap-2 mt-2">
+            {TIPO_CARDS.map(card => {
+              const active = tipoWatch === card.value
+              return (
+                <button
+                  key={card.value}
+                  type="button"
+                  onClick={() => setValue('tipo', card.value, { shouldValidate: true })}
+                  className={[
+                    'flex flex-col items-center gap-1 py-3 px-1 rounded-2xl border transition-all',
+                    active
+                      ? 'border-mover-500 bg-mover-500/15 text-white'
+                      : 'border-night-border bg-night-3 text-slate-400 hover:border-mover-500/40 hover:text-slate-300'
+                  ].join(' ')}
+                >
+                  <span className="text-[22px] leading-none">{card.emoji}</span>
+                  <span className={['text-[11px] font-semibold leading-none mt-0.5', active ? 'text-mover-300' : 'text-slate-400'].join(' ')}>
+                    {card.label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          {/* sublabel del tipo seleccionado */}
+          {tipoWatch && (() => {
+            const card = TIPO_CARDS.find(c => c.value === tipoWatch)
+            return card?.sub ? (
+              <p className="text-[10px] text-slate-500 mt-1.5 text-center">{card.sub}</p>
+            ) : null
+          })()}
+          {errors.tipo && <p className="text-xs text-gasto-400 mt-1">{errors.tipo.message}</p>}
+        </div>
 
         {/* Emoji + Nombre */}
         <div className="flex gap-3 items-start">
