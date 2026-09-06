@@ -68,10 +68,23 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
 
   const tipoDeudaWatch   = useWatch({ control, name: 'tipo_deuda' })
   const cuentaIdWatch    = useWatch({ control, name: 'cuenta_id' })
+  const montoWatch       = useWatch({ control, name: 'monto_total' })
+  const cuotasWatch      = useWatch({ control, name: 'cuotas_total' })
   const esDeudaPersona   = tipoDeudaWatch === 'deuda_persona'
   const esTarjetaCredito = tipoDeudaWatch === 'tarjeta_credito'
 
   const tarjetasCredito = (cuentas ?? []).filter(c => c.activa && c.tipo === 'credito')
+
+  // Auto-calcular cuota mensual cuando cambia monto o número de cuotas
+  useEffect(() => {
+    const monto  = Number(montoWatch)
+    const cuotas = Number(cuotasWatch)
+    if (monto > 0 && cuotas > 1) {
+      setValue('cuota_mensual', Math.round(monto / cuotas), { shouldValidate: false })
+    } else if (cuotas === 1) {
+      setValue('cuota_mensual', undefined, { shouldValidate: false })
+    }
+  }, [montoWatch, cuotasWatch, setValue])
 
   useEffect(() => {
     if (!isOpen) return
