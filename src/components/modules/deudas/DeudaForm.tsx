@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { AccountPicker } from '@/components/ui/AccountPicker'
 import { useCreateDeuda, useUpdateDeuda } from '@/hooks/useDeudas'
-import { useCategorias } from '@/hooks/useCategorias'
 import { useCuentas } from '@/hooks/useCuentas'
 import { todayISO } from '@/utils/dates'
 import type { Deuda } from '@/types/app.types'
@@ -26,7 +25,6 @@ const schema = z.object({
   nombre:              z.string().min(1, 'Requerido').max(80),
   tipo_deuda:          z.string().optional(),
   prestamista_nombre:  z.string().max(80).optional(),
-  categoria_id:        z.string().optional(),
   cuenta_id:           z.string().optional(),
   monto_total:         z.coerce.number().positive('Debe ser mayor a 0'),
   cuotas_total:        z.coerce.number().int().min(1).optional(),
@@ -52,14 +50,7 @@ const inputBorder = 'border-night-border hover:border-brand-500/40'
 export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
   const createMutation = useCreateDeuda()
   const updateMutation = useUpdateDeuda()
-  const { data: categorias } = useCategorias()
-  const { data: cuentas }    = useCuentas()
-
-  // Para deudas: mostrar Finanzas (ahorro) + Patrimonio (inversion)
-  // Son los contextos más relevantes para clasificar obligaciones financieras
-  const catOptions = (categorias ?? [])
-    .filter(c => c.activa && (c.tipo === 'ahorro' || c.tipo === 'inversion'))
-    .map(c => ({ value: c.id, label: `${c.emoji ?? ''} ${c.nombre}`.trim() }))
+  const { data: cuentas } = useCuentas()
 
   const { register, handleSubmit, reset, control, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -93,7 +84,6 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
         nombre:              editing.nombre,
         tipo_deuda:          editing.tipo_deuda ?? '',
         prestamista_nombre:  editing.prestamista_nombre ?? '',
-        categoria_id:        editing.categoria_id ?? '',
         cuenta_id:           editing.cuenta_id ?? '',
         monto_total:         editing.monto_total,
         cuotas_total:        editing.cuotas_total,
@@ -114,7 +104,6 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
       nombre:              data.nombre,
       tipo_deuda:          (data.tipo_deuda || undefined) as import('@/types/app.types').TipoDeuda | undefined,
       prestamista_nombre:  esDeudaPersona   ? (data.prestamista_nombre?.trim() || undefined) : undefined,
-      categoria_id:        data.categoria_id || undefined,
       cuenta_id:           esTarjetaCredito  ? (data.cuenta_id || undefined) : undefined,
       monto_total:         data.monto_total,
       cuotas_total:        data.cuotas_total || 1,
@@ -185,18 +174,6 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
             </p>
           </div>
         )}
-
-        <div>
-          <Select
-            label="Categoría — Finanzas / Patrimonio"
-            options={catOptions}
-            placeholder="Sin categoría (opcional)"
-            {...register('categoria_id')}
-          />
-          <p className="text-[10px] text-slate-600 mt-0.5">
-            Opcional. Clasificar según tipo de obligación financiera.
-          </p>
-        </div>
 
         {/* Monto total */}
         <div>
