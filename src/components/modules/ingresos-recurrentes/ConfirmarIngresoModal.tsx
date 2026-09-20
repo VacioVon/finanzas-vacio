@@ -24,6 +24,7 @@ export function ConfirmarIngresoModal({ instancia, onClose }: Props) {
   const [fechaReal,   setFechaReal]   = useState(new Date().toISOString().slice(0, 10))
   const [nuevaFecha,  setNuevaFecha]  = useState(instancia.fecha_esperada)
   const [nota,        setNota]        = useState('')
+  const [error,       setError]       = useState('')
 
   const confirmar = useConfirmarIngreso()
   const posponer  = usePosponerIngreso()
@@ -33,13 +34,18 @@ export function ConfirmarIngresoModal({ instancia, onClose }: Props) {
 
   async function handleConfirmar() {
     if (montoNum <= 0) return
-    await confirmar.mutateAsync({
-      instanciaId: instancia.instancia_id,
-      montoReal:   montoNum,
-      fechaReal,
-      nota:        nota || undefined,
-    })
-    setVista('exito')
+    setError('')
+    try {
+      await confirmar.mutateAsync({
+        instanciaId: instancia.instancia_id,
+        montoReal:   montoNum,
+        fechaReal,
+        nota:        nota || undefined,
+      })
+      setVista('exito')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al registrar el ingreso')
+    }
   }
 
   async function handlePosponer() {
@@ -191,6 +197,12 @@ export function ConfirmarIngresoModal({ instancia, onClose }: Props) {
                 />
               </div>
             </div>
+
+            {error && (
+              <p className="text-xs text-gasto-400 bg-gasto-500/10 px-3 py-2 rounded-xl">
+                {error}
+              </p>
+            )}
 
             {/* Acciones principales */}
             <button
