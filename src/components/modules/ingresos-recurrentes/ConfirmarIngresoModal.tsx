@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X, CheckCircle2, Clock, Ban } from 'lucide-react'
 import { useConfirmarIngreso, usePosponerIngreso, useMarcarNoRecibido } from '@/hooks/useIngresosRecurrentes'
 import type { IngresoPendienteHoy } from '@/types/ingresos-recurrentes.types'
@@ -56,7 +57,7 @@ export function ConfirmarIngresoModal({ instancia, onClose }: Props) {
 
   const loading = confirmar.isPending || posponer.isPending || noRecibido.isPending
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -223,6 +224,7 @@ export function ConfirmarIngresoModal({ instancia, onClose }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

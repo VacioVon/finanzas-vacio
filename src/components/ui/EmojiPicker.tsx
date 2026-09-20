@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 // Emojis organizados por categoría financiera
@@ -100,7 +101,7 @@ export function EmojiPicker({ value, onChange, label = 'Icono' }: EmojiPickerPro
       </div>
 
       {/* Panel flotante */}
-      {open && (
+      {open && createPortal(
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <div className="relative bg-night-1 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md max-h-[75vh] flex flex-col border border-night-border">
@@ -153,7 +154,8 @@ export function EmojiPicker({ value, onChange, label = 'Icono' }: EmojiPickerPro
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Plus } from 'lucide-react'
 import { useCuentas } from '@/hooks/useCuentas'
 import { useFuentesIngreso, useCreateIngresoRecurrente, useCreateFuenteIngreso } from '@/hooks/useIngresosRecurrentes'
@@ -67,7 +68,7 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
   const ventanaMin = Math.max(1, form.dia_esperado - form.tolerancia_dias)
   const ventanaMax = form.dia_esperado + form.tolerancia_dias
 
-  return (
+  return createPortal(
     /* Overlay */
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -318,6 +319,7 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
           </div>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body
   )
 }
