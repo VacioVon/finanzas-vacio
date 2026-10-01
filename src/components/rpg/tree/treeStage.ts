@@ -13,18 +13,18 @@ export type TreeStage =
 export interface TreeStageInfo {
   key:        TreeStage
   label:      string           // nombre de etapa para UI
-  file:       string           // archivo PNG en /public/assets/rpg/tree/
+  file:       string           // archivo WebP en /public/assets/rpg/tree/
   levelRange: [number, number] // [min, max] inclusive
 }
 
 // Tabla maestra — congelada junto con la Biblia del Árbol
 export const TREE_STAGES: readonly TreeStageInfo[] = [
-  { key: 'semilla',         label: 'Semilla',         file: 'semilla.png',         levelRange: [1,  2]  },
-  { key: 'brote',           label: 'Brote',           file: 'brote.png',           levelRange: [3,  4]  },
-  { key: 'arbol-joven',     label: 'Árbol Joven',     file: 'arbol-joven.png',     levelRange: [5,  7]  },
-  { key: 'arbol-fuerte',    label: 'Árbol Fuerte',    file: 'arbol-fuerte.png',    levelRange: [8,  11] },
-  { key: 'arbol-antiguo',   label: 'Árbol Antiguo',   file: 'arbol-antiguo.png',   levelRange: [12, 16] },
-  { key: 'arbol-ancestral', label: 'Árbol Ancestral', file: 'arbol-ancestral.png', levelRange: [17, 20] },
+  { key: 'semilla',         label: 'Semilla',         file: 'semilla.webp',         levelRange: [1,  2]  },
+  { key: 'brote',           label: 'Brote',           file: 'brote.webp',           levelRange: [3,  4]  },
+  { key: 'arbol-joven',     label: 'Árbol Joven',     file: 'arbol-joven.webp',     levelRange: [5,  7]  },
+  { key: 'arbol-fuerte',    label: 'Árbol Fuerte',    file: 'arbol-fuerte.webp',    levelRange: [8,  11] },
+  { key: 'arbol-antiguo',   label: 'Árbol Antiguo',   file: 'arbol-antiguo.webp',   levelRange: [12, 16] },
+  { key: 'arbol-ancestral', label: 'Árbol Ancestral', file: 'arbol-ancestral.webp', levelRange: [17, 20] },
 ] as const
 
 // Devuelve la etapa correspondiente al nivel (nunca retrocede).

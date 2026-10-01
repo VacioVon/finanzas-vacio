@@ -1,25 +1,25 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useAuthListener } from '@/hooks/useAuth'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { HomePage } from '@/pages/HomePage'
-import { MovimientosPage } from '@/pages/MovimientosPage'
-import { CuentasPage } from '@/pages/CuentasPage'
-import { CategoriasPage } from '@/pages/CategoriasPage'
-import { PresupuestosPage } from '@/pages/PresupuestosPage'
-import { ObjetivosPage } from '@/pages/ObjetivosPage'
-import { DeudasPage } from '@/pages/DeudasPage'
-import { CuotasPage } from '@/pages/CuotasPage'
-import { MasPage } from '@/pages/MasPage'
-import { SuscripcionesPage } from '@/pages/SuscripcionesPage'
-import { CalendarioPage } from '@/pages/CalendarioPage'
-import { AjustesPage }   from '@/pages/AjustesPage'
-import { AnalisisPage }  from '@/pages/AnalisisPage'
-import { CobrosPage }              from '@/pages/CobrosPage'
-import { IngresosRecurrentesPage } from '@/pages/IngresosRecurrentesPage'
-import { FinanzasPage }            from '@/pages/FinanzasPage'
+const MovimientosPage = lazy(() => import('@/pages/MovimientosPage').then(m => ({ default: m.MovimientosPage })))
+const CuentasPage = lazy(() => import('@/pages/CuentasPage').then(m => ({ default: m.CuentasPage })))
+const CategoriasPage = lazy(() => import('@/pages/CategoriasPage').then(m => ({ default: m.CategoriasPage })))
+const PresupuestosPage = lazy(() => import('@/pages/PresupuestosPage').then(m => ({ default: m.PresupuestosPage })))
+const ObjetivosPage = lazy(() => import('@/pages/ObjetivosPage').then(m => ({ default: m.ObjetivosPage })))
+const DeudasPage = lazy(() => import('@/pages/DeudasPage').then(m => ({ default: m.DeudasPage })))
+const CuotasPage = lazy(() => import('@/pages/CuotasPage').then(m => ({ default: m.CuotasPage })))
+const MasPage = lazy(() => import('@/pages/MasPage').then(m => ({ default: m.MasPage })))
+const SuscripcionesPage = lazy(() => import('@/pages/SuscripcionesPage').then(m => ({ default: m.SuscripcionesPage })))
+const CalendarioPage = lazy(() => import('@/pages/CalendarioPage').then(m => ({ default: m.CalendarioPage })))
+const AjustesPage = lazy(() => import('@/pages/AjustesPage').then(m => ({ default: m.AjustesPage })))
+const AnalisisPage = lazy(() => import('@/pages/AnalisisPage').then(m => ({ default: m.AnalisisPage })))
+const CobrosPage = lazy(() => import('@/pages/CobrosPage').then(m => ({ default: m.CobrosPage })))
+const IngresosRecurrentesPage = lazy(() => import('@/pages/IngresosRecurrentesPage').then(m => ({ default: m.IngresosRecurrentesPage })))
+const FinanzasPage = lazy(() => import('@/pages/FinanzasPage').then(m => ({ default: m.FinanzasPage })))
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthStore()
@@ -74,6 +74,7 @@ export function App() {
   useApplyTheme()
 
   return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
     <Routes>
       {/* Rutas públicas */}
       <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
@@ -109,5 +110,6 @@ export function App() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   )
 }
