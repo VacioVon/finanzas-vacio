@@ -151,9 +151,9 @@ export async function createMovimiento(
 
   if (error) throw error
 
-  // fondos_tercero ingreso = plata de otro que llega → no suma al saldo real
-  // fondos_tercero gasto  = usamos esa plata para pagar → SÍ descuenta del saldo real
-  if (!(form.fondos_tercero && form.tipo === 'ingreso')) {
+  // fondos_tercero: el dinero entra y sale físicamente de la cuenta real → ambos lados
+  // afectan el saldo (ingreso +, gasto/pago -). Los gráficos los excluyen por separado.
+  {
     const { error: rpcError } = await supabase.rpc('procesar_movimiento', {
       p_tipo:              form.tipo,
       p_cuenta_id:         form.cuenta_id || null,

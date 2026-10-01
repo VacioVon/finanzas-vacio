@@ -14,6 +14,8 @@ import { CultivationTree } from '@/components/modules/home/CultivationTree'
 import { useMovimientosDelMes } from '@/hooks/useMovimientos'
 import { useAportesObjetivosMes } from '@/hooks/useObjetivos'
 import { useTotalDeudasActivas } from '@/hooks/useDeudas'
+import { useResumenCompartidos } from '@/hooks/useGastosCompartidos'
+import { esIngresoPersonal } from '@/utils/gastosCompartidos'
 
 function ZoneSeparator({ label }: { label: string }) {
   return (
@@ -31,12 +33,13 @@ export function HomePage() {
   const { data: totalDeudas = 0 }  = useTotalDeudasActivas()
 
   const ingresos = (movimientosMes ?? [])
-    .filter(m => m.tipo === 'ingreso')
+    .filter(m => esIngresoPersonal(m))
     .reduce((s, m) => s + m.monto, 0)
 
+  const compartidos = useResumenCompartidos(movimientosMes)
   const gastos = (movimientosMes ?? [])
     .filter(m => m.tipo === 'gasto' && !m.para_tercero)
-    .reduce((s, m) => s + m.monto, 0)
+    .reduce((s, m) => s + m.monto, 0) - compartidos.recibido   // neto asumido
 
   const ahorrosContables  = (movimientosMes ?? [])
     .filter(m => m.tipo === 'ahorro')

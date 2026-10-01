@@ -12,6 +12,7 @@ import {
 import { procesarEventoRPG } from '@/services/rpg/rpg.service'
 import { getPeriodoPresupuestal } from '@/utils/periodo'
 import { CUENTAS_KEY } from './useCuentas'
+import { DEUDAS_KEY } from './useDeudas'
 import type { Movimiento, MovimientoFormData } from '@/types/app.types'
 
 export const MOVIMIENTOS_KEY = 'movimientos'
@@ -67,6 +68,8 @@ export function useCreateMovimiento() {
       qc.invalidateQueries({ queryKey: [MOVIMIENTOS_KEY] })
       qc.invalidateQueries({ queryKey: [CUENTAS_KEY] })
       qc.invalidateQueries({ queryKey: ['presupuestos'] })
+      qc.invalidateQueries({ queryKey: [DEUDAS_KEY] })
+      qc.invalidateQueries({ queryKey: ['gastos_compartidos'] })
       qc.invalidateQueries({ queryKey: ['objetivos'] })
       if (form.tipo === 'ingreso') {
         procesarEventoRPG(user!.id, 'INGRESO_REGISTRADO', mov.id, 'movimiento').catch(() => null)
@@ -84,6 +87,8 @@ export function useDeleteMovimiento() {
       qc.invalidateQueries({ queryKey: [MOVIMIENTOS_KEY] })
       qc.invalidateQueries({ queryKey: [CUENTAS_KEY] })
       qc.invalidateQueries({ queryKey: ['presupuestos'] })
+      qc.invalidateQueries({ queryKey: [DEUDAS_KEY] })
+      qc.invalidateQueries({ queryKey: ['gastos_compartidos'] })
       qc.invalidateQueries({ queryKey: ['objetivos'] })
     }
   })
@@ -106,6 +111,8 @@ export function useUpdateMovimiento() {
       qc.invalidateQueries({ queryKey: [MOVIMIENTOS_KEY] })
       qc.invalidateQueries({ queryKey: [CUENTAS_KEY] })
       qc.invalidateQueries({ queryKey: ['presupuestos'] })
+      qc.invalidateQueries({ queryKey: [DEUDAS_KEY] })
+      qc.invalidateQueries({ queryKey: ['gastos_compartidos'] })
       qc.invalidateQueries({ queryKey: ['objetivos'] })
     }
   })

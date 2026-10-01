@@ -33,6 +33,11 @@ export async function getDeudas(userId: string): Promise<Deuda[]> {
 }
 
 export async function createDeuda(userId: string, form: DeudaFormData): Promise<Deuda> {
+  const pagadoInicial = Math.max(0, Math.round(form.pagado_inicial ?? 0))
+  if (pagadoInicial >= form.monto_total && pagadoInicial > 0) {
+    throw new Error('Lo pagado hasta ahora debe ser menor al monto de la deuda')
+  }
+
   const { data, error } = await supabase
     .from('deudas')
     .insert({
@@ -43,7 +48,7 @@ export async function createDeuda(userId: string, form: DeudaFormData): Promise<
       categoria_id:        form.categoria_id         || null,
       cuenta_id:           form.cuenta_id            || null,
       monto_total:         form.monto_total,
-      monto_pendiente:     form.monto_total,           // empieza igual al total
+      monto_pendiente:     form.monto_total - pagadoInicial,  // total menos el pago histórico (si hay)
       cuotas_total:        form.cuotas_total           ?? 1,
       cuotas_pagadas:      0,
       cuota_mensual:       form.cuota_mensual          ?? null,
@@ -58,6 +63,25 @@ export async function createDeuda(userId: string, form: DeudaFormData): Promise<
     .single()
 
   if (error) throw error
+
+  // Pago histórico: movimiento real pago_deuda SIN cuenta. procesar_movimiento no se invoca,
+  // así que ningún saldo cambia; solo alimenta el "pagado" real de la deuda.
+  if (pagadoInicial > 0) {
+    const { error: movError } = await supabase.from('movimientos').insert({
+      usuario_id:    userId,
+      tipo:          'pago_deuda',
+      fecha:         form.fecha_compra,
+      deuda_id:      data.id,
+      monto:         pagadoInicial,
+      nota:          'Pago previo al registro en QloB',
+      contexto_pago: 'deuda_propia',
+    })
+    if (movError) {
+      await supabase.from('deudas').delete().eq('id', data.id)   // revertir la deuda recién creada
+      throw movError
+    }
+  }
+
   return data as Deuda
 }
 

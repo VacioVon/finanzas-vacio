@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Plus, X, SlidersHorizontal, ChevronDown } from 'lucide-react'
+import { Search, Plus, Download, X, SlidersHorizontal, ChevronDown } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
 import { MovimientoCard } from '@/components/modules/movimientos/MovimientoCard'
@@ -10,6 +10,9 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { useMovimientos, useMovimientosDelMes } from '@/hooks/useMovimientos'
 import { useCuentas } from '@/hooks/useCuentas'
+import { useResumenCompartidos } from '@/hooks/useGastosCompartidos'
+import { ExportarExcelModal } from '@/components/modules/movimientos/ExportarExcelModal'
+import { esIngresoPersonal } from '@/utils/gastosCompartidos'
 import { formatCLP } from '@/utils/currency'
 
 type Filtro = 'todos' | 'ingreso' | 'gasto' | 'ahorro' | 'pago_deuda'
@@ -30,6 +33,7 @@ export function MovimientosPage() {
   const [categoriasFiltro, setCategorias]     = useState<string[]>([])
   const [panelAbierto, setPanelAbierto]       = useState(false)
   const [showForm, setShowForm]               = useState(false)
+  const [showExport, setShowExport]           = useState(false)
 
   // Datos — movimientos SIN filtro server-side (filtramos client-side)
   const { data: todosMovimientos, isLoading } = useMovimientos()
@@ -37,8 +41,9 @@ export function MovimientosPage() {
   const { data: cuentas }                     = useCuentas()
 
   // Resumen del mes
-  const ingresos  = (movimientosMes ?? []).filter(m => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0)
-  const gastos    = (movimientosMes ?? []).filter(m => m.tipo === 'gasto' && !m.para_tercero).reduce((s, m) => s + m.monto, 0)
+  const compartidos = useResumenCompartidos(movimientosMes)
+  const ingresos  = (movimientosMes ?? []).filter(m => esIngresoPersonal(m)).reduce((s, m) => s + m.monto, 0)
+  const gastos    = (movimientosMes ?? []).filter(m => m.tipo === 'gasto' && !m.para_tercero).reduce((s, m) => s + m.monto, 0) - compartidos.recibido  // neto asumido
   const flujoNeto = ingresos - gastos
 
   // Categorías únicas del historial (para el panel de filtros)
@@ -104,10 +109,16 @@ export function MovimientosPage() {
       <Header
         title="Movimientos"
         action={
-          <Button size="sm" variant="primary" onClick={() => setShowForm(true)}>
-            <Plus className="h-4 w-4" />
-            Nuevo
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={() => setShowExport(true)} aria-label="Exportar a Excel">
+              <Download className="h-4 w-4" />
+              Excel
+            </Button>
+            <Button size="sm" variant="primary" onClick={() => setShowForm(true)}>
+              <Plus className="h-4 w-4" />
+              Nuevo
+            </Button>
+          </div>
         }
       />
 
@@ -371,6 +382,7 @@ export function MovimientosPage() {
         </div>
       </div>
 
+      <ExportarExcelModal isOpen={showExport} onClose={() => setShowExport(false)} />
       <MovimientoForm
         isOpen={showForm}
         onClose={() => setShowForm(false)}

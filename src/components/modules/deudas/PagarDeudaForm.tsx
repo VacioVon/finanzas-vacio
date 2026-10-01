@@ -12,6 +12,7 @@ import { useCreateMovimiento } from '@/hooks/useMovimientos'
 import { useSaldoTerceros } from '@/hooks/useCuentas'
 import { formatCLP } from '@/utils/currency'
 import { todayISO } from '@/utils/dates'
+import { montoProximaCuota } from '@/utils/planCuotas'
 import type { Deuda } from '@/types/app.types'
 
 const schema = z.object({
@@ -59,7 +60,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      monto: deuda.cuota_mensual ?? realPendiente,
+      monto: montoProximaCuota(realPendiente, deuda.cuota_mensual),
       fecha: todayISO()
     }
   })
@@ -67,7 +68,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
   useEffect(() => {
     if (isOpen) {
       reset({
-        monto:     deuda.cuota_mensual ?? realPendiente,
+        monto:     montoProximaCuota(realPendiente, deuda.cuota_mensual),
         fecha:     todayISO(),
         cuenta_id: '',
         nota:      ''
@@ -130,7 +131,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
         <p className="text-xs text-brand-300 leading-relaxed">
           El pago se descontará de la cuenta seleccionada y reducirá el saldo pendiente de la deuda.
           {deuda.cuota_mensual
-            ? ` Cuota sugerida: ${formatCLP(deuda.cuota_mensual)}.`
+            ? ` Cuota sugerida: ${formatCLP(montoProximaCuota(realPendiente, deuda.cuota_mensual))}.`
             : ''}
         </p>
       </div>
@@ -158,14 +159,14 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
           </div>
           {errors.monto && <p className="text-xs text-gasto-400 mt-1">{errors.monto.message}</p>}
 
-          {deuda.cuota_mensual && deuda.cuota_mensual !== realPendiente && (
+          {deuda.cuota_mensual && montoProximaCuota(realPendiente, deuda.cuota_mensual) !== realPendiente && (
             <div className="flex gap-2 mt-2">
               <button
                 type="button"
-                onClick={() => reset(v => ({ ...v, monto: deuda.cuota_mensual! }))}
+                onClick={() => reset(v => ({ ...v, monto: montoProximaCuota(realPendiente, deuda.cuota_mensual) }))}
                 className="flex-1 py-1.5 text-xs bg-night-3 text-slate-300 rounded-xl border border-night-border hover:bg-night-2 transition-colors tabular-nums"
               >
-                Cuota: {formatCLP(deuda.cuota_mensual)}
+                Cuota: {formatCLP(montoProximaCuota(realPendiente, deuda.cuota_mensual))}
               </button>
               <button
                 type="button"

@@ -18,6 +18,8 @@ import {
   navegarMes
 } from '@/utils/periodo'
 import { formatDate } from '@/utils/dates'
+import { esIngresoPersonal } from '@/utils/gastosCompartidos'
+import { useResumenCompartidos } from '@/hooks/useGastosCompartidos'
 import type { Movimiento } from '@/types/app.types'
 
 // ─── Tooltip Deep Ocean para Recharts ────────────────────────────────────────
@@ -88,6 +90,7 @@ interface FlujoRow {
 function buildFlujoRows(movimientos: Movimiento[]): FlujoRow[] {
   const sorted = [...movimientos]
     .filter(m => m.tipo !== 'transferencia')              // transferencia interna = neutro
+    .filter(m => !(m.tipo === 'pago_deuda' && !m.cuenta_id)) // pago histórico de deuda: nunca tocó una cuenta
     .filter(m => !(m.tipo === 'gasto' && m.para_tercero)) // gasto para tercero = no es plata tuya
     .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
 
@@ -162,15 +165,19 @@ export function AnalisisPage() {
   }
 
   // Cálculos del mes
+  // Ingreso personal: excluye reembolsos / dinero recuperado (no es ganancia)
   const ingresos = (movimientos ?? [])
-    .filter(m => m.tipo === 'ingreso')
+    .filter(m => esIngresoPersonal(m))
     .reduce((s, m) => s + m.monto, 0)
 
   const gastos = (movimientos ?? [])
     .filter(m => m.tipo === 'gasto' && !m.para_tercero)
     .reduce((s, m) => s + m.monto, 0)
 
-  const flujo      = ingresos - gastos
+  // Gasto bruto = lo que salió; neto asumido = bruto − reembolsos recibidos de gastos compartidos
+  const compartidos  = useResumenCompartidos(movimientos)
+  const gastosNetos  = gastos - compartidos.recibido
+  const flujo      = ingresos - gastosNetos
   const tasaAhorro = ingresos > 0 ? Math.round(Math.max(0, flujo / ingresos * 100)) : 0
   const catData    = agruparPorCategoria(movimientos ?? [])
   const totalGastos = catData.reduce((s, c) => s + c.monto, 0)
@@ -221,6 +228,7 @@ export function AnalisisPage() {
                 label="Gastos"
                 valor={formatCLP(gastos)}
                 color="gasto"
+                sub={compartidos.bruto > 0 ? `neto asumido ${formatCLP(gastosNetos)}` : undefined}
               />
               <StatCard
                 label="Flujo neto"

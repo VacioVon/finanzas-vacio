@@ -7,6 +7,10 @@ import { MovimientoForm } from './MovimientoForm'
 import type { Movimiento } from '@/types/app.types'
 import { formatDate } from '@/utils/dates'
 import { useDeleteMovimiento } from '@/hooks/useMovimientos'
+import { useGastosCompartidos } from '@/hooks/useGastosCompartidos'
+import { useCuentasPorCobrar } from '@/hooks/useCobros'
+import { esGastoCompartidoPagadoTotal, resumenGastoCompartido } from '@/utils/gastosCompartidos'
+import { formatCLP } from '@/utils/currency'
 
 interface MovimientoCardProps {
   movimiento: Movimiento
@@ -146,6 +150,10 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
   const [duplicateOpen, setDuplicateOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
   const deleteMutation = useDeleteMovimiento()
+  const { data: compartidos } = useGastosCompartidos()
+  const { data: cobrar }      = useCuentasPorCobrar()
+  const gc = mov.tipo === 'gasto' ? (compartidos ?? []).find(g => g.movimiento_id === mov.id) : undefined
+  const resumenCompartido = gc && esGastoCompartidoPagadoTotal(gc) ? resumenGastoCompartido(gc, cobrar ?? []) : null
 
   function handleDelete() {
     if (!confirm(`¿Eliminar este movimiento?\nSe revertirá el impacto en los saldos.`)) return
@@ -205,6 +213,11 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
                   </Badge>
                 )}
               </div>
+            )}
+            {resumenCompartido && (
+              <p className="text-[10px] text-brand-300 mt-0.5 tabular-nums" data-testid="detalle-compartido">
+                👥 Compartido · bruto {formatCLP(resumenCompartido.bruto)} · mi parte {formatCLP(resumenCompartido.miParte)} · recibido {formatCLP(resumenCompartido.recibido)} · pendiente {formatCLP(resumenCompartido.pendiente)} · neto {formatCLP(resumenCompartido.neto)}
+              </p>
             )}
             {mov.nota && (
               <p className="text-xs text-slate-400 mt-0.5 truncate italic">"{mov.nota}"</p>

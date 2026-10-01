@@ -15,8 +15,10 @@ export type PropositoTipo = 'deuda' | 'compra' | 'objetivo' | 'ahorro' | 'emerge
 export type PersonaTipo = 'persona' | 'empresa' | 'banco' | 'otro'
 
 export interface Participante {
-  nombre: string
-  monto:  number
+  nombre:     string
+  monto:      number
+  /** cuenta_por_cobrar enlazada (modelo "yo pagué el total"); ausente en filas antiguas */
+  cobrar_id?: string
 }
 
 export interface GastoCompartido {
@@ -235,6 +237,7 @@ export interface Deuda {
   estado: EstadoDeuda
   nota: string | null
   comprobante_url: string | null
+  direccion?: 'debo' | 'me_deben'   // 'me_deben' = otra persona me debe a mí
   created_at: string
   updated_at: string
   categoria?: Categoria
@@ -272,6 +275,8 @@ export interface DeudaFormData {
   fecha_prox_pago?: string
   fecha_vencimiento?: string
   nota?: string
+  /** Solo al crear: lo ya pagado antes de registrar la deuda en QloB (pago histórico, sin tocar cuentas) */
+  pagado_inicial?: number
 }
 
 export interface Suscripcion {

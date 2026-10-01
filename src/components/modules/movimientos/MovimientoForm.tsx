@@ -20,8 +20,11 @@ import { CategoryPicker } from './CategoryPicker'
 import { AccountPicker } from '@/components/ui/AccountPicker'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
-import { useCreateGastoCompartido } from '@/hooks/useGastosCompartidos'
+import { useRegistrarGastoCompartidoPagadoTotal } from '@/hooks/useGastosCompartidos'
 import type { Movimiento, TipoMovimiento, ContextoPago, OrigenDinero, Participante } from '@/types/app.types'
+
+// Participante de un gasto compartido; recibido = ya me entrego su parte
+type ParticipanteForm = Participante & { recibido?: boolean }
 
 // ── Tokens visuales por tipo ─────────────────────────────────────
 const TIPO_ACCENT_HEX: Record<string, string> = {
@@ -186,7 +189,8 @@ export function MovimientoForm({
   const [compromisoVinculado, setCompromisoVinculado] = useState<string | null>(null)
   const [origenDinero,        setOrigenDinero]        = useState<OrigenDinero | null>(null)
   const [esCompartido,        setEsCompartido]        = useState(false)
-  const [participantes,       setParticipantes]       = useState<Participante[]>([{ nombre: '', monto: 0 }])
+  const [participantes,       setParticipantes]       = useState<ParticipanteForm[]>([{ nombre: '', monto: 0 }])
+  const [cuentaRecibeId,      setCuentaRecibeId]      = useState('')
 
   const { data: cuentas }        = useCuentas()
   const { data: saldoTerceros }  = useSaldoTerceros()
@@ -197,7 +201,7 @@ export function MovimientoForm({
   const updateMutation              = useUpdateMovimiento()
   const createCuotaMutation         = useCreateCuota()
   const crearGastoTerceroMutation   = useCrearGastoTercero()
-  const createGastoCompartidoMutation = useCreateGastoCompartido()
+  const gastoCompartidoMutation = useRegistrarGastoCompartidoPagadoTotal()
 
   const {
     register, handleSubmit, watch, reset, setValue,
@@ -255,6 +259,7 @@ export function MovimientoForm({
     setOrigenDinero(null)
     setEsCompartido(false)
     setParticipantes([{ nombre: '', monto: 0 }])
+    setCuentaRecibeId('')
 
     const source = editingMovimiento ?? duplicateFrom
     if (source) {
@@ -377,20 +382,27 @@ export function MovimientoForm({
         })
         if (registrarCuota) await createCuotaMutation.mutateAsync(cuotaPayload)
       } else {
+        // Gasto compartido: validar ANTES de crear el movimiento para no dejar un gasto huerfano
+        const partsCompartido = (!skipDetalles && esCompartido && tipoReal === 'gasto')
+          ? participantes.filter(p => p.nombre.trim() && p.monto > 0)
+          : []
+        if (esCompartido && !skipDetalles && tipoReal === 'gasto') {
+          const otros = partsCompartido.reduce((s, p) => s + p.monto, 0)
+          if (partsCompartido.length === 0) { alert('Agrega al menos una persona con su parte del gasto'); return }
+          if (otros >= data.monto) { alert('La parte de los demas debe ser menor al total del gasto'); return }
+        }
         const nuevoMov = await createMutation.mutateAsync(formData)
         if (registrarCuota) await createCuotaMutation.mutateAsync(cuotaPayload)
-        // Gasto compartido: registrar participantes
-        if (!skipDetalles && esCompartido && tipoReal === 'gasto' && participantes.length > 0) {
-          const validParts = participantes.filter(p => p.nombre.trim() && p.monto > 0)
-          if (validParts.length > 0) {
-            const montoOtros = validParts.reduce((s, p) => s + p.monto, 0)
-            await createGastoCompartidoMutation.mutateAsync({
-              movimiento_id: nuevoMov.id,
-              monto_total:   data.monto + montoOtros,
-              monto_usuario: data.monto,
-              participantes: validParts,
-            })
-          }
+        // Gasto compartido: yo pague el total; los demas me deben su parte (cuenta por cobrar enlazada)
+        if (partsCompartido.length > 0) {
+          await gastoCompartidoMutation.mutateAsync({
+            movimiento_id:    nuevoMov.id,
+            fecha:            data.fecha,
+            descripcion:      formData.comercio || formData.nota?.trim() || selectedCategoria?.nombre || 'Gasto',
+            monto_total:      data.monto,
+            participantes:    partsCompartido.map(p => ({ nombre: p.nombre, monto: p.monto, recibido: !!p.recibido })),
+            cuenta_recibe_id: cuentaRecibeId || cuentaIdFinal,
+          })
         }
       }
       handleClose()
@@ -419,11 +431,12 @@ export function MovimientoForm({
     setOrigenDinero(null)
     setEsCompartido(false)
     setParticipantes([{ nombre: '', monto: 0 }])
+    setCuentaRecibeId('')
     setPaso('principal')
     onClose()
   }
 
-  const isLoading = createMutation.isPending || updateMutation.isPending || createCuotaMutation.isPending || crearGastoTerceroMutation.isPending || createGastoCompartidoMutation.isPending
+  const isLoading = createMutation.isPending || updateMutation.isPending || createCuotaMutation.isPending || crearGastoTerceroMutation.isPending || gastoCompartidoMutation.isPending
 
   const title = editingMovimiento ? 'Editar movimiento'
     : duplicateFrom ? 'Duplicar movimiento'
@@ -870,7 +883,7 @@ export function MovimientoForm({
                       Gasto compartido
                     </p>
                     <p className="text-[10px] text-slate-600">
-                      Solo tu parte afecta tu saldo
+                      Pagas el total; los demás te devuelven su parte
                     </p>
                   </div>
                 </div>
@@ -879,8 +892,8 @@ export function MovimientoForm({
               {esCompartido && (
                 <div className="px-4 pb-4 border-t border-brand-500/20 pt-3 space-y-3">
                   <p className="text-[10px] text-slate-500">
-                    El monto ingresado arriba es <span className="text-brand-400 font-semibold">tu parte</span>.
-                    Agrega lo que pagan los demás:
+                    El monto de arriba es el <span className="text-brand-400 font-semibold">total que pagaste</span>
+                    {' '}(sale completo de tu cuenta). Agrega la parte de cada persona:
                   </p>
 
                   {participantes.map((p, i) => (
@@ -908,6 +921,18 @@ export function MovimientoForm({
                         }}
                         className="w-28 h-9 px-3 rounded-xl border border-brand-500/30 bg-night-0 text-sm text-slate-200 outline-none tabular-nums"
                       />
+                      <label className="flex items-center gap-1 text-[10px] text-slate-400 flex-shrink-0 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!p.recibido}
+                          onChange={e => {
+                            const next = [...participantes]
+                            next[i] = { ...next[i], recibido: e.target.checked }
+                            setParticipantes(next)
+                          }}
+                        />
+                        Recibido
+                      </label>
                       {participantes.length > 1 && (
                         <button
                           type="button"
@@ -931,12 +956,31 @@ export function MovimientoForm({
 
                   {(() => {
                     const montoOtros = participantes.reduce((s, p) => s + (p.monto || 0), 0)
-                    const total      = monto + montoOtros
-                    if (total <= 0) return null
+                    const recibidoOtros = participantes.reduce((s, p) => s + (p.recibido ? (p.monto || 0) : 0), 0)
+                    if (monto <= 0) return null
+                    const miParte = monto - montoOtros
+                    const invalido = miParte <= 0
                     return (
-                      <div className="rounded-xl px-3 py-2 bg-brand-500/10 border border-brand-500/20 flex items-center justify-between">
-                        <span className="text-[10px] text-slate-400">Total del gasto</span>
-                        <span className="text-sm font-bold tabular-nums text-brand-300">{formatCLP(total)}</span>
+                      <div className="space-y-2">
+                        <div className="rounded-xl px-3 py-2 bg-brand-500/10 border border-brand-500/20 text-xs space-y-1" data-testid="resumen-compartido">
+                          <div className="flex justify-between"><span className="text-slate-400">Gasto total (sale de tu cuenta)</span><span className="font-bold tabular-nums text-brand-300">{formatCLP(monto)}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Mi parte</span><span className={`font-bold tabular-nums ${invalido ? 'text-gasto-400' : 'text-slate-200'}`}>{formatCLP(miParte)}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Pendiente de recibir</span><span className="font-bold tabular-nums text-slate-200">{formatCLP(Math.max(0, montoOtros - recibidoOtros))}</span></div>
+                        </div>
+                        {invalido && <p className="text-[10px] text-gasto-400">La parte de los demás debe ser menor al total.</p>}
+                        {recibidoOtros > 0 && (
+                          <div>
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wide">Cuenta donde recibí el dinero</label>
+                            <select
+                              value={cuentaRecibeId || selectedCuentaId || ''}
+                              onChange={e => setCuentaRecibeId(e.target.value)}
+                              className="mt-1 w-full h-9 px-3 rounded-xl border border-brand-500/30 bg-night-0 text-sm text-slate-200 outline-none"
+                            >
+                              {cuentaOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </select>
+                            <p className="text-[10px] text-slate-500 mt-1">Se registra como reembolso de gasto compartido, no como ingreso personal.</p>
+                          </div>
+                        )}
                       </div>
                     )
                   })()}

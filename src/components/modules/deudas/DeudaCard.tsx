@@ -3,6 +3,7 @@ import { MoreVertical, Pencil, Trash2, CreditCard, AlertTriangle, CheckCircle } 
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { HistorialPagosDeuda } from '@/components/modules/deudas/HistorialPagosDeuda'
 import { formatCLP } from '@/utils/currency'
+import { calcularPlanCuotas } from '@/utils/planCuotas'
 import { useDeleteDeuda, useUpdateEstadoDeuda } from '@/hooks/useDeudas'
 import type { Deuda } from '@/types/app.types'
 
@@ -42,8 +43,17 @@ export function DeudaCard({ deuda, onEdit, onPagar }: DeudaCardProps) {
   const porcentaje = deuda.monto_total > 0
     ? Math.min(100, (pagado / deuda.monto_total) * 100)
     : 0
-  const cuotasText = deuda.cuotas_total > 1
-    ? `${deuda.cuotas_pagadas} de ${deuda.cuotas_total} cuotas`
+  // Planificación derivada del saldo real pendiente (los pagos reales siguen siendo la fuente de verdad)
+  const plan = deuda.estado !== 'pagada' ? calcularPlanCuotas(pendiente, deuda.cuota_mensual) : null
+  const cuotasText = plan
+    ? `${plan.cuotasRestantes} ${plan.cuotasRestantes === 1 ? 'cuota restante' : 'cuotas restantes'}`
+    : deuda.cuotas_total > 1
+      ? `${deuda.cuotas_pagadas} de ${deuda.cuotas_total} cuotas`
+      : null
+  const planDetalle = plan && plan.cuotasRestantes > 0
+    ? (plan.cuotasCompletas < plan.cuotasRestantes
+        ? `${plan.cuotasCompletas > 0 ? `${plan.cuotasCompletas} × ${formatCLP(plan.cuotaHabitual)} + ` : ''}última ${formatCLP(plan.montoUltima)}`
+        : `${plan.cuotasCompletas} × ${formatCLP(plan.cuotaHabitual)}`)
     : null
 
   function handleDelete() {
@@ -209,6 +219,12 @@ export function DeudaCard({ deuda, onEdit, onPagar }: DeudaCardProps) {
             </p>
           </div>
         </div>
+
+        {planDetalle && (
+          <p className="mt-2 text-[11px] text-slate-400 tabular-nums" data-testid="plan-detalle">
+            Plan: {planDetalle}
+          </p>
+        )}
 
         {/* Barra de progreso */}
         <div className="mt-2.5">

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,6 +10,8 @@ import { AccountPicker } from '@/components/ui/AccountPicker'
 import { useCreateDeuda, useUpdateDeuda } from '@/hooks/useDeudas'
 import { useCuentas } from '@/hooks/useCuentas'
 import { todayISO } from '@/utils/dates'
+import { formatCLP } from '@/utils/currency'
+import { calcularPlanCuotas } from '@/utils/planCuotas'
 import type { Deuda } from '@/types/app.types'
 
 const TIPO_DEUDA_OPTIONS = [
@@ -29,6 +31,7 @@ const schema = z.object({
   monto_total:         z.coerce.number().positive('Debe ser mayor a 0'),
   cuotas_total:        z.coerce.number().int().min(1).optional(),
   cuota_mensual:       z.coerce.number().min(0).optional(),
+  pagado_inicial:      z.coerce.number().min(0).optional(),
   interes:             z.coerce.number().min(0).max(200).optional(),
   fecha_compra:        z.string().min(1, 'Requerido'),
   fecha_prox_pago:     z.string().optional(),
@@ -61,21 +64,32 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
   const cuentaIdWatch    = useWatch({ control, name: 'cuenta_id' })
   const montoWatch       = useWatch({ control, name: 'monto_total' })
   const cuotasWatch      = useWatch({ control, name: 'cuotas_total' })
+  const cuotaWatch       = useWatch({ control, name: 'cuota_mensual' })
+  const pagadoWatch      = useWatch({ control, name: 'pagado_inicial' })
+  // 'monto': el usuario define cuanto paga por cuota y QloB calcula cuantas son · 'cantidad': define N° de cuotas
+  const [modoCuota, setModoCuota] = useState<'monto' | 'cantidad'>('monto')
   const esDeudaPersona   = tipoDeudaWatch === 'deuda_persona'
   const esTarjetaCredito = tipoDeudaWatch === 'tarjeta_credito'
 
   const tarjetasCredito = (cuentas ?? []).filter(c => c.activa && c.tipo === 'credito')
 
-  // Auto-calcular cuota mensual cuando cambia monto o número de cuotas
+  // Pagado real: al editar viene de los movimientos; al crear, del campo "pagado hasta ahora"
+  const pagadoReal = editing
+    ? (editing.monto_pagado_real ?? Math.max(0, editing.monto_total - editing.monto_pendiente))
+    : Math.max(0, Number(pagadoWatch) || 0)
+  const saldoPendiente = Math.max(0, (Number(montoWatch) || 0) - pagadoReal)
+  const plan = calcularPlanCuotas(saldoPendiente, Number(cuotaWatch))
+
+  // Modo "cantidad": auto-calcular cuota mensual cuando cambia el saldo o el número de cuotas
   useEffect(() => {
-    const monto  = Number(montoWatch)
+    if (modoCuota !== 'cantidad') return
     const cuotas = Number(cuotasWatch)
-    if (monto > 0 && cuotas > 1) {
-      setValue('cuota_mensual', Math.round(monto / cuotas), { shouldValidate: false })
+    if (saldoPendiente > 0 && cuotas > 1) {
+      setValue('cuota_mensual', Math.round(saldoPendiente / cuotas), { shouldValidate: false })
     } else if (cuotas === 1) {
       setValue('cuota_mensual', undefined, { shouldValidate: false })
     }
-  }, [montoWatch, cuotasWatch, setValue])
+  }, [modoCuota, saldoPendiente, cuotasWatch, setValue])
 
   useEffect(() => {
     if (!isOpen) return
@@ -88,14 +102,17 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
         monto_total:         editing.monto_total,
         cuotas_total:        editing.cuotas_total,
         cuota_mensual:       editing.cuota_mensual ?? undefined,
+        pagado_inicial:      undefined,
         interes:             editing.interes,
         fecha_compra:        editing.fecha_compra,
         fecha_prox_pago:     editing.fecha_prox_pago ?? '',
         fecha_vencimiento:   editing.fecha_vencimiento ?? '',
         nota:                editing.nota ?? ''
       })
+      setModoCuota('monto')
     } else {
       reset({ fecha_compra: todayISO(), interes: 0, cuotas_total: 1 })
+      setModoCuota('monto')
     }
   }, [isOpen, editing, reset])
 
@@ -106,8 +123,12 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
       prestamista_nombre:  esDeudaPersona   ? (data.prestamista_nombre?.trim() || undefined) : undefined,
       cuenta_id:           esTarjetaCredito  ? (data.cuenta_id || undefined) : undefined,
       monto_total:         data.monto_total,
-      cuotas_total:        data.cuotas_total || 1,
+      // Modo monto: el N° de cuotas es una proyeccion (pagadas + restantes); no altera pagos reales
+      cuotas_total:        modoCuota === 'monto' && plan && plan.cuotasRestantes > 0
+                             ? (editing?.cuotas_pagadas ?? 0) + plan.cuotasRestantes
+                             : (data.cuotas_total || 1),
       cuota_mensual:       data.cuota_mensual || undefined,
+      pagado_inicial:      !editing ? (data.pagado_inicial || undefined) : undefined,
       interes:             data.interes || 0,
       fecha_compra:        data.fecha_compra,
       fecha_prox_pago:     data.fecha_prox_pago  || undefined,
@@ -196,25 +217,68 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
           {errors.monto_total && <p className="text-xs text-gasto-400 mt-1">{errors.monto_total.message}</p>}
         </div>
 
-        {/* Cuotas + Cuota mensual */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
-              N° cuotas
-            </label>
-            <input
-              {...register('cuotas_total')}
-              type="number"
-              inputMode="numeric"
-              min={1}
-              placeholder="1"
-              className={[inputBase, inputRing, 'mt-1 h-11 px-3', inputBorder].join(' ')}
-            />
-            <p className="text-[10px] text-slate-500 mt-0.5">1 = pago único</p>
+        {/* Pagado + saldo */}
+        <div className="rounded-xl border border-night-border bg-night-3/60 p-3 space-y-2">
+          {editing ? (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400">Pagado hasta ahora (pagos registrados)</span>
+              <span className="font-semibold text-slate-200 tabular-nums">{formatCLP(pagadoReal)}</span>
+            </div>
+          ) : (
+            <div>
+              <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+                Pagado hasta ahora (opcional)
+              </label>
+              <div className="relative mt-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                <input
+                  {...register('pagado_inicial')}
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="0"
+                  className={[inputBase, inputRing, 'h-11 pl-7 pr-4', inputBorder].join(' ')}
+                />
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1">
+                Se guarda como un pago previo real, sin descontar de ninguna cuenta.
+              </p>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-400">Saldo pendiente</span>
+            <span className="font-bold text-slate-100 tabular-nums">{formatCLP(saldoPendiente)}</span>
           </div>
+        </div>
+
+        {/* Forma de pago */}
+        <div>
+          <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">Forma de pago</label>
+          <div className="grid grid-cols-2 gap-2 mt-1">
+            {([
+              ['monto',    'Definir monto por cuota'],
+              ['cantidad', 'Definir N° de cuotas'],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setModoCuota(key)}
+                className={[
+                  'h-10 rounded-xl border text-xs font-semibold transition-colors',
+                  modoCuota === key
+                    ? 'border-brand-500 bg-brand-500/15 text-brand-300'
+                    : 'border-night-border bg-night-3 text-slate-400 hover:border-brand-500/40'
+                ].join(' ')}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {modoCuota === 'monto' ? (
           <div>
             <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
-              Cuota mensual
+              Monto por cuota
             </label>
             <div className="relative mt-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
@@ -222,13 +286,66 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
                 {...register('cuota_mensual')}
                 type="number"
                 inputMode="numeric"
-                placeholder="Opcional"
+                placeholder="Ej: 150000"
                 className={[inputBase, inputRing, 'h-11 pl-7 pr-3', inputBorder].join(' ')}
               />
             </div>
-            <p className="text-[10px] text-slate-500 mt-0.5">Vacío = pago libre</p>
+            {plan && plan.cuotasRestantes > 0 && (
+              <div className="mt-2 rounded-xl border border-brand-500/25 bg-brand-500/8 p-3 text-xs space-y-0.5" data-testid="plan-cuotas">
+                <p className="font-semibold text-brand-300">
+                  {plan.cuotasRestantes} {plan.cuotasRestantes === 1 ? 'cuota restante' : 'cuotas restantes'}
+                </p>
+                {plan.cuotasCompletas > 0 && (
+                  <p className="text-slate-300 tabular-nums">
+                    {plan.cuotasCompletas} × {formatCLP(plan.cuotaHabitual)}
+                  </p>
+                )}
+                {plan.cuotasCompletas < plan.cuotasRestantes && (
+                  <p className="text-slate-300 tabular-nums">
+                    Última cuota: {formatCLP(plan.montoUltima)}
+                  </p>
+                )}
+              </div>
+            )}
+            <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">
+              Esto es una planificación. Los pagos reales se registran cuando efectivamente los haces;
+              cambiar la cuota no modifica los pagos anteriores.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+                N° cuotas
+              </label>
+              <input
+                {...register('cuotas_total')}
+                type="number"
+                inputMode="numeric"
+                min={1}
+                placeholder="1"
+                className={[inputBase, inputRing, 'mt-1 h-11 px-3', inputBorder].join(' ')}
+              />
+              <p className="text-[10px] text-slate-500 mt-0.5">1 = pago único</p>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+                Cuota mensual
+              </label>
+              <div className="relative mt-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                <input
+                  {...register('cuota_mensual')}
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Opcional"
+                  className={[inputBase, inputRing, 'h-11 pl-7 pr-3', inputBorder].join(' ')}
+                />
+              </div>
+              <p className="text-[10px] text-slate-500 mt-0.5">Vacío = pago libre</p>
+            </div>
+          </div>
+        )}
 
         {/* Interés */}
         <div>
