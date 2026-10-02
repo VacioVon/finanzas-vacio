@@ -13,7 +13,6 @@ import { SuscripcionesWidget } from '@/components/modules/home/SuscripcionesWidg
 import { CultivationTree } from '@/components/modules/home/CultivationTree'
 import { useMovimientosDelMes } from '@/hooks/useMovimientos'
 import { useAportesObjetivosMes } from '@/hooks/useObjetivos'
-import { useTotalDeudasActivas } from '@/hooks/useDeudas'
 import { useResumenCompartidos } from '@/hooks/useGastosCompartidos'
 import { esIngresoPersonal } from '@/utils/gastosCompartidos'
 
@@ -30,7 +29,6 @@ function ZoneSeparator({ label }: { label: string }) {
 export function HomePage() {
   const { data: movimientosMes }   = useMovimientosDelMes()
   const { data: aportesMes }       = useAportesObjetivosMes()
-  const { data: totalDeudas = 0 }  = useTotalDeudasActivas()
 
   const ingresos = (movimientosMes ?? [])
     .filter(m => esIngresoPersonal(m))
@@ -89,7 +87,7 @@ export function HomePage() {
             ahorrosObjetivos={ahorrosObjetivos}
           />
         )}
-        <PatrimonioNeto totalDeudas={totalDeudas} />
+        <PatrimonioNeto />
       </div>
 
       {/* ══ ZONA 2 — QUIÉN SOY — identidad del cultivador ════════ */}

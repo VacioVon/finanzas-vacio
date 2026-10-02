@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import {
   calcularTCT,
-  calcularPatrimonioNeto,
+  calcularPatrimonio,
+  calcularResumen,
   calcularDineroDisponible,
 } from '../utils/financial'
-import type { Cuenta, Deuda } from '../types/app.types'
+import type { Cuenta, Deuda, CuentaPorCobrar } from '../types/app.types'
 
 // ── Helpers de fixture ────────────────────────────────────────
 
@@ -92,49 +93,137 @@ describe('calcularTCT — Tasa de Costo Total', () => {
   })
 })
 
-// ── calcularPatrimonioNeto ─────────────────────────────────────
+// ── calcularPatrimonio (fuente única) ──────────────────────────
 
-describe('calcularPatrimonioNeto', () => {
-  it('sin cuentas ni deudas → 0', () => {
-    expect(calcularPatrimonioNeto([], [])).toBe(0)
+function makeCobrar(overrides: Partial<CuentaPorCobrar> = {}): CuentaPorCobrar {
+  return {
+    id: 'c1', usuario_id: 'u1', movimiento_origen_id: null, persona: 'X', descripcion: null,
+    monto_original: 0, monto_pagado: 0, fecha: '2026-10-01', fecha_vencimiento: null,
+    estado: 'pendiente', nota: null, created_at: '', updated_at: '',
+    ...overrides,
+  }
+}
+
+/** Deuda cuyo pendiente se deriva de los pagos reales (monto_pagado_real). */
+function deudaReal(total: number, pagado: number, o: Partial<Deuda> = {}): Deuda {
+  return makeDeuda({
+    monto_total: total, monto_pagado_real: pagado, monto_pendiente_real: Math.max(0, total - pagado),
+    // columna de la base deliberadamente desactualizada: NO debe usarse
+    monto_pendiente: total, ...o,
+  })
+}
+
+describe('calcularPatrimonio', () => {
+  // Caso real de QloB (01-10-2026)
+  const cuentas = [
+    makeCuenta({ id: 'be', tipo: 'debito', saldo_actual: 6920 }),
+    makeCuenta({ id: 'fa', tipo: 'debito', saldo_actual: 146077 }),
+    makeCuenta({ id: 'mp', tipo: 'digital', saldo_actual: 1 }),
+    makeCuenta({ id: 'ef', tipo: 'efectivo', saldo_actual: 20280 }),
+    makeCuenta({ id: 'cmr', tipo: 'credito', saldo_actual: 700493, limite: 1170000 }),
+  ]
+  const deudas = [
+    deudaReal(231124, 57781),   // Mamá: pendiente 173.343
+    deudaReal(233019, 77673),   // Diego: pendiente 155.346
+    deudaReal(21590, 0),        // Linterna: 21.590
+    deudaReal(9000, 9000, { estado: 'pagada' }),
+  ]
+  const porCobrar = [
+    makeCobrar({ id: '1', monto_original: 20000, monto_pagado: 10000 }),   // 10.000
+    makeCobrar({ id: '2', monto_original: 22900, monto_pagado: 17050 }),   // 5.850
+    makeCobrar({ id: '3', monto_original: 20000, monto_pagado: 0 }),       // 20.000
+    makeCobrar({ id: '4', monto_original: 15000, monto_pagado: 15000, estado: 'pagado' }),
+  ]
+
+  it('caso actual: activos 209.128, pasivos 1.050.772, patrimonio −841.644', () => {
+    const p = calcularPatrimonio(cuentas, deudas, porCobrar)
+    expect(p.activos).toEqual({ cuentas: 173278, inversiones: 0, porCobrar: 35850, total: 209128 })
+    expect(p.pasivos).toEqual({ tarjetas: 700493, deudas: 350279, total: 1050772 })
+    expect(p.patrimonioNeto).toBe(-841644)
   })
 
-  it('cuenta bancaria activa suma al patrimonio', () => {
-    const cuentas = [makeCuenta({ saldo_actual: 1000000 })]
-    expect(calcularPatrimonioNeto(cuentas, [])).toBe(1000000)
+  it('A. sin cuentas por cobrar → −877.494', () => {
+    expect(calcularPatrimonio(cuentas, deudas, []).patrimonioNeto).toBe(-877494)
   })
 
-  it('cuenta de crédito no suma (excluida)', () => {
-    const cuentas = [makeCuenta({ tipo: 'credito', saldo_actual: 500000 })]
-    expect(calcularPatrimonioNeto(cuentas, [])).toBe(0)
+  it('B. sin deuda de tarjeta → activos − deudas = 173.278 + 35.850 − 350.279 = −141.151', () => {
+    const sinTarjeta = cuentas.filter(c => c.tipo !== 'credito')
+    expect(calcularPatrimonio(sinTarjeta, deudas, porCobrar).patrimonioNeto).toBe(-141151)
   })
 
-  it('cuenta inactiva no cuenta', () => {
-    const cuentas = [makeCuenta({ saldo_actual: 1000000, activa: false })]
-    expect(calcularPatrimonioNeto(cuentas, [])).toBe(0)
+  it('C. una deuda pagada no aparece como pasivo', () => {
+    const p = calcularPatrimonio([], [deudaReal(9000, 9000, { estado: 'pagada' })])
+    expect(p.pasivos.deudas).toBe(0)
+    expect(p.patrimonioNeto).toBe(0)
   })
 
-  it('deuda activa resta del patrimonio', () => {
-    const cuentas = [makeCuenta({ saldo_actual: 2000000 })]
-    const deudas  = [makeDeuda({ monto_pendiente: 500000 })]
-    expect(calcularPatrimonioNeto(cuentas, deudas)).toBe(1500000)
+  it('D. una deuda en mora sigue siendo pasivo', () => {
+    const p = calcularPatrimonio([], [deudaReal(100000, 40000, { estado: 'en_mora' })])
+    expect(p.pasivos.deudas).toBe(60000)
+    expect(p.patrimonioNeto).toBe(-60000)
   })
 
-  it('deuda pagada no resta', () => {
-    const cuentas = [makeCuenta({ saldo_actual: 2000000 })]
-    const deudas  = [makeDeuda({ monto_pendiente: 500000, estado: 'pagada' })]
-    expect(calcularPatrimonioNeto(cuentas, deudas)).toBe(2000000)
+  it('E. por cobrar afecta el patrimonio pero NO el dinero disponible', () => {
+    const cs = [makeCuenta({ saldo_actual: 100000 })]
+    const sin = calcularPatrimonio(cs, [], [])
+    const con = calcularPatrimonio(cs, [], [makeCobrar({ monto_original: 30000 })])
+    expect(con.patrimonioNeto - sin.patrimonioNeto).toBe(30000)
+    expect(calcularDineroDisponible(cs)).toBe(100000)   // la función de disponible no recibe cobros
+    expect(con.activos.cuentas).toBe(100000)             // no se suma al saldo de cuentas
   })
 
-  it('inversión suma al patrimonio', () => {
-    const cuentas = [makeCuenta({ tipo: 'inversion', saldo_actual: 300000 })]
-    expect(calcularPatrimonioNeto(cuentas, [])).toBe(300000)
+  it('F. la tarjeta siempre resta, sea cual sea el signo guardado', () => {
+    const pos = calcularPatrimonio([makeCuenta({ tipo: 'credito', saldo_actual: 700493 })], [])
+    const neg = calcularPatrimonio([makeCuenta({ tipo: 'credito', saldo_actual: -700493 })], [])
+    expect(pos.patrimonioNeto).toBe(-700493)
+    expect(neg.patrimonioNeto).toBe(-700493)
+    expect(pos.pasivos.tarjetas).toBe(700493)
   })
 
-  it('patrimonio puede ser negativo (deuda > activos)', () => {
-    const cuentas = [makeCuenta({ saldo_actual: 100000 })]
-    const deudas  = [makeDeuda({ monto_pendiente: 500000 })]
-    expect(calcularPatrimonioNeto(cuentas, deudas)).toBe(-400000)
+  it('G. con deduplicación, una deuda ligada a tarjeta no se resta dos veces', () => {
+    const cs = [makeCuenta({ id: 'cmr', tipo: 'credito', saldo_actual: 400000 })]
+    const ds = [deudaReal(100000, 0, { cuenta_id: 'cmr' }), deudaReal(50000, 0)]
+    expect(calcularPatrimonio(cs, ds).pasivos.deudas).toBe(150000)                                          // por defecto: se suman ambas
+    expect(calcularPatrimonio(cs, ds, [], { deduplicarDeudasDeTarjeta: true }).pasivos.deudas).toBe(50000)  // solo la no ligada
+  })
+
+  it('el pendiente sale de los pagos reales, no de la columna monto_pendiente', () => {
+    const d = makeDeuda({ monto_total: 200000, monto_pendiente: 200000, monto_pagado_real: 50000, monto_pendiente_real: 150000 })
+    expect(calcularPatrimonio([], [d]).pasivos.deudas).toBe(150000)
+    // sin dato de pagos reales, no se inventa: se asume nada pagado (nunca la columna)
+    const sinReal = makeDeuda({ monto_total: 200000, monto_pendiente: 10 })
+    expect(calcularPatrimonio([], [sinReal]).pasivos.deudas).toBe(200000)
+  })
+
+  it('una deuda "me deben" es activo por cobrar, no pasivo', () => {
+    const d = deudaReal(20000, 5000, { direccion: 'me_deben' })
+    const p = calcularPatrimonio([], [d])
+    expect(p.pasivos.deudas).toBe(0)
+    expect(p.activos.porCobrar).toBe(15000)
+  })
+
+  it('cuentas por cobrar canceladas o pagadas no cuentan', () => {
+    const p = calcularPatrimonio([], [], [
+      makeCobrar({ monto_original: 10000, estado: 'cancelado' }),
+      makeCobrar({ monto_original: 10000, monto_pagado: 10000, estado: 'pagado' }),
+    ])
+    expect(p.activos.porCobrar).toBe(0)
+  })
+
+  it('cuentas inactivas no cuentan; inversión suma por su valor actual', () => {
+    const cs = [
+      makeCuenta({ saldo_actual: 1000000, activa: false }),
+      makeCuenta({ tipo: 'inversion', saldo_actual: 1461991 }),
+    ]
+    const p = calcularPatrimonio(cs, [])
+    expect(p.activos).toMatchObject({ cuentas: 0, inversiones: 1461991, total: 1461991 })
+  })
+
+  it('calcularResumen usa la misma fórmula (única fuente de verdad)', () => {
+    const r = calcularResumen(cuentas, deudas, [], porCobrar)
+    expect(r.patrimonioNeto).toBe(calcularPatrimonio(cuentas, deudas, porCobrar).patrimonioNeto)
+    expect(r.patrimonioNeto).toBe(-841644)
+    expect(r.totalDeudas).toBe(350279)
   })
 })
 
