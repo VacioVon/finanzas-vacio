@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ChevronLeft, ChevronRight, Users, Plus, X } from 'lucide-react'
@@ -207,7 +207,13 @@ export function MovimientoForm({
     register, handleSubmit, watch, reset, setValue,
     formState: { errors }
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    // En un pago de deuda el formulario trabaja con tipo 'gasto' + pagoDeuda; la categoría está oculta
+    // y no debe exigirse (antes la validación fallaba en silencio y no dejaba guardar).
+    resolver: ((values, context, options) =>
+      zodResolver(schema)(
+        { ...values, tipo: pagoDeuda && values.tipo === 'gasto' ? 'pago_deuda' : values.tipo } as FormValues,
+        context, options
+      )) as Resolver<FormValues>,
     defaultValues: { tipo: defaultTipo, fecha: defaultFecha ?? todayISO(), monto: 0 }
   })
 
@@ -268,6 +274,11 @@ export function MovimientoForm({
       setTipo(baseTipo)
       if (t === 'pago_deuda') setPagoDeuda(true)
       setComprobante(editingMovimiento?.comprobante_url ?? null)
+      // Al editar se conserva a qué deuda pertenece el pago (antes se perdía al guardar)
+      if (editingMovimiento) {
+        setDeudaVinculada(editingMovimiento.deuda_id ?? null)
+        setContextoPago(editingMovimiento.contexto_pago ?? null)
+      }
       reset({
         tipo:              baseTipo,
         fecha:             editingMovimiento ? source.fecha : todayISO(),
@@ -333,7 +344,8 @@ export function MovimientoForm({
       cuenta_id:         cuentaIdFinal,
       cuenta_destino_id: mostrarTransf ? data.cuenta_destino_id : undefined,
       nota:              skipDetalles ? undefined : data.nota,
-      comprobante_url:   skipDetalles ? null : comprobanteUrl,
+      // Al editar con "Guardar sin detalles" NO se debe borrar el comprobante existente
+      comprobante_url:   skipDetalles ? (editingMovimiento ? undefined : null) : comprobanteUrl,
       comision:          mostrarCuotas ? comisionCuota : 0,
       para_tercero:      skipDetalles ? false : (mostrarTercero ? paraTercero : false),
       tercero_nombre:    skipDetalles ? undefined : (mostrarTercero && paraTercero && terceroNombre.trim()

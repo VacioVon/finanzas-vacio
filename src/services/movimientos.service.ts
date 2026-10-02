@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import type { Movimiento, MovimientoFormData } from '@/types/app.types'
 import { getCurrentMonthRange } from '@/utils/dates'
+import { resolverEdicion, deudasInvolucradas } from '@/utils/movimientosEdicion'
 
 // Fragmento de JOIN reutilizable
 const MOVIMIENTO_SELECT = `
@@ -177,12 +178,43 @@ export async function deleteMovimiento(id: string): Promise<void> {
   if (error) throw error
 }
 
-// ✅ CORREGIDO: actualiza el registro Y maneja reversión + reaplicación de saldos
+/**
+ * Edita un movimiento existente.
+ *  - Los campos que el formulario no maneja (para_tercero, deuda de un pago, objetivo) se conservan.
+ *  - Los saldos solo se recalculan si cambió algo financiero (tipo, cuenta, destino, deuda, objetivo
+ *    o monto). Cambiar fecha, nota, comercio, categoría o comprobante nunca toca saldos.
+ */
 export async function updateMovimiento(
   id: string,
   original: Movimiento,
   form: MovimientoFormData
 ): Promise<Movimiento> {
+  const r = resolverEdicion(original, form)
+
+  // Un pago de una deuda ligada a una tarjeta de crédito: la función de reversa de la base no deshace
+  // el efecto sobre la tarjeta, así que recalcular saldos corrompería el saldo de la tarjeta.
+  if (r.cambioFinanciero) {
+    const ids = deudasInvolucradas(original, r.deudaNueva)
+    if (ids.length > 0) {
+      const { data: deudas, error: dError } = await supabase
+        .from('deudas')
+        .select('id, nombre, cuenta:cuentas(tipo)')
+        .in('id', ids)
+      if (dError) throw dError
+      const ligada = (deudas ?? []).find(d => {
+        const c = d.cuenta as unknown as { tipo?: string } | { tipo?: string }[] | null
+        return (Array.isArray(c) ? c[0]?.tipo : c?.tipo) === 'credito'
+      })
+      if (ligada) {
+        throw new Error(
+          `Este pago pertenece a la deuda "${ligada.nombre.trim()}", que está ligada a una tarjeta de crédito. ` +
+          'Cambiar el monto, la cuenta o la deuda aún no es seguro (descuadraría el saldo de la tarjeta). ' +
+          'Puedes cambiar la fecha, la nota, el comercio y el comprobante.'
+        )
+      }
+    }
+  }
+
   // 1. Actualizar el registro
   const payload = {
     tipo:               form.tipo,
@@ -191,15 +223,16 @@ export async function updateMovimiento(
     subcategoria_id:    form.subcategoria_id || null,
     cuenta_id:          form.cuenta_id || null,
     cuenta_destino_id:  form.cuenta_destino_id || null,
-    objetivo_ahorro_id: form.objetivo_ahorro_id || null,
-    deuda_id:           form.deuda_id || null,
+    objetivo_ahorro_id: r.objetivoNuevo,
+    deuda_id:           r.deudaNueva,
     monto:              form.monto,
     comercio:           form.comercio !== undefined ? (form.comercio || null) : original.comercio,
-    nota:               form.nota || null,
+    // Si el formulario no trae la nota (guardar sin detalles) se conserva la existente
+    nota:               form.nota !== undefined ? (form.nota || null) : original.nota,
     comprobante_url:    form.comprobante_url !== undefined ? form.comprobante_url : original.comprobante_url,
     comision:           form.comision       !== undefined ? form.comision        : original.comision,
-    para_tercero:       form.para_tercero ?? original.para_tercero,
-    tercero_nombre:     form.tercero_nombre !== undefined ? (form.tercero_nombre || null) : original.tercero_nombre,
+    para_tercero:       r.paraTercero,
+    tercero_nombre:     r.terceroNombre,
     updated_at:         new Date().toISOString()
   }
 
@@ -212,22 +245,24 @@ export async function updateMovimiento(
 
   if (error) throw error
 
-  // 2. Revertir saldo anterior + aplicar saldo nuevo (RPC atómica)
-  const { error: rpcError } = await supabase.rpc('actualizar_movimiento_saldos', {
-    p_tipo_anterior:           original.tipo,
-    p_cuenta_anterior:         original.cuenta_id,
-    p_cuenta_destino_anterior: original.cuenta_destino_id,
-    p_objetivo_anterior:       original.objetivo_ahorro_id,
-    p_deuda_anterior:          original.deuda_id,
-    p_monto_anterior:          original.monto,
-    p_tipo_nuevo:              form.tipo,
-    p_cuenta_nueva:            form.cuenta_id || null,
-    p_cuenta_destino_nueva:    form.cuenta_destino_id || null,
-    p_objetivo_nuevo:          form.objetivo_ahorro_id || null,
-    p_deuda_nueva:             form.deuda_id || null,
-    p_monto_nuevo:             form.monto
-  })
-  if (rpcError) throw rpcError
+  // 2. Recalcular saldos solo si cambió algo financiero (RPC atómica)
+  if (r.cambioFinanciero) {
+    const { error: rpcError } = await supabase.rpc('actualizar_movimiento_saldos', {
+      p_tipo_anterior:           original.tipo,
+      p_cuenta_anterior:         original.cuenta_id,
+      p_cuenta_destino_anterior: original.cuenta_destino_id,
+      p_objetivo_anterior:       original.objetivo_ahorro_id,
+      p_deuda_anterior:          original.deuda_id,
+      p_monto_anterior:          original.monto,
+      p_tipo_nuevo:              form.tipo,
+      p_cuenta_nueva:            form.cuenta_id || null,
+      p_cuenta_destino_nueva:    form.cuenta_destino_id || null,
+      p_objetivo_nuevo:          r.objetivoNuevo,
+      p_deuda_nueva:             r.deudaNueva,
+      p_monto_nuevo:             form.monto
+    })
+    if (rpcError) throw rpcError
+  }
 
   return data as Movimiento
 }
