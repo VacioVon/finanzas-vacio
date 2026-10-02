@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react'
-import { Plus, Trash2, ToggleLeft, ToggleRight, Calendar } from 'lucide-react'
+import { Plus, Trash2, ToggleLeft, ToggleRight, Calendar, Pencil, SlidersHorizontal } from 'lucide-react'
 import { AppLayout }    from '@/components/layout/AppLayout'
 import { Header }       from '@/components/layout/Header'
 import { Card }         from '@/components/ui/Card'
@@ -11,7 +11,8 @@ import {
 } from '@/hooks/useIngresosRecurrentes'
 import { IngresoRecurrenteForm }  from '@/components/modules/ingresos-recurrentes/IngresoRecurrenteForm'
 import { ConfirmarIngresoModal }  from '@/components/modules/ingresos-recurrentes/ConfirmarIngresoModal'
-import type { IngresoMes, IngresoPendienteHoy } from '@/types/ingresos-recurrentes.types'
+import { AjustarMesModal }        from '@/components/modules/ingresos-recurrentes/AjustarMesModal'
+import type { IngresoMes, IngresoPendienteHoy, IngresoRecurrente } from '@/types/ingresos-recurrentes.types'
 
 function formatCLP(n: number) {
   return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n)
@@ -35,6 +36,8 @@ export function IngresosRecurrentesPage() {
   const [anio, setAnio] = useState(now.getFullYear())
   const [showForm,    setShowForm]    = useState(false)
   const [confirmar,   setConfirmar]   = useState<IngresoPendienteHoy | null>(null)
+  const [editando,    setEditando]    = useState<IngresoRecurrente | null>(null)
+  const [ajustando,   setAjustando]   = useState<IngresoMes | null>(null)
 
   const { data: recurrentes = [], isLoading: loadingR } = useIngresosRecurrentes()
   const { data: ingresosMes = [], isLoading: loadingM } = useIngresosMes(mes, anio)
@@ -133,11 +136,11 @@ export function IngresosRecurrentesPage() {
                       {g.items.map(inst => {
                         const badge = ESTADO_BADGE[inst.estado] ?? ESTADO_BADGE.pendiente
                         return (
+                          <div key={inst.instancia_id} className="flex items-center gap-1">
                           <button
-                            key={inst.instancia_id}
                             onClick={() => inst.estado !== 'confirmado' && setConfirmar(ingresoToConfirmar(inst))}
                             disabled={inst.estado === 'confirmado'}
-                            className="w-full flex items-center gap-3 py-2.5 hover:bg-night-3/30 disabled:cursor-default transition-colors text-left"
+                            className="flex-1 min-w-0 flex items-center gap-3 py-2.5 hover:bg-night-3/30 disabled:cursor-default transition-colors text-left"
                           >
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium text-slate-300 truncate">{inst.nombre}</p>
@@ -156,6 +159,17 @@ export function IngresosRecurrentesPage() {
                               {formatCLP(inst.monto_esperado)}
                             </span>
                           </button>
+                          {inst.estado === 'pendiente' && (
+                            <button
+                              onClick={() => setAjustando(inst)}
+                              className="size-8 flex-shrink-0 flex items-center justify-center rounded-lg text-slate-500 hover:text-ingreso-400 hover:bg-ingreso-500/10 transition-colors"
+                              aria-label="Ajustar este mes"
+                              title="Ajustar este mes"
+                            >
+                              <SlidersHorizontal className="size-3.5" />
+                            </button>
+                          )}
+                          </div>
                         )
                       })}
                     </div>
@@ -209,6 +223,13 @@ export function IngresosRecurrentesPage() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button
+                      onClick={() => setEditando(r)}
+                      className="size-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-brand-400 hover:bg-brand-500/10 transition-colors"
+                      aria-label="Editar"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                    <button
                       onClick={() => toggle.mutate({ id: r.id, activo: !r.activo })}
                       className={`transition-colors ${r.activo ? 'text-ingreso-400 hover:text-ingreso-300' : 'text-slate-600 hover:text-slate-400'}`}
                       aria-label={r.activo ? 'Desactivar' : 'Activar'}
@@ -235,6 +256,8 @@ export function IngresosRecurrentesPage() {
       </div>
 
       {showForm  && <IngresoRecurrenteForm onClose={() => setShowForm(false)} />}
+      {editando  && <IngresoRecurrenteForm editing={editando} onClose={() => setEditando(null)} />}
+      {ajustando && <AjustarMesModal instancia={ajustando} onClose={() => setAjustando(null)} />}
       {confirmar && <ConfirmarIngresoModal instancia={confirmar} onClose={() => setConfirmar(null)} />}
     </AppLayout>
   )

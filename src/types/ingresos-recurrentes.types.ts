@@ -84,3 +84,19 @@ export interface CreateIngresoRecurrenteForm {
   tipo_fecha:      TipoFechaIngreso
   nota:            string
 }
+
+/** Fila de ingresos_esperados (una instancia por período). */
+export interface InstanciaEsperada {
+  id:                    string
+  ingreso_recurrente_id: string
+  periodo_ref:           string      // 'YYYY-MM'
+  fecha_esperada:        string
+  fecha_min:             string
+  fecha_max:             string
+  monto_esperado:        number
+  estado:                EstadoInstancia
+  movimiento_id:         string | null
+  nota:                  string | null
+}
+
+export type UpdateIngresoRecurrenteForm = CreateIngresoRecurrenteForm

@@ -12,8 +12,15 @@ import {
   confirmarIngresoEsperado,
   posponerIngresoEsperado,
   marcarNoRecibido,
+  getInstanciasDeRecurrente,
+  updateIngresoRecurrente,
+  aplicarCambiosAInstancias,
+  ajustarInstanciaMes,
+  quitarAjusteInstancia,
+  asignarCategoriaMovimiento,
 } from '@/services/ingresos-recurrentes.service'
 import type { CreateIngresoRecurrenteForm } from '@/types/ingresos-recurrentes.types'
+import type { CambioInstancia } from '@/utils/ingresosRecurrentes'
 
 const KEYS = {
   recurrentes:  (uid: string) => ['ingresos', 'recurrentes', uid]  as const,
@@ -118,10 +125,16 @@ export function useConfirmarIngreso() {
   const qc         = useQueryClient()
   const invalidate = useInvalidate()
   return useMutation({
-    mutationFn: ({
-      instanciaId, montoReal, fechaReal, nota,
-    }: { instanciaId: string; montoReal: number; fechaReal: string; nota?: string }) =>
-      confirmarIngresoEsperado(user!.id, instanciaId, montoReal, fechaReal, nota),
+    mutationFn: async ({
+      instanciaId, montoReal, fechaReal, nota, categoriaId,
+    }: { instanciaId: string; montoReal: number; fechaReal: string; nota?: string; categoriaId?: string | null }) => {
+      const res = await confirmarIngresoEsperado(user!.id, instanciaId, montoReal, fechaReal, nota)
+      // Categoría de sueldo (existente): el ingreso ya está registrado; si esto falla no se pierde nada
+      if (res.ok && !res.ya_confirmado && res.movimiento_id && categoriaId) {
+        try { await asignarCategoriaMovimiento(res.movimiento_id, categoriaId) } catch { /* se puede asignar luego */ }
+      }
+      return res
+    },
     onSuccess: () => {
       invalidate()
       if (user?.id) qc.invalidateQueries({ queryKey: ['movimientos'] })
@@ -144,5 +157,51 @@ export function useMarcarNoRecibido() {
   return useMutation({
     mutationFn: (instanciaId: string) => marcarNoRecibido(instanciaId),
     onSuccess:  invalidate,
+  })
+}
+
+export function useInstanciasDeRecurrente(recurrenteId: string | undefined) {
+  return useQuery({
+    queryKey: ['ingresos', 'instancias', recurrenteId],
+    queryFn:  () => getInstanciasDeRecurrente(recurrenteId!),
+    enabled:  !!recurrenteId,
+  })
+}
+
+/** Edita la configuración y aplica el plan (ya calculado y mostrado al usuario) a las pendientes. */
+export function useUpdateIngresoRecurrente() {
+  const invalidate = useInvalidate()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, form, cambios }: { id: string; form: CreateIngresoRecurrenteForm; cambios: CambioInstancia[] }) => {
+      await updateIngresoRecurrente(id, form)
+      const aplicadas = await aplicarCambiosAInstancias(cambios)
+      return { aplicadas }
+    },
+    onSuccess: () => {
+      invalidate()
+      qc.invalidateQueries({ queryKey: ['ingresos', 'instancias'] })
+    },
+  })
+}
+
+export function useAjustarInstanciaMes() {
+  const invalidate = useInvalidate()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ instanciaId, montoBase, montoNuevo, comentario }:
+      { instanciaId: string; montoBase: number; montoNuevo: number; comentario?: string }) =>
+      ajustarInstanciaMes(instanciaId, montoBase, montoNuevo, comentario),
+    onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ['ingresos', 'instancias'] }) },
+  })
+}
+
+export function useQuitarAjusteInstancia() {
+  const invalidate = useInvalidate()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ instanciaId, montoBase }: { instanciaId: string; montoBase: number }) =>
+      quitarAjusteInstancia(instanciaId, montoBase),
+    onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ['ingresos', 'instancias'] }) },
   })
 }

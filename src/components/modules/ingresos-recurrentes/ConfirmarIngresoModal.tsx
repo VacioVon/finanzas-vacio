@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, CheckCircle2, Clock, Ban } from 'lucide-react'
 import { useConfirmarIngreso, usePosponerIngreso, useMarcarNoRecibido } from '@/hooks/useIngresosRecurrentes'
+import { useCategoriasByTipo } from '@/hooks/useCategorias'
+import { esIngresoSueldo } from '@/utils/ingresosRecurrentes'
 import type { IngresoPendienteHoy } from '@/types/ingresos-recurrentes.types'
 
 interface Props {
@@ -32,6 +34,13 @@ export function ConfirmarIngresoModal({ instancia, onClose }: Props) {
 
   const montoNum = parseFloat(montoReal.replace(/[^\d.]/g, '')) || 0
 
+  // Si el ingreso es un sueldo, usa la categoría "Sueldo" que YA existe (nunca se crea una nueva)
+  const { data: categoriasIngreso } = useCategoriasByTipo('ingreso')
+  const categoriaSueldo = esIngresoSueldo(instancia.nombre, instancia.fuente_nombre)
+    ? (categoriasIngreso ?? []).find(c => c.activa && c.nombre.trim().toLowerCase() === 'sueldo')
+    : undefined
+  const diferencia = montoNum - instancia.monto_esperado
+
   async function handleConfirmar() {
     if (montoNum <= 0) return
     setError('')
@@ -41,6 +50,7 @@ export function ConfirmarIngresoModal({ instancia, onClose }: Props) {
         montoReal:   montoNum,
         fechaReal,
         nota:        nota || undefined,
+        categoriaId: categoriaSueldo?.id ?? null,
       })
       setVista('exito')
     } catch (err: unknown) {
@@ -172,6 +182,14 @@ export function ConfirmarIngresoModal({ instancia, onClose }: Props) {
                   placeholder={String(instancia.monto_esperado)}
                   className="w-full bg-night-3 border border-night-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-ingreso-500 tabular-nums"
                 />
+                {montoNum > 0 && diferencia !== 0 && (
+                  <p className="text-[11px] mt-1 text-slate-500 tabular-nums">
+                    {diferencia > 0 ? '+' : '−'}{formatCLP(Math.abs(diferencia))} respecto a lo esperado
+                  </p>
+                )}
+                {categoriaSueldo && (
+                  <p className="text-[11px] mt-1 text-ingreso-400/80">Se registrará en la categoría «Sueldo».</p>
+                )}
               </div>
               <div>
                 <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wide block mb-1.5">

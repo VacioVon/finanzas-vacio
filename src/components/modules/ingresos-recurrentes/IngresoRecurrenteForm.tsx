@@ -2,12 +2,23 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Plus } from 'lucide-react'
 import { useCuentas } from '@/hooks/useCuentas'
-import { useFuentesIngreso, useCreateIngresoRecurrente, useCreateFuenteIngreso } from '@/hooks/useIngresosRecurrentes'
-import type { CreateIngresoRecurrenteForm, FrecuenciaIngreso } from '@/types/ingresos-recurrentes.types'
+import {
+  useFuentesIngreso, useCreateIngresoRecurrente, useCreateFuenteIngreso,
+  useUpdateIngresoRecurrente, useInstanciasDeRecurrente,
+} from '@/hooks/useIngresosRecurrentes'
+import { planificarCambioBase } from '@/utils/ingresosRecurrentes'
+import type { CreateIngresoRecurrenteForm, FrecuenciaIngreso, IngresoRecurrente } from '@/types/ingresos-recurrentes.types'
 
 interface Props {
-  onClose: () => void
+  onClose:  () => void
+  /** Si se entrega, el formulario edita ese ingreso recurrente en vez de crear uno nuevo. */
+  editing?: IngresoRecurrente | null
 }
+
+const fmtCLP = (n: number) => '$' + Math.round(n).toLocaleString('es-CL')
+const fmtFecha = (iso: string) => iso.split('-').reverse().join('/')
+const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+const etiquetaPeriodo = (ref: string) => { const [y, m] = ref.split('-').map(Number); return `${MESES[m - 1]} ${y}` }
 
 const FRECUENCIAS: { value: FrecuenciaIngreso; label: string }[] = [
   { value: 'mensual',   label: 'Mensual'   },
@@ -18,13 +29,25 @@ const FRECUENCIAS: { value: FrecuenciaIngreso; label: string }[] = [
 
 const FIELD_CLASS = 'w-full bg-night-3 border border-night-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none placeholder-slate-600'
 
-export function IngresoRecurrenteForm({ onClose }: Props) {
+export function IngresoRecurrenteForm({ onClose, editing }: Props) {
   const { data: cuentas = [] } = useCuentas()
   const { data: fuentes = [] } = useFuentesIngreso()
   const crear       = useCreateIngresoRecurrente()
+  const actualizar  = useUpdateIngresoRecurrente()
+  const { data: instancias = [] } = useInstanciasDeRecurrente(editing?.id)
   const crearFuente = useCreateFuenteIngreso()
 
-  const [form, setForm] = useState<CreateIngresoRecurrenteForm>({
+  const [form, setForm] = useState<CreateIngresoRecurrenteForm>(editing ? {
+    nombre:          editing.nombre.trim(),
+    monto_esperado:  editing.monto_esperado,
+    cuenta_id:       editing.cuenta_id,
+    fuente_id:       editing.fuente_id,
+    frecuencia:      editing.frecuencia,
+    dia_esperado:    editing.dia_esperado,
+    tolerancia_dias: editing.tolerancia_dias,
+    tipo_fecha:      editing.tipo_fecha,
+    nota:            editing.nota ?? '',
+  } : {
     nombre:          '',
     monto_esperado:  0,
     cuenta_id:       null,
@@ -35,6 +58,13 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
     tipo_fecha:      'fijo',
     nota:            '',
   })
+
+  // Al editar: qué instancias se actualizarían, cuáles se conservan y cuáles no se tocan (vista previa)
+  const plan = editing
+    ? planificarCambioBase(instancias, {
+        monto_esperado: form.monto_esperado, dia_esperado: form.dia_esperado, tolerancia_dias: form.tolerancia_dias,
+      })
+    : null
   const [nuevaFuente,   setNuevaFuente]   = useState('')
   const [mostrarFuente, setMostrarFuente] = useState(false)
   const [error,         setError]         = useState('')
@@ -58,7 +88,11 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
     if (form.monto_esperado <= 0)                      return setError('El monto debe ser mayor a 0')
     if (form.dia_esperado < 1 || form.dia_esperado > 31) return setError('Día inválido (1-31)')
     try {
-      await crear.mutateAsync(form)
+      if (editing && plan) {
+        await actualizar.mutateAsync({ id: editing.id, form, cambios: plan.actualizar })
+      } else {
+        await crear.mutateAsync(form)
+      }
       onClose()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar')
@@ -94,8 +128,8 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
         {/* ── HEADER fijo ─────────────────────────────────────── */}
         <div className="flex-shrink-0 flex items-center justify-between px-5 pt-5 pb-4 border-b border-night-border/50">
           <div>
-            <p className="text-base font-semibold text-white">Nuevo ingreso recurrente</p>
-            <p className="text-[11px] text-slate-500">Sueldo, honorarios u otro pago esperado</p>
+            <p className="text-base font-semibold text-white">{editing ? 'Editar ingreso recurrente' : 'Nuevo ingreso recurrente'}</p>
+            <p className="text-[11px] text-slate-500">{editing ? 'Cambia lo esperado; tus movimientos reales no se modifican' : 'Sueldo, honorarios u otro pago esperado'}</p>
           </div>
           <button
             type="button"
@@ -144,8 +178,10 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
                 <button
                   key={f.value}
                   type="button"
-                  onClick={() => set('frecuencia', f.value)}
+                  onClick={() => !editing && set('frecuencia', f.value)}
+                  disabled={!!editing}
                   className={[
+                    editing ? 'cursor-not-allowed opacity-60' : '',
                     'py-2 rounded-lg text-[11px] font-semibold transition-all',
                     form.frecuencia === f.value
                       ? 'bg-night-2 text-slate-100 shadow'
@@ -289,6 +325,35 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
               className={`${FIELD_CLASS} focus:border-brand-500`}
             />
           </div>
+
+          {/* Vista previa de qué se afectaría (solo al editar) */}
+          {plan && (
+            <div className="rounded-xl border border-brand-500/25 bg-brand-500/5 p-3 space-y-2" data-testid="vista-previa-edicion">
+              <p className="text-[11px] font-semibold text-brand-300 uppercase tracking-wide">Qué se actualizará al guardar</p>
+              {plan.actualizar.length === 0 ? (
+                <p className="text-xs text-slate-400">Ninguna instancia pendiente cambia (solo se guarda la configuración).</p>
+              ) : (
+                <ul className="space-y-1">
+                  {plan.actualizar.map(c => (
+                    <li key={c.id} className="text-xs text-slate-300 tabular-nums">
+                      <span className="font-semibold">{etiquetaPeriodo(c.periodo_ref)}:</span>{' '}
+                      {fmtCLP(c.antes.monto)} · {fmtFecha(c.antes.fecha)} → {fmtCLP(c.despues.monto)} · {fmtFecha(c.despues.fecha)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {plan.conservadas.length > 0 && (
+                <p className="text-[11px] text-xp-400">
+                  Se conservan con su ajuste manual: {plan.conservadas.map(i => etiquetaPeriodo(i.periodo_ref)).join(', ')}.
+                </p>
+              )}
+              {plan.intactas.length > 0 && (
+                <p className="text-[11px] text-slate-500">
+                  No se tocan ({plan.intactas.length}): confirmadas, pospuestas o no recibidas. Tus movimientos reales tampoco.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── FOOTER fijo ──────────────────────────────────────── */}
@@ -311,10 +376,10 @@ export function IngresoRecurrenteForm({ onClose }: Props) {
             </button>
             <button
               type="submit"
-              disabled={crear.isPending}
+              disabled={crear.isPending || actualizar.isPending}
               className="flex-1 py-2.5 rounded-xl bg-ingreso-500 text-night-0 text-sm font-semibold hover:bg-ingreso-400 disabled:opacity-50 transition-colors"
             >
-              {crear.isPending ? 'Guardando…' : 'Guardar ingreso'}
+              {crear.isPending || actualizar.isPending ? 'Guardando…' : editing ? 'Guardar cambios' : 'Guardar ingreso'}
             </button>
           </div>
         </div>

@@ -6,7 +6,10 @@ import type {
   IngresoMes,
   ConfirmarIngresoResultado,
   CreateIngresoRecurrenteForm,
+  UpdateIngresoRecurrenteForm,
+  InstanciaEsperada,
 } from '@/types/ingresos-recurrentes.types'
+import { armarNotaAjuste, type CambioInstancia } from '@/utils/ingresosRecurrentes'
 
 // ─── Fuentes de ingreso ──────────────────────────────────────
 
@@ -138,5 +141,108 @@ export async function marcarNoRecibido(instanciaId: string): Promise<void> {
     .from('ingresos_esperados')
     .update({ estado: 'no_recibido', updated_at: new Date().toISOString() })
     .eq('id', instanciaId)
+  if (error) throw error
+}
+
+// ─── Edición (solo configuración + instancias pendientes) ─────
+
+/** Todas las instancias de un ingreso recurrente (para mostrar qué se afectaría al editar). */
+export async function getInstanciasDeRecurrente(recurrenteId: string): Promise<InstanciaEsperada[]> {
+  const { data, error } = await supabase
+    .from('ingresos_esperados')
+    .select('id, ingreso_recurrente_id, periodo_ref, fecha_esperada, fecha_min, fecha_max, monto_esperado, estado, movimiento_id, nota')
+    .eq('ingreso_recurrente_id', recurrenteId)
+    .order('periodo_ref', { ascending: true })
+  if (error) throw error
+  return (data ?? []).map(i => ({ ...i, monto_esperado: Number(i.monto_esperado) })) as InstanciaEsperada[]
+}
+
+/** Actualiza SOLO la configuración del recurrente. No toca instancias ni movimientos. */
+export async function updateIngresoRecurrente(id: string, form: UpdateIngresoRecurrenteForm): Promise<void> {
+  const { error } = await supabase
+    .from('ingresos_recurrentes')
+    .update({
+      nombre:          form.nombre,
+      monto_esperado:  form.monto_esperado,
+      cuenta_id:       form.cuenta_id || null,
+      fuente_id:       form.fuente_id || null,
+      dia_esperado:    form.dia_esperado,
+      tolerancia_dias: form.tolerancia_dias,
+      tipo_fecha:      form.tipo_fecha,
+      nota:            form.nota || null,
+      updated_at:      new Date().toISOString(),
+    })
+    .eq('id', id)
+  if (error) throw error
+}
+
+/**
+ * Aplica el plan calculado a las instancias PENDIENTES. Cada actualización repite el filtro
+ * estado='pendiente', así que una instancia que cambió de estado entre tanto no se toca.
+ */
+export async function aplicarCambiosAInstancias(cambios: CambioInstancia[]): Promise<number> {
+  let aplicadas = 0
+  for (const c of cambios) {
+    const { data, error } = await supabase
+      .from('ingresos_esperados')
+      .update({
+        monto_esperado: c.despues.monto,
+        fecha_esperada: c.despues.fecha,
+        fecha_min:      c.despues.min,
+        fecha_max:      c.despues.max,
+        updated_at:     new Date().toISOString(),
+      })
+      .eq('id', c.id)
+      .eq('estado', 'pendiente')
+      .select('id')
+    if (error) throw error
+    aplicadas += data?.length ?? 0
+  }
+  return aplicadas
+}
+
+/**
+ * "Ajustar este mes": cambia el monto esperado de UNA instancia pendiente y deja constancia en
+ * su nota. No toca el recurrente base ni otros meses.
+ */
+export async function ajustarInstanciaMes(
+  instanciaId: string, montoBase: number, montoNuevo: number, comentario?: string
+): Promise<void> {
+  const { data, error } = await supabase
+    .from('ingresos_esperados')
+    .update({
+      monto_esperado: montoNuevo,
+      nota:           armarNotaAjuste(montoBase, montoNuevo, comentario),
+      updated_at:     new Date().toISOString(),
+    })
+    .eq('id', instanciaId)
+    .eq('estado', 'pendiente')
+    .select('id')
+  if (error) throw error
+  if (!data || data.length !== 1) throw new Error('Solo se puede ajustar una instancia pendiente')
+}
+
+/** Quita el ajuste de un mes: la instancia vuelve al monto base. */
+export async function quitarAjusteInstancia(instanciaId: string, montoBase: number): Promise<void> {
+  const { data, error } = await supabase
+    .from('ingresos_esperados')
+    .update({ monto_esperado: montoBase, nota: null, updated_at: new Date().toISOString() })
+    .eq('id', instanciaId)
+    .eq('estado', 'pendiente')
+    .select('id')
+  if (error) throw error
+  if (!data || data.length !== 1) throw new Error('Solo se puede modificar una instancia pendiente')
+}
+
+/**
+ * Asigna la categoría a un movimiento recién creado por una confirmación, solo si aún no tiene
+ * categoría. No toca montos ni saldos.
+ */
+export async function asignarCategoriaMovimiento(movimientoId: string, categoriaId: string): Promise<void> {
+  const { error } = await supabase
+    .from('movimientos')
+    .update({ categoria_id: categoriaId })
+    .eq('id', movimientoId)
+    .is('categoria_id', null)
   if (error) throw error
 }
