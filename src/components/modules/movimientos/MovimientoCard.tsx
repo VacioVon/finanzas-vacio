@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay'
 import { MovimientoForm } from './MovimientoForm'
+import { ComprobanteMovimientoModal } from './ComprobanteMovimientoModal'
 import type { Movimiento } from '@/types/app.types'
 import { formatDate } from '@/utils/dates'
 import { useDeleteMovimiento } from '@/hooks/useMovimientos'
@@ -74,12 +75,16 @@ const tipoBorderL: Record<string, string> = {
 function ContextMenu({
   onEdit,
   onDuplicate,
+  onComprobante,
+  tieneComprobante,
   onDelete,
   onClose,
   anchorRef
 }: {
   onEdit:       () => void
   onDuplicate:  () => void
+  onComprobante: () => void
+  tieneComprobante: boolean
   onDelete:     () => void
   onClose:      () => void
   anchorRef:    React.RefObject<HTMLButtonElement>
@@ -131,6 +136,13 @@ function ContextMenu({
           <Copy className="h-4 w-4 text-slate-400" />
           Duplicar
         </button>
+        <button
+          onClick={() => { onComprobante(); onClose() }}
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-night-3/60 transition-colors"
+        >
+          <Paperclip className="h-4 w-4 text-slate-400" />
+          {tieneComprobante ? 'Cambiar comprobante' : 'Adjuntar comprobante'}
+        </button>
         <div className="mx-3 my-1 h-px bg-night-border/60" />
         <button
           onClick={() => { onDelete(); onClose() }}
@@ -148,6 +160,7 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
   const [menuOpen,      setMenuOpen]      = useState(false)
   const [editOpen,      setEditOpen]      = useState(false)
   const [duplicateOpen, setDuplicateOpen] = useState(false)
+  const [comprobanteOpen, setComprobanteOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
   const deleteMutation = useDeleteMovimiento()
   const { data: compartidos } = useGastosCompartidos()
@@ -265,6 +278,8 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
           anchorRef={btnRef}
           onEdit={()      => setEditOpen(true)}
           onDuplicate={() => setDuplicateOpen(true)}
+          onComprobante={() => setComprobanteOpen(true)}
+          tieneComprobante={!!mov.comprobante_url}
           onDelete={handleDelete}
           onClose={()     => setMenuOpen(false)}
         />
@@ -277,6 +292,11 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
         editingMovimiento={mov}
         onSuccess={() => setEditOpen(false)}
       />
+
+      {/* Modal comprobante (solo guarda el archivo; no toca saldos) */}
+      {comprobanteOpen && (
+        <ComprobanteMovimientoModal isOpen onClose={() => setComprobanteOpen(false)} movimiento={mov} />
+      )}
 
       {/* Modal duplicar */}
       <MovimientoForm

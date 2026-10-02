@@ -7,7 +7,8 @@ import {
   getEvolucionMensual,
   createMovimiento,
   deleteMovimiento,
-  updateMovimiento
+  updateMovimiento,
+  setComprobanteMovimiento
 } from '@/services/movimientos.service'
 import { procesarEventoRPG } from '@/services/rpg/rpg.service'
 import { getPeriodoPresupuestal } from '@/utils/periodo'
@@ -115,5 +116,14 @@ export function useUpdateMovimiento() {
       qc.invalidateQueries({ queryKey: ['gastos_compartidos'] })
       qc.invalidateQueries({ queryKey: ['objetivos'] })
     }
+  })
+}
+
+/** Adjunta o quita el comprobante de un movimiento; solo refresca la lista (no afecta saldos). */
+export function useSetComprobanteMovimiento() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, url }: { id: string; url: string | null }) => setComprobanteMovimiento(id, url),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [MOVIMIENTOS_KEY] }),
   })
 }

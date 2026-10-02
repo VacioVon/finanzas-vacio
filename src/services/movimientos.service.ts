@@ -232,6 +232,20 @@ export async function updateMovimiento(
   return data as Movimiento
 }
 
+/**
+ * Cambia SOLO el comprobante de un movimiento existente.
+ * No llama a ninguna función de saldos: no altera montos, cuentas, deudas ni tarjetas.
+ */
+export async function setComprobanteMovimiento(id: string, url: string | null): Promise<void> {
+  const { data, error } = await supabase
+    .from('movimientos')
+    .update({ comprobante_url: url })
+    .eq('id', id)
+    .select('id')
+  if (error) throw error
+  if (!data || data.length !== 1) throw new Error('No se encontró el movimiento')
+}
+
 // ─── Comprobantes (Supabase Storage) ─────────────────────────
 
 export async function uploadComprobante(
