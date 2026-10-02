@@ -6,3 +6,10 @@ dist-ssr
 *.local
 .DS_Store
 supabase/.temp/
+
+# Variantes de entorno (secretos) y respaldos locales con datos personales
+.env.*
+!.env.example
+Respaldos/
+respaldos/
+backups/

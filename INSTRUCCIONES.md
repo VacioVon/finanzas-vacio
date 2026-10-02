@@ -1,37 +1,35 @@
-# Finanzas Vacío — Instrucciones Sprint 1
+# QloB (Quemen los Barcos) — Instrucciones
+
+App de finanzas personales: React 18 + TypeScript + Vite + Tailwind + Supabase, desplegada en Vercel.
+
+> **Importante:** el proyecto Supabase **ya existe** y contiene tus datos reales.
+> **No crees un proyecto nuevo ni ejecutes scripts SQL para "empezar de cero".**
+> Si cambiaste de computador o lo reiniciaste, sigue "Reconectar" y consulta `RECUPERACION.md`.
 
 ## 1. Instalar dependencias
 
-Requiere Node.js 18+. Instálalo desde https://nodejs.org
+Requiere Node.js 18 o superior (https://nodejs.org) y Git.
 
 ```bash
 npm install
 ```
 
-## 2. Configurar Supabase
+## 2. Reconectar a Supabase (proyecto existente)
 
-### 2.1 Crear proyecto
-1. Ve a https://supabase.com → New Project
-2. Nombre: `finanzas-vacio`
-3. Región: South America (São Paulo)
-
-### 2.2 Ejecutar SQL
-En Supabase → SQL Editor, ejecutar en orden:
-1. `supabase/migrations/001_initial_schema.sql` — crea tablas, RLS, funciones
-2. `supabase/seed.sql` — carga categorías y subcategorías por defecto
-
-### 2.3 Variables de entorno
-Copia las credenciales desde Supabase → Project Settings → API y edita `.env.local`:
+Crea `.env.local` en la raíz del proyecto con estas variables. Los valores se obtienen en
+Supabase → *Project Settings → API*. **No los escribas en documentos ni los subas a Git.**
 
 ```
-VITE_SUPABASE_URL=https://TU_PROYECTO.supabase.co
-VITE_SUPABASE_ANON_KEY=TU_ANON_KEY_AQUI
+VITE_SUPABASE_URL=            (URL del proyecto existente)
+VITE_SUPABASE_ANON_KEY=       (clave pública)
+SUPABASE_PROJECT_ID=          (ref del proyecto; para los scripts)
+SUPABASE_SERVICE_ROLE_KEY=    (solo para scripts locales de respaldo; nunca en Vercel)
 ```
 
-### 2.4 Configurar Auth
-En Supabase → Authentication → Providers:
-- Email: habilitado ✓
-- Confirm email: puedes desactivarlo para pruebas locales
+Para ejecutar la app solo hacen falta las dos primeras.
+
+Comprobación: al iniciar sesión deben aparecer tus cuentas y movimientos. Si aparece vacío, **detente**
+y revisa que la URL sea la del proyecto original; no ejecutes SQL.
 
 ## 3. Ejecutar en desarrollo
 
@@ -41,25 +39,31 @@ npm run dev
 
 Abre http://localhost:5173
 
-## 4. Build para producción
+## 4. Comprobaciones
 
 ```bash
-npm run build
-npm run preview
+npx tsc --noEmit     # tipos
+npm test             # pruebas
+npm run build        # build de producción
 ```
 
-## Estructura Sprint 1
+## 5. Respaldos
 
-| Módulo | Estado | Ruta |
-|---|---|---|
-| Autenticación | ✅ | /login, /register |
-| Home | ✅ | / |
-| Movimientos | ✅ | /movimientos |
-| Cuentas | ✅ | /cuentas (desde /mas) |
-| Categorías | ✅ | /categorias (desde /mas) |
-| Presupuestos | ⏳ Sprint 2 | — |
-| Ahorros | ⏳ Sprint 2 | — |
-| Deudas | ⏳ Sprint 3 | — |
-| Calendario | ⏳ Sprint 3 | — |
-| Análisis | ⏳ Sprint 4 | — |
-| Ajustes | ⏳ Sprint 4 | — |
+```bash
+node supabase/scripts/backup.mjs
+```
+
+Guarda una copia de solo lectura en `C:\Respaldos\QloB\AAAA-MM-DD\` con manifiesto y verificación.
+Detalles de qué se respalda, cómo verificar y cómo restaurar: **`RECUPERACION.md`**.
+
+## 6. Qué NO hacer
+
+- No ejecutar `supabase/035_reset_total.sql` ni `supabase/scripts/limpiar_datos_usuario.sql` (borran datos).
+- No ejecutar scripts SQL contra producción sin revisarlos y sin aprobación.
+- No poner `SUPABASE_SERVICE_ROLE_KEY` en Vercel, en variables `VITE_*` ni en Git.
+- No crear datos de prueba en la base real.
+
+## 7. Despliegue
+
+Vercel despliega al subir cambios a `main` en GitHub (`VacioVon/finanzas-vacio`).
+Variables en Vercel: solo `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
