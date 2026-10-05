@@ -4,6 +4,11 @@ import { getCuentas } from '@/services/cuentas.service'
 import { getDeudas } from '@/services/deudas.service'
 import { getGastosCompartidos } from '@/services/gastos-compartidos.service'
 import { getCuentasPorCobrar } from '@/services/cobros.service'
+import { getSuscripciones } from '@/services/suscripciones.service'
+import { getObjetivos } from '@/services/objetivos.service'
+import { getCuotas } from '@/services/cuotas.service'
+import { getValorizaciones } from '@/services/valorizaciones.service'
+import { getFuentesIngreso, getIngresosRecurrentes, getInstanciasDeRecurrente } from '@/services/ingresos-recurrentes.service'
 import { construirLibro, generarXlsx, type DatosExport, type PresupuestoExport } from '@/utils/exportExcel'
 
 const MOV_SELECT = `
@@ -38,7 +43,7 @@ export async function exportarExcel(
   userId: string,
   opciones: { fechaSueldo: number; desde: string | null; hasta: string | null }
 ): Promise<{ blob: Blob; movimientos: number }> {
-  const [movimientos, cuentas, deudas, compartidos, cobrar, pres, comp] = await Promise.all([
+  const [movimientos, cuentas, deudas, compartidos, cobrar, pres, comp, suscripciones, objetivos, cuotas, valorizaciones, fuentesIngreso, ingresosRecurrentes] = await Promise.all([
     getTodosLosMovimientos(userId),
     getCuentas(userId),
     getDeudas(userId),
@@ -46,7 +51,15 @@ export async function exportarExcel(
     getCuentasPorCobrar(userId),
     supabase.from('presupuestos').select('mes, anio, categoria_id, monto_presupuestado, categoria:categorias(nombre)').eq('usuario_id', userId),
     supabase.from('suscripciones').select('id, nombre').eq('usuario_id', userId),
+    getSuscripciones(userId),
+    getObjetivos(userId),
+    getCuotas(userId),
+    getValorizaciones(userId),
+    getFuentesIngreso(userId),
+    getIngresosRecurrentes(userId),
   ])
+  // Instancias esperadas de todos los ingresos recurrentes (solo lectura)
+  const ingresosEsperados = (await Promise.all(ingresosRecurrentes.map(r => getInstanciasDeRecurrente(r.id)))).flat()
   if (pres.error) throw pres.error
   if (comp.error) throw comp.error
 
@@ -61,6 +74,7 @@ export async function exportarExcel(
     compromisos: (comp.data ?? []) as { id: string; nombre: string }[],
     fechaSueldo: opciones.fechaSueldo || 1,
     desde: opciones.desde, hasta: opciones.hasta, generado: new Date(),
+    extra: { suscripciones, fuentesIngreso, ingresosRecurrentes, ingresosEsperados, objetivos, cuotas, valorizaciones },
   }
 
   const hojas = construirLibro(datos)

@@ -8,6 +8,11 @@ import {
 } from '@/utils/gastosCompartidos'
 import { calcularPlanCuotas } from '@/utils/planCuotas'
 import { getPeriodoPresupuestal } from '@/utils/periodo'
+import {
+  hojaDeudas, hojaPagosDeuda, hojaCompromisos, hojaIngresosRecurrentes, hojaIngresosEsperados,
+  hojaObjetivos, hojaCuotasTarjeta, hojaInversiones, hojaPanorama, hojaPorCobrarDetalle,
+  type DatosExtra,
+} from '@/utils/exportExcelExtra'
 
 // ─── Tipos del libro ─────────────────────────────────────────────
 
@@ -37,6 +42,8 @@ export interface DatosExport {
   desde:        string | null   // YYYY-MM-DD, null = sin límite
   hasta:        string | null
   generado:     Date
+  /** Datos adicionales (compromisos, ingresos recurrentes, objetivos…). Si falta, solo salen las hojas base. */
+  extra?:       DatosExtra
 }
 
 export const CAT_AJUSTE   = 'Ajuste de dinero'
@@ -86,6 +93,7 @@ const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto'
 // ─── Utilidades de fecha / período ───────────────────────────────
 
 function pad(n: number) { return String(n).padStart(2, '0') }
+function fmtISO(dt: Date) { return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}` }
 
 /** 'YYYY-MM-DD' → Date local (sin desfase de zona horaria) */
 export function aFecha(iso: string): Date {
@@ -344,37 +352,8 @@ export function construirLibro(d: DatosExport): Hoja[] {
     }),
   }
 
-  // ── Hoja: Deudas (estado actual)
-  const deudas: Hoja = {
-    nombre: 'Deudas',
-    columnas: [
-      { header: 'Deuda', key: 'nombre', width: 28, formato: 'texto' },
-      { header: 'Dirección', key: 'dir', width: 16, formato: 'texto' },
-      { header: 'Persona / acreedor', key: 'persona', width: 20, formato: 'texto' },
-      { header: 'Monto total (CLP)', key: 'total', width: 16, formato: 'clp' },
-      { header: 'Pagado real (CLP)', key: 'pagado', width: 16, formato: 'clp' },
-      { header: 'Saldo pendiente (CLP)', key: 'pend', width: 18, formato: 'clp' },
-      { header: 'Cuota definida (CLP)', key: 'cuota', width: 16, formato: 'clp' },
-      { header: 'Cuotas restantes (plan)', key: 'restantes', width: 14, formato: 'entero' },
-      { header: 'Última cuota (CLP)', key: 'ultima', width: 16, formato: 'clp' },
-      { header: 'Interés anual (%)', key: 'interes', width: 12, formato: 'texto' },
-      { header: 'Próximo pago', key: 'prox', width: 12, formato: 'fecha' },
-      { header: 'Estado', key: 'estado', width: 10, formato: 'texto' },
-    ],
-    filas: d.deudas.map(x => {
-      const pagado = x.monto_pagado_real ?? Math.max(0, x.monto_total - x.monto_pendiente)
-      const pend = x.monto_pendiente_real ?? Math.max(0, x.monto_total - pagado)
-      const plan = x.estado !== 'pagada' ? calcularPlanCuotas(pend, x.cuota_mensual) : null
-      return {
-        nombre: x.nombre, dir: x.direccion === 'me_deben' ? 'Me deben' : 'Yo debo',
-        persona: x.prestamista_nombre, total: x.monto_total, pagado, pend,
-        cuota: x.cuota_mensual, restantes: plan?.cuotasRestantes ?? null, ultima: plan?.montoUltima ?? null,
-        interes: x.interes > 0 ? `${x.interes}%` : null,
-        prox: x.fecha_prox_pago ? aFecha(x.fecha_prox_pago) : null,
-        estado: x.estado === 'activa' ? 'Activa' : x.estado === 'pagada' ? 'Pagada' : 'En mora',
-      }
-    }),
-  }
+  // ── Hoja: Deudas (detalle y de quién son)
+  const deudas = hojaDeudas(d)
 
   // ── Hoja: Cuentas por cobrar
   const porCobrar: Hoja = {
@@ -387,15 +366,39 @@ export function construirLibro(d: DatosExport): Hoja[] {
       { header: 'Recibido (CLP)', key: 'rec', width: 14, formato: 'clp' },
       { header: 'Pendiente (CLP)', key: 'pend', width: 14, formato: 'clp' },
       { header: 'Estado', key: 'estado', width: 12, formato: 'texto' },
+      { header: 'N° de cobros recibidos', key: 'ncobros', width: 12, formato: 'entero' },
+      { header: 'Último cobro', key: 'ultFecha', width: 12, formato: 'fecha' },
+      { header: 'Vence', key: 'vence', width: 12, formato: 'fecha' },
     ],
-    filas: d.cobrar.map(c => ({
-      persona: c.persona, desc: c.descripcion, fecha: aFecha(c.fecha), orig: c.monto_original,
-      rec: c.monto_pagado, pend: c.estado === 'cancelado' ? 0 : Math.max(0, c.monto_original - c.monto_pagado),
-      estado: c.estado === 'pendiente' ? 'Pendiente' : c.estado === 'pagado' ? 'Pagado' : 'Cancelado',
-    })),
+    filas: hojaPorCobrarDetalle(d.cobrar),
   }
 
-  return [leeme(d, movs.length), movimientos, resumen, gastoCategoria, presupuesto, cuentas, deudas, porCobrar]
+  if (!d.extra) {
+    return [leeme(d, movs.length), movimientos, resumen, gastoCategoria, presupuesto, cuentas, deudas, porCobrar]
+  }
+
+  // Panorama: último período completo y promedio de gasto neto de los períodos completos
+  const periodoActual = periodoDe(fmtISO(d.generado), d.fechaSueldo).clave
+  const completos = periodos.filter(k => k < periodoActual)
+  const ultimo = completos[completos.length - 1]
+  const ingresoReal = ultimo ? { etiqueta: etiquetaPeriodo(ultimo, d.fechaSueldo), monto: porPeriodo.get(ultimo)!.ingresos } : null
+  const gastoProm = completos.length
+    ? { periodos: completos.length, monto: Math.round(completos.reduce((sum, k) => { const a = porPeriodo.get(k)!; return sum + (a.bruto - a.reemb) }, 0) / completos.length) }
+    : null
+  const e = d.extra
+  const opcionales = [
+    e.objetivos.length ? hojaObjetivos(d, e) : null,
+    e.cuotas.length ? hojaCuotasTarjeta(d, e) : null,
+    (e.valorizaciones.length || d.cuentas.some(c => c.tipo === 'inversion')) ? hojaInversiones(d, e) : null,
+  ].filter((h): h is Hoja => h !== null)
+
+  return [
+    leeme(d, movs.length), hojaPanorama(d, e, ingresoReal, gastoProm),
+    movimientos, resumen, gastoCategoria, presupuesto, cuentas,
+    deudas, hojaPagosDeuda(d), hojaCompromisos(d, e),
+    hojaIngresosRecurrentes(e), hojaIngresosEsperados(d, e),
+    porCobrar, ...opcionales,
+  ]
 }
 
 // ─── Hoja Léeme (diccionario para humanos y para IA) ─────────────
@@ -425,7 +428,16 @@ function leeme(d: DatosExport, n: number): Hoja {
     ['Resumen por período', 'Ingresos, gasto bruto/neto, flujo y tasa de ahorro por período presupuestal.'],
     ['Gasto por categoría', 'Gasto por período, categoría y subcategoría con su % del total y promedio por movimiento.'],
     ['Presupuesto vs real', 'Presupuesto de cada categoría frente al gasto bruto de su período.'],
-    ['Cuentas / Deudas / Por cobrar', 'Foto del estado actual al momento de exportar (no depende del rango de fechas).'],
+    ['Panorama mensual', 'Ingreso mensual esperado frente a lo ya comprometido cada mes (compromisos + cuotas de deudas), margen y patrimonio. Punto de partida para buscar dónde mejorar.'],
+    ['Cuentas', 'Foto del estado actual al momento de exportar (no depende del rango de fechas).'],
+    ['Deudas', 'Cada deuda con de quién es (persona/acreedor), tipo, si está ligada a una tarjeta, pagado, pendiente, cuota, cuotas restantes y último pago. "(sin indicar)" = no se registró a quién se le debe.'],
+    ['Pagos de deuda', 'Historial de cada abono a una deuda, con cuenta de origen y el compromiso al que se ligó (si corresponde).'],
+    ['Compromisos', 'Pagos programados (servicios, suscripciones, gastos fijos): monto, frecuencia, equivalente mensual, próxima fecha y total pagado histórico.'],
+    ['Ingresos recurrentes / Ingresos esperados', 'Lo que esperas recibir (sueldo, quincena…) y cada período con su estado y el monto realmente recibido.'],
+    ['Por cobrar', 'Dinero que otros te deben, con cuánto llevas recibido.'],
+    ['Objetivos de ahorro / Cuotas de tarjeta / Inversiones', 'Solo aparecen si tienes registros.'],
+    ['Equivalente mensual', 'Lleva cualquier frecuencia a un mes promedio (semanal ×52/12, quincenal ×2, bimestral ×1/2, anual ×1/12) para poder compararlas.'],
+    ['Cuidado con el doble conteo', 'Una compra con tarjeta puede aparecer como compromiso y como deuda de tarjeta; el Panorama avisa cuando los nombres se parecen.'],
   ]
   return {
     nombre: 'Léeme',
