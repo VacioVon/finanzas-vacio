@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, ListChecks } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
 import { Card } from '@/components/ui/Card'
@@ -8,6 +8,8 @@ import { SkeletonList } from '@/components/ui/Skeleton'
 import { DeudaCard } from '@/components/modules/deudas/DeudaCard'
 import { DeudaForm } from '@/components/modules/deudas/DeudaForm'
 import { PagarDeudaForm } from '@/components/modules/deudas/PagarDeudaForm'
+import { PagarVariasDeudasModal } from '@/components/modules/deudas/PagarVariasDeudasModal'
+import { Button } from '@/components/ui/Button'
 import { useDeudas } from '@/hooks/useDeudas'
 import { formatCLP } from '@/utils/currency'
 import type { Deuda } from '@/types/app.types'
@@ -27,6 +29,7 @@ export function DeudasPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing,  setEditing]  = useState<Deuda | null>(null)
   const [pagando,  setPagando]  = useState<Deuda | null>(null)
+  const [pagoVarias, setPagoVarias] = useState(false)
 
   const lista = (deudas ?? []).filter(d => filtro === 'todas' || d.estado === filtro)
 
@@ -36,7 +39,15 @@ export function DeudasPage() {
 
   return (
     <AppLayout nebula="#F4645F">
-      <Header title="Deudas" />
+      <Header
+        title="Deudas"
+        action={
+          <Button size="sm" variant="secondary" onClick={() => setPagoVarias(true)}>
+            <ListChecks className="h-4 w-4" />
+            Pagar varias
+          </Button>
+        }
+      />
 
       <div className="space-y-4 pt-4">
 
@@ -127,6 +138,7 @@ export function DeudasPage() {
           deuda={pagando}
         />
       )}
+      <PagarVariasDeudasModal isOpen={pagoVarias} onClose={() => setPagoVarias(false)} />
     </AppLayout>
   )
 }

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { FileUploader } from '@/components/ui/FileUploader'
 import { TercerosToggle } from '@/components/ui/TercerosToggle'
+import { PagarVariasDeudasModal } from '@/components/modules/deudas/PagarVariasDeudasModal'
 import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
 import { useCategoriasByTipo } from '@/hooks/useCategorias'
 import { useCreateMovimiento, useUpdateMovimiento } from '@/hooks/useMovimientos'
@@ -195,6 +196,7 @@ export function MovimientoForm({
   const [participantes,       setParticipantes]       = useState<ParticipanteForm[]>([{ nombre: '', monto: 0 }])
   const [cuentaRecibeId,      setCuentaRecibeId]      = useState('')
   const [sobranteTerceros,    setSobranteTerceros]    = useState<number | null>(null)
+  const [pagoVariasDeudas,    setPagoVariasDeudas]    = useState(false)
 
   const { data: cuentas }        = useCuentas()
   const { data: saldoTerceros }  = useSaldoTerceros()
@@ -793,6 +795,18 @@ export function MovimientoForm({
             )}
           </div>
 
+          {/* Atajo: pagar varias deudas de una vez (con cuántas cuotas se paga cada una) */}
+          {!editingMovimiento && (tipoReal === 'pago_tarjeta' || tipoReal === 'pago_deuda') && (
+            <button
+              type="button"
+              onClick={() => setPagoVariasDeudas(true)}
+              className="w-full h-11 rounded-2xl border border-gasto-500/30 bg-gasto-500/10 text-gasto-300 text-sm font-semibold hover:bg-gasto-500/15 transition-colors"
+              data-testid="abrir-pagar-varias"
+            >
+              Pagar varias deudas a la vez
+            </button>
+          )}
+
           {/* Contexto de pago — solo para pago_tarjeta y pago_deuda */}
           {(tipoReal === 'pago_tarjeta' || tipoReal === 'pago_deuda') && (
             <ContextoPagoSelector
@@ -1117,6 +1131,7 @@ export function MovimientoForm({
           onClose={() => { setSobranteTerceros(null); handleClose(); onSuccess?.() }}
         />
       )}
+      <PagarVariasDeudasModal isOpen={pagoVariasDeudas} onClose={() => setPagoVariasDeudas(false)} />
     </Modal>
   )
 }
