@@ -7,10 +7,14 @@ import { TercerosToggle } from '@/components/ui/TercerosToggle'
 import { useDeudas } from '@/hooks/useDeudas'
 import { useCuentas } from '@/hooks/useCuentas'
 import { useCreateMovimiento } from '@/hooks/useMovimientos'
+import { useSuscripciones } from '@/hooks/useSuscripciones'
+import { marcarCompromisoPagado } from '@/services/suscripciones.service'
+import { useQueryClient } from '@tanstack/react-query'
 import { formatCLP } from '@/utils/currency'
 import { todayISO } from '@/utils/dates'
 import {
   agruparDeudasPagables, describirPago, opcionesRapidas, validarPagoMultiple, totalLineas,
+  sugerirCompromiso, compromisosAMarcar, compromisoPagadoEsteCiclo,
   type DeudaElegible, type LineaPago,
 } from '@/utils/pagoVariasDeudas'
 
@@ -27,14 +31,18 @@ export function PagarVariasDeudasModal({ isOpen, onClose }: Props) {
   const { data: deudas }  = useDeudas()
   const { data: cuentas } = useCuentas()
   const crear = useCreateMovimiento()
+  const qc = useQueryClient()
+  const { data: compromisos } = useSuscripciones()
+  const activos = (compromisos ?? []).filter(c => c.activa)
 
   const [cuentaId, setCuentaId]   = useState('')
   const [fecha, setFecha]         = useState(todayISO())
   const [sel, setSel]             = useState<Record<string, string>>({})    // deudaId → monto (texto)
+  const [comp, setComp]           = useState<Record<string, string>>({})    // deudaId → compromiso que cubre ('' = ninguno)
   const [deTerceros, setDeTerceros] = useState(false)
   const [errores, setErrores]     = useState<string[]>([])
   const [ejecutando, setEjecutando] = useState(false)
-  const [resultado, setResultado] = useState<{ hechas: string[]; fallo?: string } | null>(null)
+  const [resultado, setResultado] = useState<{ hechas: string[]; fallo?: string; marcados?: string[] } | null>(null)
 
   const grupos = useMemo(() => agruparDeudasPagables(deudas ?? [], cuentas ?? []), [deudas, cuentas])
   const todas = grupos.flatMap(g => g.items)
@@ -54,10 +62,13 @@ export function PagarVariasDeudasModal({ isOpen, onClose }: Props) {
       else next[e.deuda.id] = String(e.cuotaSugerida)
       return next
     })
+    // Al marcar, se sugiere el compromiso que se parece a la deuda (el usuario puede cambiarlo)
+    setComp(prev => (e.deuda.id in prev ? prev : { ...prev, [e.deuda.id]: sugerirCompromiso(e.deuda.nombre, activos) }))
   }
   const poner = (id: string, monto: number) => setSel(prev => ({ ...prev, [id]: String(monto) }))
   function marcarGrupo(items: DeudaElegible[]) {
     setSel(prev => { const n = { ...prev }; for (const e of items) n[e.deuda.id] = String(e.cuotaSugerida); return n })
+    setComp(prev => { const n = { ...prev }; for (const e of items) if (!(e.deuda.id in n)) n[e.deuda.id] = sugerirCompromiso(e.deuda.nombre, activos); return n })
   }
 
   async function pagar() {
@@ -66,18 +77,26 @@ export function PagarVariasDeudasModal({ isOpen, onClose }: Props) {
     if (errs.length) return
     setEjecutando(true)
     const hechas: string[] = []
+    const enlazados: string[] = []
     try {
       for (let i = 0; i < lineas.length; i++) {
         const l = lineas[i]
         await crear.mutateAsync({
           tipo: 'pago_deuda', fecha, monto: l.monto, cuenta_id: cuenta!.id, deuda_id: l.deudaId,
           contexto_pago: 'deuda_propia', fondos_tercero: deTerceros,
+          compromiso_id: comp[l.deudaId] || undefined,
           nota: `Pago de deudas (${i + 1}/${lineas.length}) · ${l.nombre}`,
         })
         hechas.push(l.nombre)
+        if (comp[l.deudaId]) enlazados.push(comp[l.deudaId])
         setSel(prev => { const n = { ...prev }; delete n[l.deudaId]; return n })   // ya pagada: sale de la selección
       }
-      setResultado({ hechas })
+      // Los compromisos enlazados quedan pagados (una sola vez cada uno, sin adelantar uno ya pagado)
+      const aMarcar = compromisosAMarcar(enlazados, compromisos ?? [])
+      const marcados: string[] = []
+      for (const c of aMarcar) { await marcarCompromisoPagado(c, fecha); marcados.push(c.nombre.trim()) }
+      qc.invalidateQueries({ queryKey: ['suscripciones'] }); qc.invalidateQueries({ queryKey: ['pagos-compromisos'] })
+      setResultado({ hechas, marcados })
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : ((e as { message?: string })?.message ?? 'Error al registrar el pago')
       setResultado({ hechas, fallo: `${lineas[hechas.length]?.nombre ?? ''}: ${msg}` })
@@ -87,7 +106,7 @@ export function PagarVariasDeudasModal({ isOpen, onClose }: Props) {
   }
 
   function cerrar() {
-    setSel({}); setErrores([]); setResultado(null); setDeTerceros(false); setCuentaId('')
+    setSel({}); setComp({}); setErrores([]); setResultado(null); setDeTerceros(false); setCuentaId('')
     onClose()
   }
 
@@ -104,6 +123,11 @@ export function PagarVariasDeudasModal({ isOpen, onClose }: Props) {
           <ul className="text-xs text-slate-300 space-y-1">
             {resultado.hechas.map(n => <li key={n}>✓ {n}</li>)}
           </ul>
+          {!!resultado.marcados?.length && (
+            <p className="text-xs text-ingreso-400" data-testid="compromisos-marcados">
+              Compromisos que quedaron pagados: {resultado.marcados.join(', ')}
+            </p>
+          )}
           {resultado.fallo && (
             <p className="text-xs text-gasto-400 bg-gasto-500/10 border border-gasto-500/25 rounded-xl p-3">
               No se pudo registrar: {resultado.fallo}. Los pagos de arriba ya quedaron guardados; lo que falta sigue seleccionado para reintentar.
@@ -186,6 +210,25 @@ export function PagarVariasDeudasModal({ isOpen, onClose }: Props) {
                               {o.etiqueta} · {formatCLP(o.monto)}
                             </button>
                           ))}
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-500 uppercase tracking-wide block mb-1">¿Es el pago de un compromiso?</label>
+                          <select
+                            value={comp[e.deuda.id] ?? ''}
+                            onChange={ev => setComp(prev => ({ ...prev, [e.deuda.id]: ev.target.value }))}
+                            className="w-full h-10 px-3 rounded-xl border border-night-border bg-night-0 text-slate-200 text-xs outline-none"
+                            data-testid="select-compromiso"
+                          >
+                            <option value="">No, solo abono a la deuda</option>
+                            {activos.map(c => (
+                              <option key={c.id} value={c.id}>
+                                {c.nombre.trim()}{compromisoPagadoEsteCiclo(c) ? ' (ya pagado este ciclo)' : ''}
+                              </option>
+                            ))}
+                          </select>
+                          {comp[e.deuda.id] && (
+                            <p className="text-[10px] text-ingreso-400/80 mt-1">El compromiso queda pagado con este movimiento: no lo pagues de nuevo.</p>
+                          )}
                         </div>
                         <p className={['text-[11px] tabular-nums', desc.saldaLaDeuda ? 'text-ingreso-400' : monto > e.pendiente ? 'text-gasto-400' : 'text-slate-300'].join(' ')} data-testid="descripcion-pago">
                           {monto > e.pendiente ? `Supera lo pendiente (${formatCLP(e.pendiente)})` : desc.texto}

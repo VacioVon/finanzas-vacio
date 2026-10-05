@@ -91,3 +91,31 @@ describe('validarPagoMultiple y total', () => {
     expect(totalLineas([l(77673), l(57781), l(14430), l(5280), l(-5)])).toBe(155164)
   })
 })
+
+import { compromisoPagadoEsteCiclo, sugerirCompromiso, compromisosAMarcar } from '../utils/pagoVariasDeudas'
+
+describe('conexión con compromisos', () => {
+  const hoy = new Date(2026, 9, 5)   // 5-oct-2026
+  const comps = [
+    { id: 'p', nombre: 'Pastillas Amor', activa: true, ultimo_pago_fecha: null, proxima_fecha: '2026-10-01' },
+    { id: 'g', nombre: 'Comida gaticas', activa: true, ultimo_pago_fecha: '2026-10-05', proxima_fecha: '2026-11-01' },
+    { id: 'x', nombre: 'Pastillas viejas', activa: false, ultimo_pago_fecha: null, proxima_fecha: '2026-10-01' },
+  ]
+  it('sugiere el compromiso por nombre, solo si está activo', () => {
+    expect(sugerirCompromiso('Pastillas amor', comps)).toBe('p')
+    expect(sugerirCompromiso('Comida gatos', comps)).toBe('g')
+    expect(sugerirCompromiso('Frutilla con crema', comps)).toBe('')
+  })
+  it('un compromiso con pago y próxima fecha futura ya está pagado este ciclo', () => {
+    expect(compromisoPagadoEsteCiclo(comps[0], hoy)).toBe(false)   // vencido, sin pago
+    expect(compromisoPagadoEsteCiclo(comps[1], hoy)).toBe(true)
+    expect(compromisoPagadoEsteCiclo({ ultimo_pago_fecha: null, proxima_fecha: '2026-11-01' }, hoy)).toBe(false)
+  })
+  it('no marca dos veces el mismo compromiso ni uno que ya estaba pagado', () => {
+    const r = compromisosAMarcar(['p', 'p', 'g', ''], comps, hoy)
+    expect(r.map(c => c.id)).toEqual(['p'])
+  })
+  it('un id que no existe se ignora', () => {
+    expect(compromisosAMarcar(['zzz'], comps, hoy)).toEqual([])
+  })
+});

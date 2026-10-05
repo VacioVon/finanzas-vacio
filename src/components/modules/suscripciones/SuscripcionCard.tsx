@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pencil, Trash2, ToggleLeft, ToggleRight, CreditCard, CheckCircle2 } from 'lucide-react'
 import { formatCLP } from '@/utils/currency'
-import { useDeleteSuscripcion, useToggleSuscripcion } from '@/hooks/useSuscripciones'
+import { useDeleteSuscripcion, useToggleSuscripcion, useMarcarCompromisoPagado } from '@/hooks/useSuscripciones'
 import type { PagoCompromisoHistorial } from '@/hooks/useSuscripciones'
 import { SuscripcionForm } from './SuscripcionForm'
 import { PagarCompromisoModal } from './PagarCompromisoModal'
@@ -70,6 +70,7 @@ export function SuscripcionCard({ suscripcion: s, historial = [] }: Props) {
 
   const deleteMutation = useDeleteSuscripcion()
   const toggleMutation = useToggleSuscripcion()
+  const marcarMutation = useMarcarCompromisoPagado()
 
   const dias       = diasRestantes(s.proxima_fecha)
   const badge      = badgeDias(dias)
@@ -92,6 +93,12 @@ export function SuscripcionCard({ suscripcion: s, historial = [] }: Props) {
   function handleDelete() {
     if (!confirm(`¿Eliminar compromiso "${s.nombre}"?`)) return
     deleteMutation.mutate(s.id)
+  }
+
+  // Para cuando ya se pagó por otro lado (tarjeta, deuda, efectivo…): solo marca el compromiso, no mueve dinero
+  function handleYaPagado() {
+    if (!confirm(`¿Marcar "${s.nombre}" como pagado?\n\nNo se registra ningún movimiento ni se descuenta dinero: úsalo solo si ya lo pagaste y lo registraste en otro lado.`)) return
+    marcarMutation.mutate({ compromiso: s, fecha: format(new Date(), 'yyyy-MM-dd') })
   }
 
   function handleToggle() {
@@ -217,6 +224,17 @@ export function SuscripcionCard({ suscripcion: s, historial = [] }: Props) {
               >
                 <CreditCard className="h-3.5 w-3.5" />
                 Registrar pago
+              </button>
+            )}
+            {!pagadoEstePeriodo && s.activa && (
+              <button
+                onClick={handleYaPagado}
+                disabled={marcarMutation.isPending}
+                className="text-[11px] font-medium px-2 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors"
+                title="Marcar como pagado sin registrar movimiento (ya lo pagaste por otro lado)"
+                data-testid="ya-pagado"
+              >
+                Ya lo pagué
               </button>
             )}
             <div className="flex-1" />

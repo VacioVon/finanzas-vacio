@@ -115,3 +115,39 @@ export function validarPagoMultiple(
 }
 
 export const totalLineas = (lineas: LineaPago[]) => lineas.reduce((s, l) => s + (l.monto > 0 ? l.monto : 0), 0)
+
+// ─── Conexión con compromisos ────────────────────────────────────
+import type { Suscripcion } from '@/types/app.types'
+import { nombresSeParecen } from '@/utils/pagoCompromisoDeuda'
+
+/** ¿El compromiso ya está pagado en su ciclo actual? (hay un pago y la próxima fecha es futura) */
+export function compromisoPagadoEsteCiclo(s: Pick<Suscripcion, 'ultimo_pago_fecha' | 'proxima_fecha'>, hoy: Date = new Date()): boolean {
+  if (!s.ultimo_pago_fecha || !s.proxima_fecha) return false
+  const [y, m, d] = s.proxima_fecha.split('-').map(Number)
+  const prox = new Date(y, m - 1, d)
+  const h = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+  return prox.getTime() > h.getTime()
+}
+
+/** Compromiso activo cuyo nombre se parece al de la deuda (p. ej. "Pastillas amor" ↔ "Pastillas Amor"); '' si no hay. */
+export function sugerirCompromiso(nombreDeuda: string, compromisos: Pick<Suscripcion, 'id' | 'nombre' | 'activa'>[]): string {
+  return compromisos.find(c => c.activa && nombresSeParecen(nombreDeuda, c.nombre))?.id ?? ''
+}
+
+/**
+ * Compromisos que hay que dejar como pagados tras un pago múltiple: los enlazados, sin repetir y sin
+ * los que ya estaban pagados este ciclo (no se adelanta la fecha dos veces).
+ */
+export function compromisosAMarcar<T extends Pick<Suscripcion, 'id' | 'ultimo_pago_fecha' | 'proxima_fecha'>>(
+  idsEnlazados: string[], compromisos: T[], hoy: Date = new Date()
+): T[] {
+  const vistos = new Set<string>()
+  const res: T[] = []
+  for (const id of idsEnlazados) {
+    if (!id || vistos.has(id)) continue
+    vistos.add(id)
+    const c = compromisos.find(x => x.id === id)
+    if (c && !compromisoPagadoEsteCiclo(c, hoy)) res.push(c)
+  }
+  return res
+}
