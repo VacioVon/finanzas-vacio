@@ -11,6 +11,8 @@ import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
 import { useRegistrarPagoCompromiso, useRegistrarPagoCompromisoConDeuda, useMarcarCompromisoPagado } from '@/hooks/useSuscripciones'
 import { useDeudas } from '@/hooks/useDeudas'
 import { PagoRegistradoSinMarcarError } from '@/services/suscripciones.service'
+import { sobranteTrasPago } from '@/utils/saldoTerceros'
+import { SobranteTercerosModal } from '@/components/modules/movimientos/SobranteTercerosModal'
 import { deudasPagablesDeTarjeta, validarPagoConDeuda, resumenPagoConDeuda } from '@/utils/pagoCompromisoDeuda'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
@@ -59,7 +61,8 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   // 'cuenta': pago normal desde una cuenta · 'deuda': abono a una compra en cuotas de la tarjeta
   const [modo, setModo]           = useState<'cuenta' | 'deuda'>('cuenta')
   const [deudaId, setDeudaId]     = useState<string>('')
-  const [pendienteMarcar, setPendienteMarcar] = useState<string | null>(null)   // pago hecho, falta marcar compromiso
+  const [pendienteMarcar, setPendienteMarcar] = useState<string | null>(null)
+  const [sobrante, setSobrante] = useState<number | null>(null)   // dinero de terceros que sobró tras pagar   // pago hecho, falta marcar compromiso
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -141,6 +144,10 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
         fondos_tercero: esTerceros,
       }
       await pagarMutation.mutateAsync({ compromiso, pago: data })
+      if (esTerceros && saldoTerceros) {
+        const resto = sobranteTrasPago(saldoTerceros.disponible, montoFinal)
+        if (resto > 0) setSobrante(resto)
+      }
       setPaso('exito')
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error al registrar pago')
@@ -496,6 +503,9 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
         </div>
       )}
 
+      {sobrante != null && (
+        <SobranteTercerosModal monto={sobrante} onClose={() => setSobrante(null)} />
+      )}
     </Modal>
   )
 }

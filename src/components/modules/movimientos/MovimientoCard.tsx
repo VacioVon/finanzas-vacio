@@ -213,11 +213,17 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
                 </>
               )}
             </div>
-            {(mov.para_tercero || (mov.comision > 0)) && (
+            {(mov.para_tercero || mov.fondos_tercero || (mov.comision > 0)) && (
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 {mov.para_tercero && (
                   <Badge variant="xp">
                     👥 Para{mov.tercero_nombre ? ` ${mov.tercero_nombre}` : ' tercero'}
+                  </Badge>
+                )}
+                {/* Pagado con (o recibido de) dinero de terceros: no es gasto ni ingreso propio */}
+                {mov.fondos_tercero && !mov.para_tercero && (
+                  <Badge variant="xp">
+                    👥 {mov.tipo === 'ingreso' ? 'Dinero de terceros' : 'Gasto de terceros'}
                   </Badge>
                 )}
                 {mov.comision > 0 && (

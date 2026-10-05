@@ -68,7 +68,12 @@ export function resumenCompartidosPeriodo(
   return { recibido, pendiente, bruto }
 }
 
-/** Un ingreso de "Recuperación de dinero" es dinero devuelto, no ingreso personal. */
-export function esIngresoPersonal(m: Pick<Movimiento, 'tipo' | 'categoria'>): boolean {
-  return m.tipo === 'ingreso' && m.categoria?.nombre !== CATEGORIA_RECUPERACION
+/** Ingreso propio: no es dinero devuelto ("Recuperación de dinero") ni dinero de terceros. */
+export function esIngresoPersonal(m: Pick<Movimiento, 'tipo' | 'categoria'> & { fondos_tercero?: boolean }): boolean {
+  return m.tipo === 'ingreso' && m.categoria?.nombre !== CATEGORIA_RECUPERACION && !m.fondos_tercero
+}
+
+/** Gasto propio: no es gasto hecho para un tercero ni pagado con dinero de terceros. */
+export function esGastoPersonal(m: Pick<Movimiento, 'tipo' | 'para_tercero'> & { fondos_tercero?: boolean }): boolean {
+  return m.tipo === 'gasto' && !m.para_tercero && !m.fondos_tercero
 }

@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,6 +12,8 @@ import { useCreateMovimiento } from '@/hooks/useMovimientos'
 import { useSaldoTerceros } from '@/hooks/useCuentas'
 import { formatCLP } from '@/utils/currency'
 import { todayISO } from '@/utils/dates'
+import { sobranteTrasPago } from '@/utils/saldoTerceros'
+import { SobranteTercerosModal } from '@/components/modules/movimientos/SobranteTercerosModal'
 import { montoProximaCuota } from '@/utils/planCuotas'
 import type { Deuda } from '@/types/app.types'
 
@@ -39,6 +41,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
   const { data: cuentas }        = useCuentas()
   const { data: saldoTerceros }  = useSaldoTerceros()
   const createMov                = useCreateMovimiento()
+  const [sobrante, setSobrante]  = useState<number | null>(null)   // dinero de terceros que sobró tras pagar
 
   const cuentasPago = (cuentas ?? []).filter(c => c.activa && c.tipo !== 'inversion')
 
@@ -90,6 +93,11 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
         nota:           data.nota || undefined,
         fondos_tercero: esTerceros,
       })
+      // Pagó con dinero de terceros: si sobra, se pregunta si queda para el usuario
+      if (esTerceros && saldoTerceros) {
+        const resto = sobranteTrasPago(saldoTerceros.disponible, data.monto)
+        if (resto > 0) { setSobrante(resto); return }
+      }
       onClose()
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Error al registrar pago')
@@ -233,6 +241,9 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
           </Button>
         </div>
       </form>
+      {sobrante != null && (
+        <SobranteTercerosModal monto={sobrante} onClose={() => { setSobrante(null); onClose() }} />
+      )}
     </Modal>
   )
 }

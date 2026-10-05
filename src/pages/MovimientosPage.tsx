@@ -14,7 +14,7 @@ import { getCurrentMesAnio, etiquetaRangoPeriodo } from '@/utils/periodo'
 import { useCuentas } from '@/hooks/useCuentas'
 import { useResumenCompartidos } from '@/hooks/useGastosCompartidos'
 import { ExportarExcelModal } from '@/components/modules/movimientos/ExportarExcelModal'
-import { esIngresoPersonal } from '@/utils/gastosCompartidos'
+import { esIngresoPersonal, esGastoPersonal } from '@/utils/gastosCompartidos'
 import { formatCLP } from '@/utils/currency'
 
 type Filtro = 'todos' | 'ingreso' | 'gasto' | 'ahorro' | 'pago_deuda'
@@ -49,7 +49,7 @@ export function MovimientosPage() {
   // Resumen del mes
   const compartidos = useResumenCompartidos(movimientosMes)
   const ingresos  = (movimientosMes ?? []).filter(m => esIngresoPersonal(m)).reduce((s, m) => s + m.monto, 0)
-  const gastos    = (movimientosMes ?? []).filter(m => m.tipo === 'gasto' && !m.para_tercero).reduce((s, m) => s + m.monto, 0) - compartidos.recibido  // neto asumido
+  const gastos    = (movimientosMes ?? []).filter(esGastoPersonal).reduce((s, m) => s + m.monto, 0) - compartidos.recibido  // neto asumido
   const flujoNeto = ingresos - gastos
 
   // Categorías únicas del historial (para el panel de filtros)

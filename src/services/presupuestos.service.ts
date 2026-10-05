@@ -35,6 +35,7 @@ export async function getGastadoEnPeriodo(
     .eq('usuario_id', userId)
     .eq('tipo', 'gasto')
     .eq('para_tercero', false)
+    .eq('fondos_tercero', false)
     .gte('fecha', start)
     .lte('fecha', end)
 

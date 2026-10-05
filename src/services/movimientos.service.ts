@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import type { Movimiento, MovimientoFormData } from '@/types/app.types'
 import { getCurrentMonthRange } from '@/utils/dates'
 import { resolverEdicion, deudasInvolucradas } from '@/utils/movimientosEdicion'
+import { calcularSaldoTerceros } from '@/utils/saldoTerceros'
 
 // Fragmento de JOIN reutilizable
 const MOVIMIENTO_SELECT = `
@@ -102,7 +103,7 @@ export async function getEvolucionMensual(
     const key = m.fecha.slice(0, 7)
     if (!byMes[key]) continue
     if (m.tipo === 'ingreso' && !m.fondos_tercero) byMes[key].ingresos += m.monto
-    if (m.tipo === 'gasto'   && !m.para_tercero)  byMes[key].gastos  += m.monto
+    if (m.tipo === 'gasto'   && !m.para_tercero && !m.fondos_tercero)  byMes[key].gastos  += m.monto
   }
 
   const nombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
@@ -330,36 +331,24 @@ export interface SaldoTerceros {
 export async function getSaldoTerceros(userId: string): Promise<SaldoTerceros> {
   const { data, error } = await supabase
     .from('movimientos')
-    .select('monto, tipo, fondos_tercero, para_tercero, cuenta_id')
+    .select('monto, tipo, fecha, created_at, fondos_tercero, para_tercero, cuenta_id')
     .eq('usuario_id', userId)
     .or('fondos_tercero.eq.true,para_tercero.eq.true')
 
   if (error) throw error
 
-  let fondos = 0
-  let gastos = 0
-  let gastadoTerceros = 0
-  const fondosByCuenta: Record<string, number> = {}
-
-  for (const m of data ?? []) {
-    if (m.fondos_tercero && m.tipo === 'ingreso') {
-      fondos += m.monto
-      if (m.cuenta_id) fondosByCuenta[m.cuenta_id] = (fondosByCuenta[m.cuenta_id] ?? 0) + m.monto
-    }
-    if (m.fondos_tercero && m.tipo !== 'ingreso') gastadoTerceros += m.monto
-    if (m.para_tercero)  gastos += m.monto
-  }
-
-  const primaryCuentaId = Object.entries(fondosByCuenta)
-    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+  const filas = data ?? []
+  // Saldo de terceros: cronológico y sin bajar de 0 (el exceso previo a un depósito es propio)
+  const t = calcularSaldoTerceros(filas.map(m => ({ ...m, monto: Number(m.monto) })))
+  const gastos = filas.filter(m => m.para_tercero).reduce((s, m) => s + Number(m.monto), 0)
 
   return {
-    fondos,
+    fondos:          t.fondos,
     gastos,
-    neto:            fondos - gastos,
-    gastadoTerceros,
-    disponible:      fondos - gastadoTerceros,
-    primaryCuentaId,
+    neto:            t.fondos - gastos,
+    gastadoTerceros: t.gastadoTerceros,
+    disponible:      t.disponible,
+    primaryCuentaId: t.primaryCuentaId,
   }
 }
 

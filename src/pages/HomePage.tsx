@@ -16,7 +16,7 @@ import { useAuthStore } from '@/store/authStore'
 import { getCurrentMesAnio } from '@/utils/periodo'
 import { useAportesObjetivosMes } from '@/hooks/useObjetivos'
 import { useResumenCompartidos } from '@/hooks/useGastosCompartidos'
-import { esIngresoPersonal } from '@/utils/gastosCompartidos'
+import { esIngresoPersonal, esGastoPersonal } from '@/utils/gastosCompartidos'
 
 function ZoneSeparator({ label }: { label: string }) {
   return (
@@ -41,7 +41,7 @@ export function HomePage() {
 
   const compartidos = useResumenCompartidos(movimientosMes)
   const gastos = (movimientosMes ?? [])
-    .filter(m => m.tipo === 'gasto' && !m.para_tercero)
+    .filter(esGastoPersonal)
     .reduce((s, m) => s + m.monto, 0) - compartidos.recibido   // neto asumido
 
   const ahorrosContables  = (movimientosMes ?? [])

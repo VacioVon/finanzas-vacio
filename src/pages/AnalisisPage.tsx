@@ -18,7 +18,7 @@ import {
   navegarMes
 } from '@/utils/periodo'
 import { formatDate } from '@/utils/dates'
-import { esIngresoPersonal } from '@/utils/gastosCompartidos'
+import { esIngresoPersonal, esGastoPersonal } from '@/utils/gastosCompartidos'
 import { useResumenCompartidos } from '@/hooks/useGastosCompartidos'
 import type { Movimiento } from '@/types/app.types'
 
@@ -91,7 +91,7 @@ function buildFlujoRows(movimientos: Movimiento[]): FlujoRow[] {
   const sorted = [...movimientos]
     .filter(m => m.tipo !== 'transferencia')              // transferencia interna = neutro
     .filter(m => !(m.tipo === 'pago_deuda' && !m.cuenta_id)) // pago histórico de deuda: nunca tocó una cuenta
-    .filter(m => !(m.tipo === 'gasto' && m.para_tercero)) // gasto para tercero = no es plata tuya
+    .filter(m => !(m.tipo === 'gasto' && (m.para_tercero || m.fondos_tercero))) // para tercero o pagado con plata de terceros = no es plata tuya
     .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
 
   let saldo = 0
@@ -134,7 +134,7 @@ const PIE_COLORS = [
 function agruparPorCategoria(movimientos: Movimiento[]): CatData[] {
   const map: Record<string, CatData> = {}
   for (const m of movimientos) {
-    if (m.tipo !== 'gasto' || m.para_tercero) continue
+    if (!esGastoPersonal(m)) continue
     const id     = m.categoria_id ?? '__sin__'
     const nombre = m.categoria?.nombre ?? 'Sin categoría'
     const color  = m.categoria?.color  ?? '#6B7280'
@@ -171,7 +171,7 @@ export function AnalisisPage() {
     .reduce((s, m) => s + m.monto, 0)
 
   const gastos = (movimientos ?? [])
-    .filter(m => m.tipo === 'gasto' && !m.para_tercero)
+    .filter(esGastoPersonal)
     .reduce((s, m) => s + m.monto, 0)
 
   // Gasto bruto = lo que salió; neto asumido = bruto − reembolsos recibidos de gastos compartidos

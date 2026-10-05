@@ -10,6 +10,8 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
+import { useCuentasPorCobrar } from '@/hooks/useCobros'
+import { cobrarPendiente } from '@/utils/financial'
 import { useValorizaciones } from '@/hooks/useValorizaciones'
 import type { Cuenta } from '@/types/app.types'
 import { formatCLP } from '@/utils/currency'
@@ -22,6 +24,8 @@ export function CuentasPage() {
   const { data: cuentas, isLoading } = useCuentas()
   const { data: valorizaciones } = useValorizaciones()
   const { data: terceros } = useSaldoTerceros()
+  const { data: cobrar }   = useCuentasPorCobrar()
+  const porCobrarPendiente = (cobrar ?? []).reduce((sum, c) => sum + cobrarPendiente(c), 0)
 
   const totalDisponible = (cuentas ?? [])
     .filter(c => c.tipo !== 'inversion' && c.tipo !== 'credito')
@@ -94,7 +98,7 @@ export function CuentasPage() {
               </div>
 
               {/* Tarjeta virtual: dinero de terceros — dos bloques independientes */}
-              {terceros && (terceros.fondos > 0 || terceros.gastos > 0) && (
+              {terceros && (terceros.fondos > 0 || terceros.gastos > 0 || porCobrarPendiente > 0) && (
                 <div className="rounded-2xl border border-dashed border-slate-600/50 bg-night-2/60 p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="text-base">🤝</span>
@@ -106,24 +110,24 @@ export function CuentasPage() {
 
                   <div className="grid grid-cols-2 gap-2">
                     {/* Por devolver — fondos recibidos que pertenecen a otros */}
-                    {terceros.fondos > 0 && (
+                    {terceros.disponible > 0 && (
                       <div className="rounded-xl bg-night-3/60 border border-gasto-500/20 px-3 py-2.5">
                         <p className="text-[10px] text-slate-500 mb-1 leading-none">Debo devolver</p>
                         <p className="text-sm font-bold tabular-nums text-gasto-400 leading-none">
-                          {formatCLP(terceros.fondos)}
+                          {formatCLP(terceros.disponible)}
                         </p>
-                        <p className="text-[10px] text-slate-600 mt-0.5">plata de otros en tu cuenta</p>
+                        <p className="text-[10px] text-slate-600 mt-0.5">plata de otros que tienes ahora</p>
                       </div>
                     )}
 
                     {/* Por cobrar — lo que gastaste para otros */}
-                    {terceros.gastos > 0 && (
+                    {porCobrarPendiente > 0 && (
                       <div className="rounded-xl bg-night-3/60 border border-ingreso-500/20 px-3 py-2.5">
                         <p className="text-[10px] text-slate-500 mb-1 leading-none">Por cobrar</p>
                         <p className="text-sm font-bold tabular-nums text-ingreso-400 leading-none">
-                          {formatCLP(terceros.gastos)}
+                          {formatCLP(porCobrarPendiente)}
                         </p>
-                        <p className="text-[10px] text-slate-600 mt-0.5">otros te deben a ti</p>
+                        <p className="text-[10px] text-slate-600 mt-0.5">otros te deben a ti (pendiente)</p>
                       </div>
                     )}
                   </div>

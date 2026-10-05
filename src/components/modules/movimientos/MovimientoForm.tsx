@@ -20,6 +20,8 @@ import { CategoryPicker } from './CategoryPicker'
 import { AccountPicker } from '@/components/ui/AccountPicker'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
+import { sobranteTrasPago } from '@/utils/saldoTerceros'
+import { SobranteTercerosModal } from './SobranteTercerosModal'
 import { useRegistrarGastoCompartidoPagadoTotal } from '@/hooks/useGastosCompartidos'
 import type { Movimiento, TipoMovimiento, ContextoPago, OrigenDinero, Participante } from '@/types/app.types'
 
@@ -191,6 +193,7 @@ export function MovimientoForm({
   const [esCompartido,        setEsCompartido]        = useState(false)
   const [participantes,       setParticipantes]       = useState<ParticipanteForm[]>([{ nombre: '', monto: 0 }])
   const [cuentaRecibeId,      setCuentaRecibeId]      = useState('')
+  const [sobranteTerceros,    setSobranteTerceros]    = useState<number | null>(null)
 
   const { data: cuentas }        = useCuentas()
   const { data: saldoTerceros }  = useSaldoTerceros()
@@ -416,6 +419,11 @@ export function MovimientoForm({
             cuenta_recibe_id: cuentaRecibeId || cuentaIdFinal,
           })
         }
+      }
+      // Pagó con dinero de terceros: si sobra, se pregunta antes de cerrar
+      if (esTerceros && !editingMovimiento && saldoTerceros) {
+        const resto = sobranteTrasPago(saldoTerceros.disponible, data.monto)
+        if (resto > 0) { setSobranteTerceros(resto); return }
       }
       handleClose()
       onSuccess?.()
@@ -1123,6 +1131,12 @@ export function MovimientoForm({
             </button>
           </div>
         </form>
+      )}
+      {sobranteTerceros != null && (
+        <SobranteTercerosModal
+          monto={sobranteTerceros}
+          onClose={() => { setSobranteTerceros(null); handleClose(); onSuccess?.() }}
+        />
       )}
     </Modal>
   )
