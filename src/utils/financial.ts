@@ -14,8 +14,8 @@ import type { Cuenta, Deuda, ResumenFinanciero, Movimiento, CuentaPorCobrar } fr
 //  - El "por cobrar" es patrimonio pero NO es dinero disponible: no se suma a las cuentas.
 //  - El pendiente de una deuda se deriva de los pagos reales (movimientos pago_deuda);
 //    la columna monto_pendiente de la base NO se usa porque puede quedar desactualizada.
-//  - Cuando una deuda está ligada a una tarjeta de crédito, su saldo puede estar ya incluido
-//    en el saldo de la tarjeta. Con deduplicarDeudasDeTarjeta=true esa deuda no se resta de nuevo.
+//  - Una deuda ligada a una tarjeta de crédito (compra en cuotas) ya está incluida en el saldo de la
+//    tarjeta, así que NO se resta de nuevo (deduplicarDeudasDeTarjeta, activo por defecto).
 
 export interface DesglosePatrimonio {
   activos: { cuentas: number; inversiones: number; porCobrar: number; total: number }
@@ -24,7 +24,7 @@ export interface DesglosePatrimonio {
 }
 
 export interface OpcionesPatrimonio {
-  /** No restar deudas ligadas a una tarjeta (evita doble conteo si ya están en el saldo de la tarjeta). */
+  /** No restar deudas ligadas a una tarjeta (ya están en su saldo). Por defecto true; false = sumarlas aparte. */
   deduplicarDeudasDeTarjeta?: boolean
 }
 
@@ -59,6 +59,7 @@ export function calcularPatrimonio(
     .filter(c => c.tipo === 'credito')
     .reduce((sum, c) => sum + Math.abs(c.saldo_actual), 0)
 
+  const deduplicar = opciones.deduplicarDeudasDeTarjeta ?? true
   const idsTarjetas = new Set(activas.filter(c => c.tipo === 'credito').map(c => c.id))
   const vigentes = deudas.filter(d => d.estado === 'activa' || d.estado === 'en_mora')
 
@@ -68,7 +69,7 @@ export function calcularPatrimonio(
 
   const deudasPropias = vigentes
     .filter(d => d.direccion !== 'me_deben')
-    .filter(d => !(opciones.deduplicarDeudasDeTarjeta && d.cuenta_id && idsTarjetas.has(d.cuenta_id)))
+    .filter(d => !(deduplicar && d.cuenta_id && idsTarjetas.has(d.cuenta_id)))
     .reduce((sum, d) => sum + deudaPendienteReal(d), 0)
 
   const porCobrarTotal = porCobrar.reduce((sum, c) => sum + cobrarPendiente(c), 0) + meDeben

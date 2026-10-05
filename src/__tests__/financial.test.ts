@@ -180,11 +180,31 @@ describe('calcularPatrimonio', () => {
     expect(pos.pasivos.tarjetas).toBe(700493)
   })
 
-  it('G. con deduplicación, una deuda ligada a tarjeta no se resta dos veces', () => {
-    const cs = [makeCuenta({ id: 'cmr', tipo: 'credito', saldo_actual: 400000 })]
+  it('G. una deuda ligada a tarjeta no se resta dos veces (por defecto)', () => {
+    const cs = [makeCuenta({ id: 'cmr', tipo: 'credito', saldo_actual: -400000 })]
     const ds = [deudaReal(100000, 0, { cuenta_id: 'cmr' }), deudaReal(50000, 0)]
-    expect(calcularPatrimonio(cs, ds).pasivos.deudas).toBe(150000)                                          // por defecto: se suman ambas
-    expect(calcularPatrimonio(cs, ds, [], { deduplicarDeudasDeTarjeta: true }).pasivos.deudas).toBe(50000)  // solo la no ligada
+    expect(calcularPatrimonio(cs, ds).pasivos.deudas).toBe(50000)                                           // solo la no ligada
+    expect(calcularPatrimonio(cs, ds).patrimonioNeto).toBe(-450000)                                         // tarjeta 400.000 + 50.000
+    expect(calcularPatrimonio(cs, ds, [], { deduplicarDeudasDeTarjeta: false }).pasivos.deudas).toBe(150000) // opción: sumarlas
+  })
+
+  it('caso real tras corregir la CMR: tarjeta 526.779 con 5 compras en cuotas ligadas', () => {
+    const cs = [
+      makeCuenta({ id: 'cmr', tipo: 'credito', saldo_actual: -526779 }),
+      makeCuenta({ id: 'bk', tipo: 'debito', saldo_actual: 100000 }),
+    ]
+    const ds = [
+      deudaReal(233019, 77673, { cuenta_id: 'cmr' }),   // Diego 155.346
+      deudaReal(231124, 57781, { cuenta_id: 'cmr' }),   // Mamá 173.343
+      deudaReal(43290, 0, { cuenta_id: 'cmr' }),        // Comida gatos
+      deudaReal(11220, 0, { cuenta_id: 'cmr' }),        // Pastillas
+      deudaReal(8490, 0, { cuenta_id: 'cmr' }),         // Frutilla
+      deudaReal(2535181, 0),                            // Deuda auto (sin tarjeta)
+    ]
+    const p = calcularPatrimonio(cs, ds)
+    expect(p.pasivos.tarjetas).toBe(526779)             // las deudas ligadas ya están aquí dentro
+    expect(p.pasivos.deudas).toBe(2535181)              // solo la deuda sin tarjeta
+    expect(p.patrimonioNeto).toBe(100000 - 526779 - 2535181)
   })
 
   it('el pendiente sale de los pagos reales, no de la columna monto_pendiente', () => {
