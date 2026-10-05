@@ -374,7 +374,8 @@ export function construirLibro(d: DatosExport): Hoja[] {
   }
 
   if (!d.extra) {
-    return [leeme(d, movs.length), movimientos, resumen, gastoCategoria, presupuesto, cuentas, deudas, porCobrar]
+    const base = [movimientos, resumen, gastoCategoria, presupuesto, cuentas, deudas, porCobrar]
+    return [leeme(d, movs.length, base), ...base]
   }
 
   // Panorama: último período completo y promedio de gasto neto de los períodos completos
@@ -392,24 +393,27 @@ export function construirLibro(d: DatosExport): Hoja[] {
     (e.valorizaciones.length || d.cuentas.some(c => c.tipo === 'inversion')) ? hojaInversiones(d, e) : null,
   ].filter((h): h is Hoja => h !== null)
 
-  return [
-    leeme(d, movs.length), hojaPanorama(d, e, ingresoReal, gastoProm),
-    movimientos, resumen, gastoCategoria, presupuesto, cuentas,
-    deudas, hojaPagosDeuda(d), hojaCompromisos(d, e),
+  // Orden pensado para el análisis: primero el panorama y lo comprometido (compromisos, deudas, ingresos),
+  // después el detalle de movimientos y el resto.
+  const hojas = [
+    hojaPanorama(d, e, ingresoReal, gastoProm),
+    hojaCompromisos(d, e), deudas, hojaPagosDeuda(d),
     hojaIngresosRecurrentes(e), hojaIngresosEsperados(d, e),
-    porCobrar, ...opcionales,
+    movimientos, resumen, gastoCategoria, presupuesto, cuentas, porCobrar, ...opcionales,
   ]
+  return [leeme(d, movs.length, hojas), ...hojas]
 }
 
 // ─── Hoja Léeme (diccionario para humanos y para IA) ─────────────
 
-function leeme(d: DatosExport, n: number): Hoja {
+function leeme(d: DatosExport, n: number, hojas: Hoja[] = []): Hoja {
   const rango = `${d.desde ? d.desde.split('-').reverse().join('/') : 'inicio'} al ${d.hasta ? d.hasta.split('-').reverse().join('/') : 'hoy'}`
   const filas: string[][] = [
     ['Exportación QloB (Quemen los Barcos)', ''],
     ['Generado', d.generado.toLocaleString('es-CL')],
     ['Rango de fechas de los movimientos', rango],
     ['Movimientos exportados', String(n)],
+    ['Hojas de este archivo', ['Léeme', ...hojas.map(h => h.nombre)].join(' · ')],
     ['Moneda', 'Pesos chilenos (CLP), sin decimales'],
     ['Día de sueldo configurado', `${d.fechaSueldo} → cada período presupuestal va del día ${d.fechaSueldo} del mes anterior al ${d.fechaSueldo - 1} del mes indicado`],
     ['', ''],
