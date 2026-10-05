@@ -61,9 +61,27 @@ export function getPeriodoPresupuestal(
   }
 }
 
-export function getCurrentMesAnio(): { mes: number; anio: number } {
-  const now = new Date()
-  return { mes: now.getMonth() + 1, anio: now.getFullYear() }
+/**
+ * Período presupuestal actual. Con día de sueldo > 1, el período "de un mes" va del día de sueldo del
+ * mes anterior al día anterior de ese mes (p. ej. con sueldo el 28: 28-sep → 27-oct es "Octubre").
+ * Desde el día de sueldo en adelante ya corre el período del mes siguiente.
+ */
+export function getCurrentMesAnio(fechaSueldo = 1, hoy: Date = new Date()): { mes: number; anio: number } {
+  let mes  = hoy.getMonth() + 1
+  let anio = hoy.getFullYear()
+  if (fechaSueldo > 1 && hoy.getDate() >= fechaSueldo) {
+    mes += 1
+    if (mes > 12) { mes = 1; anio += 1 }
+  }
+  return { mes, anio }
+}
+
+/** "28 sep – 27 oct" para mostrar el rango de un período. */
+export function etiquetaRangoPeriodo(mes: number, anio: number, fechaSueldo = 1): string {
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+  const { start, end } = getPeriodoPresupuestal(mes, anio, fechaSueldo)
+  const f = (iso: string) => { const [, m, d] = iso.split('-').map(Number); return `${d} ${meses[m - 1]}` }
+  return `${f(start)} – ${f(end)}`
 }
 
 export function labelMesAnio(mes: number, anio: number): string {

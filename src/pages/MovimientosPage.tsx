@@ -8,7 +8,9 @@ import { MovimientoForm } from '@/components/modules/movimientos/MovimientoForm'
 import { SkeletonList } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Button } from '@/components/ui/Button'
-import { useMovimientos, useMovimientosDelMes } from '@/hooks/useMovimientos'
+import { useMovimientos, useMovimientosPorPeriodo } from '@/hooks/useMovimientos'
+import { useAuthStore } from '@/store/authStore'
+import { getCurrentMesAnio, etiquetaRangoPeriodo } from '@/utils/periodo'
 import { useCuentas } from '@/hooks/useCuentas'
 import { useResumenCompartidos } from '@/hooks/useGastosCompartidos'
 import { ExportarExcelModal } from '@/components/modules/movimientos/ExportarExcelModal'
@@ -37,7 +39,11 @@ export function MovimientosPage() {
 
   // Datos — movimientos SIN filtro server-side (filtramos client-side)
   const { data: todosMovimientos, isLoading } = useMovimientos()
-  const { data: movimientosMes }              = useMovimientosDelMes()
+  const { profile } = useAuthStore()
+  const fechaSueldo = profile?.fecha_sueldo ?? 1
+  const { mes: mesP, anio: anioP } = getCurrentMesAnio(fechaSueldo)
+  const rangoPeriodo = etiquetaRangoPeriodo(mesP, anioP, fechaSueldo)
+  const { data: movimientosMes }              = useMovimientosPorPeriodo(mesP, anioP, fechaSueldo)   // período, no mes calendario
   const { data: cuentas }                     = useCuentas()
 
   // Resumen del mes
@@ -141,7 +147,7 @@ export function MovimientosPage() {
               <div className="rounded-2xl border border-night-border bg-night-2 px-3 py-2.5">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">
-                    {flujoNeto >= 0 ? 'Disponible del período' : 'Déficit del período'}
+                    {flujoNeto >= 0 ? 'Disponible del período' : 'Déficit del período'} <span className="normal-case font-normal text-slate-600">· {rangoPeriodo}</span>
                   </p>
                   <p className={`text-sm font-bold tabular-nums ${flujoNeto >= 0 ? 'text-ingreso-400' : 'text-gasto-400'}`}>
                     {flujoNeto >= 0 ? '' : '-'}{formatCLP(Math.abs(flujoNeto))}

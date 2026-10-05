@@ -98,8 +98,8 @@ export function useAsignarFondosObjetivo() {
  */
 export function useAportesObjetivosMes() {
   const { user, profile } = useAuthStore()
-  const { mes, anio }     = getCurrentMesAnio()
   const fechaSueldo       = profile?.fecha_sueldo ?? 1
+  const { mes, anio }     = getCurrentMesAnio(fechaSueldo)
   const { start, end }    = getPeriodoPresupuestal(mes, anio, fechaSueldo)
 
   return useQuery({

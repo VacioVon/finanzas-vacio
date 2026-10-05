@@ -11,7 +11,9 @@ import { DeudasWidget } from '@/components/modules/home/DeudasWidget'
 import { CuotasWidget } from '@/components/modules/home/CuotasWidget'
 import { SuscripcionesWidget } from '@/components/modules/home/SuscripcionesWidget'
 import { CultivationTree } from '@/components/modules/home/CultivationTree'
-import { useMovimientosDelMes } from '@/hooks/useMovimientos'
+import { useMovimientosPorPeriodo } from '@/hooks/useMovimientos'
+import { useAuthStore } from '@/store/authStore'
+import { getCurrentMesAnio } from '@/utils/periodo'
 import { useAportesObjetivosMes } from '@/hooks/useObjetivos'
 import { useResumenCompartidos } from '@/hooks/useGastosCompartidos'
 import { esIngresoPersonal } from '@/utils/gastosCompartidos'
@@ -27,7 +29,10 @@ function ZoneSeparator({ label }: { label: string }) {
 }
 
 export function HomePage() {
-  const { data: movimientosMes }   = useMovimientosDelMes()
+  const { profile } = useAuthStore()
+  const fechaSueldo = profile?.fecha_sueldo ?? 1
+  const { mes: mesP, anio: anioP } = getCurrentMesAnio(fechaSueldo)
+  const { data: movimientosMes }   = useMovimientosPorPeriodo(mesP, anioP, fechaSueldo)   // período, no mes calendario
   const { data: aportesMes }       = useAportesObjetivosMes()
 
   const ingresos = (movimientosMes ?? [])

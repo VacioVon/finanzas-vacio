@@ -9,10 +9,12 @@ import { PresupuestoCard } from '@/components/modules/presupuestos/PresupuestoCa
 import { PresupuestoForm } from '@/components/modules/presupuestos/PresupuestoForm'
 import { usePresupuestosMes } from '@/hooks/usePresupuestos'
 import { getCurrentMesAnio, navegarMes, labelMesAnio } from '@/utils/periodo'
+import { useAuthStore } from '@/store/authStore'
 import { formatCLP } from '@/utils/currency'
 
 export function PresupuestosPage() {
-  const { mes: mesHoy, anio: anioHoy } = getCurrentMesAnio()
+  const { profile } = useAuthStore()
+  const { mes: mesHoy, anio: anioHoy } = getCurrentMesAnio(profile?.fecha_sueldo ?? 1)
   const [mes,  setMes]  = useState(mesHoy)
   const [anio, setAnio] = useState(anioHoy)
   const [formOpen, setFormOpen] = useState(false)

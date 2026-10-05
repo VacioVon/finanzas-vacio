@@ -151,13 +151,13 @@ function agruparPorCategoria(movimientos: Movimiento[]): CatData[] {
 
 export function AnalisisPage() {
   const { profile } = useAuthStore()
-  const [{ mes, anio }, setMesAnio] = useState(getCurrentMesAnio())
-
   const fechaSueldo = profile?.fecha_sueldo ?? 1
+  const [{ mes, anio }, setMesAnio] = useState(getCurrentMesAnio(fechaSueldo))
+
   const { data: movimientos, isLoading } = useMovimientosPorPeriodo(mes, anio, fechaSueldo)
   const { data: evolucion }              = useEvolucionMensual(6)
 
-  const now = getCurrentMesAnio()
+  const now = getCurrentMesAnio(fechaSueldo)
   const esMesActual = mes === now.mes && anio === now.anio
 
   function navegar(delta: 1 | -1) {

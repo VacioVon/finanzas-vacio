@@ -3,11 +3,13 @@ import { ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { usePresupuestosMes } from '@/hooks/usePresupuestos'
 import { getCurrentMesAnio, labelMesAnio } from '@/utils/periodo'
+import { useAuthStore } from '@/store/authStore'
 import { formatCLP } from '@/utils/currency'
 
 export function PresupuestosWidget() {
   const navigate = useNavigate()
-  const { mes, anio } = getCurrentMesAnio()
+  const { profile } = useAuthStore()
+  const { mes, anio } = getCurrentMesAnio(profile?.fecha_sueldo ?? 1)
   const { data: presupuestos, isLoading } = usePresupuestosMes(mes, anio)
 
   if (isLoading) return null

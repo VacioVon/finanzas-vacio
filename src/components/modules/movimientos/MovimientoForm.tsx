@@ -827,47 +827,8 @@ export function MovimientoForm({
             />
           </div>
 
-          {/* Origen del dinero — gastos, pagos de deuda y pago tarjeta */}
-          {(tipo === 'gasto' || pagoDeuda || tipo === 'pago_tarjeta') && (
-            <div>
-              <p className={`${labelDark} mb-2`}>
-                Origen del dinero{' '}
-                <span className="text-slate-600 font-normal normal-case">(opcional)</span>
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                {([
-                  { value: 'sueldo'               as OrigenDinero, label: 'Sueldo',       emoji: '💼' },
-                  { value: 'ahorro'               as OrigenDinero, label: 'Ahorro',        emoji: '🏦' },
-                  { value: 'transferencia_externa' as OrigenDinero, label: 'Transferencia', emoji: '📥' },
-                  { value: 'objetivo'             as OrigenDinero, label: 'Objetivo',      emoji: '🎯' },
-                  { value: 'prestamo'             as OrigenDinero, label: 'Préstamo',      emoji: '🤝' },
-                  { value: 'otro'                 as OrigenDinero, label: 'Otro',          emoji: '📦' },
-                ] as const).map(op => {
-                  const active = origenDinero === op.value
-                  return (
-                    <button
-                      key={op.value}
-                      type="button"
-                      onClick={() => setOrigenDinero(active ? null : op.value)}
-                      className="flex flex-col items-center gap-1 p-2.5 rounded-xl border text-center transition-all"
-                      style={{
-                        borderColor:     active ? '#2979FF50' : '#3D3B50',
-                        backgroundColor: active ? '#2979FF12' : 'transparent',
-                      }}
-                    >
-                      <span className="text-base">{op.emoji}</span>
-                      <span
-                        className="text-[10px] font-semibold leading-tight"
-                        style={{ color: active ? '#2979FF' : '#64748B' }}
-                      >
-                        {op.label}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+          {/* El selector "Origen del dinero" se quitó del formulario: era solo una etiqueta informativa que ningún cálculo usaba.
+              Los movimientos que ya la tienen la siguen mostrando en su tarjeta. */}
 
           {/* Gastos compartidos — solo gastos directos, sin tarjeta */}
           {tipo === 'gasto' && !pagoDeuda && !editingMovimiento && (
