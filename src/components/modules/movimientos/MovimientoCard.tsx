@@ -12,6 +12,7 @@ import { useGastosCompartidos } from '@/hooks/useGastosCompartidos'
 import { useCuentasPorCobrar } from '@/hooks/useCobros'
 import { esGastoCompartidoPagadoTotal, resumenGastoCompartido } from '@/utils/gastosCompartidos'
 import { formatCLP } from '@/utils/currency'
+import { esSobranteAMiDinero } from '@/utils/saldoTerceros'
 
 interface MovimientoCardProps {
   movimiento: Movimiento
@@ -166,6 +167,8 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
   const { data: compartidos } = useGastosCompartidos()
   const { data: cobrar }      = useCuentasPorCobrar()
   const gc = mov.tipo === 'gasto' ? (compartidos ?? []).find(g => g.movimiento_id === mov.id) : undefined
+  const sobrante = esSobranteAMiDinero(mov)                 // sobrante de terceros que me quedé = ingreso
+  const tipoMostrado = sobrante ? 'ingreso' : mov.tipo
   const resumenCompartido = gc && esGastoCompartidoPagadoTotal(gc) ? resumenGastoCompartido(gc, cobrar ?? []) : null
 
   function handleDelete() {
@@ -175,7 +178,7 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
 
   return (
     <>
-      <Card padding="sm" className={`relative ${tipoBorderL[mov.tipo] ?? ''}`}>
+      <Card padding="sm" className={`relative ${tipoBorderL[tipoMostrado] ?? ''}`}>
         <div className="flex items-center gap-3">
           {/* Ícono categoría */}
           <div
@@ -191,11 +194,11 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
               <p className="text-sm font-semibold text-slate-200 truncate">
                 {mov.tipo === 'transferencia'
                   ? `${mov.cuenta?.nombre ?? '?'} → ${mov.cuenta_destino?.nombre ?? '?'}`
-                  : (mov.categoria?.nombre ?? 'Sin categoría')
+                  : sobrante ? 'Sobrante de terceros' : (mov.categoria?.nombre ?? 'Sin categoría')
                 }
               </p>
-              <Badge variant={tipoBadgeVariant[mov.tipo] ?? 'muted'} className="flex-shrink-0">
-                {tipoLabel[mov.tipo] ?? mov.tipo}
+              <Badge variant={tipoBadgeVariant[tipoMostrado] ?? 'muted'} className="flex-shrink-0">
+                {tipoLabel[tipoMostrado] ?? tipoMostrado}
               </Badge>
             </div>
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -223,7 +226,7 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
                 {/* Pagado con (o recibido de) dinero de terceros: no es gasto ni ingreso propio */}
                 {mov.fondos_tercero && !mov.para_tercero && (
                   <Badge variant="xp">
-                    👥 {mov.tipo === 'ingreso' ? 'Dinero de terceros' : 'Gasto de terceros'}
+                    👥 {sobrante ? 'Era de terceros' : mov.tipo === 'ingreso' ? 'Dinero de terceros' : 'Gasto de terceros'}
                   </Badge>
                 )}
                 {mov.comision > 0 && (
@@ -265,7 +268,7 @@ export function MovimientoCard({ movimiento: mov }: MovimientoCardProps) {
           {/* Monto + acciones */}
           <div className="flex items-center gap-1 flex-shrink-0">
             {mov.comprobante_url && <ComprobanteIcon url={mov.comprobante_url} />}
-            <CurrencyDisplay amount={mov.monto} size="sm" showSign tipo={mov.tipo} />
+            <CurrencyDisplay amount={mov.monto} size="sm" showSign tipo={tipoMostrado} />
             <button
               ref={btnRef}
               onClick={() => setMenuOpen(o => !o)}

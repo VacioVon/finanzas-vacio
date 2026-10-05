@@ -83,3 +83,42 @@ describe('montoParaMi (cuánto del sobrante pasa a mi dinero)', () => {
   it('acepta puntos de miles escritos a mano y redondea', () => expect(montoParaMi('1.5', 500)).toBe(2))
   it('con sobrante 0 siempre es 0', () => expect(montoParaMi(100, 0)).toBe(0))
 })
+
+import { esSobranteAMiDinero, notaSobrante, MARCA_SOBRANTE } from '../utils/saldoTerceros'
+import { esIngresoPersonal, esGastoPersonal } from '../utils/gastosCompartidos'
+import { clasificar } from '../utils/exportExcel'
+import type { Movimiento } from '../types/app.types'
+
+describe('sobrante que me quedo (se registra como ingreso)', () => {
+  const sobrante = { tipo: 'gasto', monto: 845, fondos_tercero: true, cuenta_id: null, nota: notaSobrante('Banco Falabella Débito ') } as unknown as Movimiento
+
+  it('la nota dice a qué cuenta queda y lleva la marca', () => {
+    expect(sobrante.nota).toBe(`${MARCA_SOBRANTE} Pasa a mi dinero · queda en Banco Falabella Débito`)
+    expect(notaSobrante(null)).toBe(`${MARCA_SOBRANTE} Pasa a mi dinero`)
+  })
+  it('se reconoce solo si es egreso de terceros, sin cuenta y con la marca', () => {
+    expect(esSobranteAMiDinero(sobrante)).toBe(true)
+    expect(esSobranteAMiDinero({ ...sobrante, cuenta_id: 'c1' })).toBe(false)      // con cuenta movería saldos: no es este caso
+    expect(esSobranteAMiDinero({ ...sobrante, fondos_tercero: false })).toBe(false)
+    expect(esSobranteAMiDinero({ ...sobrante, nota: 'otra cosa' })).toBe(false)
+    expect(esSobranteAMiDinero({ ...sobrante, tipo: 'ingreso' })).toBe(false)
+  })
+  it('cuenta como INGRESO propio y no como gasto', () => {
+    expect(esIngresoPersonal(sobrante)).toBe(true)
+    expect(esGastoPersonal(sobrante)).toBe(false)
+    expect(clasificar(sobrante)).toBe('Ingreso personal')
+  })
+  it('un gasto normal con dinero de terceros sigue sin ser ni ingreso ni gasto propio', () => {
+    const g = { tipo: 'gasto', monto: 7500, fondos_tercero: true, cuenta_id: 'c1', nota: 'WiFi' } as unknown as Movimiento
+    expect(esIngresoPersonal(g)).toBe(false)
+    expect(esGastoPersonal(g)).toBe(false)
+    expect(clasificar(g)).toBe('Gasto con dinero de terceros (excluido de mi gasto)')
+  })
+  it('baja el saldo de terceros: $845 de sobrante dejan el saldo en 0', () => {
+    const s = calcularSaldoTerceros([
+      m('ingreso', 8345, '2026-10-05'), m('pago_deuda', 7500, '2026-10-06'),
+      m('gasto', 845, '2026-10-06', { cuenta_id: null, created_at: '2026-10-06T12:00:00Z' }),
+    ])
+    expect(s.disponible).toBe(0)
+  })
+})

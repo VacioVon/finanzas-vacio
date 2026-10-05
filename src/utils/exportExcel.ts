@@ -7,6 +7,7 @@ import {
   resumenGastoCompartido,
 } from '@/utils/gastosCompartidos'
 import { calcularPlanCuotas } from '@/utils/planCuotas'
+import { esSobranteAMiDinero } from '@/utils/saldoTerceros'
 import { getPeriodoPresupuestal } from '@/utils/periodo'
 import {
   hojaDeudas, hojaPagosDeuda, hojaCompromisos, hojaIngresosRecurrentes, hojaIngresosEsperados,
@@ -65,6 +66,7 @@ export type Clasificacion =
   | 'Ahorro'
 
 export function clasificar(m: Movimiento): Clasificacion {
+  if (esSobranteAMiDinero(m)) return 'Ingreso personal'   // sobrante de terceros que me quedé
   const cat = m.categoria?.nombre
   switch (m.tipo) {
     case 'ingreso':
@@ -188,7 +190,7 @@ export function construirLibro(d: DatosExport): Hoja[] {
       return {
         fecha: aFecha(m.fecha),
         periodo: periodoDe(m.fecha, d.fechaSueldo).clave,
-        tipo: TIPO_LABEL[m.tipo] ?? m.tipo,
+        tipo: esSobranteAMiDinero(m) ? 'Ingreso' : (TIPO_LABEL[m.tipo] ?? m.tipo),
         cls: c.cls,
         cat: m.categoria?.nombre ?? null,
         sub: m.subcategoria?.nombre ?? null,

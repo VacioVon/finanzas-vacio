@@ -1,4 +1,5 @@
 import type { GastoCompartido, CuentaPorCobrar, Movimiento } from '@/types/app.types'
+import { esSobranteAMiDinero } from '@/utils/saldoTerceros'
 
 /** Categoría de sistema con la que registrar_cobro_recibido marca el dinero recuperado. */
 export const CATEGORIA_RECUPERACION = 'Recuperación de dinero'
@@ -69,7 +70,8 @@ export function resumenCompartidosPeriodo(
 }
 
 /** Ingreso propio: no es dinero devuelto ("Recuperación de dinero") ni dinero de terceros. */
-export function esIngresoPersonal(m: Pick<Movimiento, 'tipo' | 'categoria'> & { fondos_tercero?: boolean }): boolean {
+export function esIngresoPersonal(m: Pick<Movimiento, 'tipo' | 'categoria'> & { fondos_tercero?: boolean; nota?: string | null; cuenta_id?: string | null }): boolean {
+  if (esSobranteAMiDinero(m)) return true   // sobrante de terceros que el usuario se quedó
   return m.tipo === 'ingreso' && m.categoria?.nombre !== CATEGORIA_RECUPERACION && !m.fondos_tercero
 }
 

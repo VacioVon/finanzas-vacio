@@ -66,3 +66,21 @@ export function montoParaMi(texto: string | number, sobrante: number): number {
   if (!Number.isFinite(n) || n <= 0) return 0
   return Math.min(Math.round(n), Math.max(0, Math.round(sobrante)))
 }
+
+// ─── Sobrante que pasa a ser dinero propio ───────────────────────
+//
+// Cuando el usuario se queda con un sobrante de dinero de terceros, el dinero ya está en una cuenta
+// real (no se mueve). Se registra UN movimiento sin cuenta, con esta marca en la nota, que:
+//  - baja el saldo de terceros (para eso es un "egreso" de terceros),
+//  - se muestra y se cuenta como INGRESO propio (te lo quedas),
+//  - no toca ningún saldo de cuenta (no hay cuenta asociada, así que nada se suma ni se resta).
+
+export const MARCA_SOBRANTE = '[SOBRANTE DE TERCEROS]'
+
+export function notaSobrante(cuentaNombre: string | null): string {
+  return `${MARCA_SOBRANTE} Pasa a mi dinero${cuentaNombre ? ` · queda en ${cuentaNombre.trim()}` : ''}`
+}
+
+export function esSobranteAMiDinero(m: { tipo: string; fondos_tercero?: boolean; nota?: string | null; cuenta_id?: string | null }): boolean {
+  return m.tipo === 'gasto' && !!m.fondos_tercero && !m.cuenta_id && !!m.nota && m.nota.startsWith(MARCA_SOBRANTE)
+}
