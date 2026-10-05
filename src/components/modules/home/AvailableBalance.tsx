@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay'
-import { useCuentas } from '@/hooks/useCuentas'
+import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
 import { calcularDineroDisponible } from '@/utils/financial'
 import { iconoCuenta } from '@/utils/financial'
 import { formatCLP } from '@/utils/currency'
 
 export function AvailableBalance() {
   const { data: cuentas, isLoading } = useCuentas()
+  const { data: terceros } = useSaldoTerceros()
   const [hidden,   setHidden]   = useState(false)
   const [expanded, setExpanded] = useState(false)
 
@@ -71,6 +72,12 @@ export function AvailableBalance() {
           {!hidden && (
             <p className={`text-xs font-medium mb-3 ${indicatorColor}`}>
               {indicatorLabel}
+            </p>
+          )}
+
+          {!hidden && terceros && terceros.disponible > 0 && (
+            <p className="text-[11px] text-blue-100/90 mb-3 tabular-nums" data-testid="linea-terceros">
+              Incluye {formatCLP(terceros.disponible)} de terceros → <span className="font-semibold text-white">tuyo: {formatCLP(total - terceros.disponible)}</span>
             </p>
           )}
 

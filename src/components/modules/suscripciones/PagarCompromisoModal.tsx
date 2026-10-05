@@ -12,6 +12,7 @@ import { useRegistrarPagoCompromiso, useRegistrarPagoCompromisoConDeuda, useMarc
 import { useDeudas } from '@/hooks/useDeudas'
 import { PagoRegistradoSinMarcarError } from '@/services/suscripciones.service'
 import { sobranteTrasPago } from '@/utils/saldoTerceros'
+import { TercerosToggle } from '@/components/ui/TercerosToggle'
 import { SobranteTercerosModal } from '@/components/modules/movimientos/SobranteTercerosModal'
 import { deudasPagablesDeTarjeta, validarPagoConDeuda, resumenPagoConDeuda } from '@/utils/pagoCompromisoDeuda'
 import { todayISO } from '@/utils/dates'
@@ -48,9 +49,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
     ? (cuentas ?? []).find(c => c.id === saldoTerceros.primaryCuentaId)?.nombre ?? null
     : null
 
-  const virtualTerceros = saldoTerceros && saldoTerceros.disponible > 0
-    ? { disponible: saldoTerceros.disponible, primaryCuentaId: saldoTerceros.primaryCuentaId, primaryCuentaNombre }
-    : null
+  const virtualTerceros = null   // ya no hay billetera virtual: se usa el interruptor "Es dinero de terceros"
   const [paso, setPaso]      = useState<Paso>('formulario')
   const [error, setError]    = useState<string | null>(null)
   const [cuentaFinal, setCuentaFinal] = useState<Cuenta | null>(null)
@@ -62,7 +61,8 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   const [modo, setModo]           = useState<'cuenta' | 'deuda'>('cuenta')
   const [deudaId, setDeudaId]     = useState<string>('')
   const [pendienteMarcar, setPendienteMarcar] = useState<string | null>(null)
-  const [sobrante, setSobrante] = useState<number | null>(null)   // dinero de terceros que sobró tras pagar   // pago hecho, falta marcar compromiso
+  const [sobrante, setSobrante] = useState<number | null>(null)   // (sin uso: ya no hay billetera virtual)
+  const [deTerceros, setDeTerceros] = useState(false)   // pago hecho, falta marcar compromiso
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -82,7 +82,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
     if (isOpen && !wasOpen.current) {
       setPaso('formulario')
       setError(null)
-      setModo('cuenta'); setDeudaId(''); setPendienteMarcar(null)
+      setModo('cuenta'); setDeudaId(''); setPendienteMarcar(null); setDeTerceros(false)
       reset({
         fecha:     todayISO(),
         monto:     compromiso?.monto ?? 0,
@@ -124,7 +124,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
       try {
         await pagarConDeudaMutation.mutateAsync({
           compromiso, deudaId: deudaElegida.deuda.id,
-          pago: { cuenta_id: cuentaFinal.id, monto: montoFinal, fecha: watch('fecha'), nota: watch('nota') || undefined },
+          pago: { cuenta_id: cuentaFinal.id, monto: montoFinal, fecha: watch('fecha'), nota: watch('nota') || undefined, fondos_tercero: deTerceros },
         })
         setPaso('exito')
       } catch (e: unknown) {
@@ -141,7 +141,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
         monto:          montoFinal,
         fecha:          watch('fecha'),
         nota:           watch('nota') || undefined,
-        fondos_tercero: esTerceros,
+        fondos_tercero: esTerceros || deTerceros,
       }
       await pagarMutation.mutateAsync({ compromiso, pago: data })
       if (esTerceros && saldoTerceros) {
@@ -315,6 +315,8 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
               </p>
             </div>
           )}
+
+          <TercerosToggle value={deTerceros} onChange={setDeTerceros} ayuda="Pago con plata de otra persona (no es mi gasto)" />
 
           {/* Fecha */}
           <Input

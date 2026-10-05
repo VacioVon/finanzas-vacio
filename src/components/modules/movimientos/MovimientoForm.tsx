@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { FileUploader } from '@/components/ui/FileUploader'
+import { TercerosToggle } from '@/components/ui/TercerosToggle'
 import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
 import { useCategoriasByTipo } from '@/hooks/useCategorias'
 import { useCreateMovimiento, useUpdateMovimiento } from '@/hooks/useMovimientos'
@@ -234,7 +235,7 @@ export function MovimientoForm({
 
   const mostrarCuotas    = tipo === 'gasto' && esTarjeta && !editingMovimiento
   const mostrarTercero   = tipo === 'gasto' && !editingMovimiento
-  const mostrarFondos    = tipo === 'ingreso' && !editingMovimiento
+  const mostrarFondos    = tipo === 'ingreso' || tipo === 'gasto'   // también al editar: sirve para marcar movimientos ya registrados
   const mostrarTransf    = tipo === 'transferencia' || tipo === 'pago_tarjeta'
   const mostrarCategoria = tipo !== 'transferencia' && tipo !== 'pago_tarjeta' && !pagoDeuda
 
@@ -244,9 +245,8 @@ export function MovimientoForm({
     ? (cuentas ?? []).find(c => c.id === saldoTerceros.primaryCuentaId)?.nombre ?? null
     : null
 
-  const virtualTercerosForm = tipo === 'gasto' && saldoTerceros && saldoTerceros.disponible > 0
-    ? { disponible: saldoTerceros.disponible, primaryCuentaId: saldoTerceros.primaryCuentaId, primaryCuentaNombre: primaryCuentaNombreForm }
-    : null
+  // Ya no existe la billetera virtual de terceros: se marca el movimiento con el interruptor "Es dinero de terceros"
+  const virtualTercerosForm = null
 
   const montoCuota     = monto > 0 && cuotasTotal >= 1 ? Math.ceil(monto / cuotasTotal) : 0
   const registrarCuota = mostrarCuotas && cuotasTotal >= 1
@@ -279,6 +279,7 @@ export function MovimientoForm({
       setComprobante(editingMovimiento?.comprobante_url ?? null)
       // Al editar se conserva a qué deuda pertenece el pago (antes se perdía al guardar)
       if (editingMovimiento) {
+        setFondosTercero(!!editingMovimiento.fondos_tercero)
         setDeudaVinculada(editingMovimiento.deuda_id ?? null)
         setContextoPago(editingMovimiento.contexto_pago ?? null)
       }
@@ -354,7 +355,8 @@ export function MovimientoForm({
       tercero_nombre:    skipDetalles ? undefined : (mostrarTercero && paraTercero && terceroNombre.trim()
         ? terceroNombre.trim()
         : undefined),
-      fondos_tercero:    esTerceros ? true : (skipDetalles ? false : (mostrarFondos ? fondosTercero : false)),
+      // Al editar con "Guardar sin detalles" no se toca la marca existente
+      fondos_tercero:    esTerceros ? true : (skipDetalles ? (editingMovimiento ? undefined : false) : (mostrarFondos ? fondosTercero : false)),
       contexto_pago:     (!skipDetalles && mostrarContexto) ? contextoPago ?? undefined : undefined,
       deuda_id:          (!skipDetalles && mostrarContexto) ? deudaVinculada ?? undefined : undefined,
       compromiso_id:     (!skipDetalles && tipo === 'gasto' && !pagoDeuda) ? compromisoVinculado ?? undefined : undefined,
@@ -1031,38 +1033,15 @@ export function MovimientoForm({
             </div>
           )}
 
-          {/* Fondos de tercero — ingreso */}
+          {/* Dinero de terceros: no cuenta en mis estadísticas (ingreso o gasto) */}
           {mostrarFondos && (
-            <div className={[
-              'rounded-2xl border transition-all',
-              fondosTercero
-                ? 'border-ingreso-500/40 bg-ingreso-500/8'
-                : 'border-night-border bg-night-3'
-            ].join(' ')}>
-              <button
-                type="button"
-                onClick={() => setFondosTercero(v => !v)}
-                className="w-full flex items-center gap-3 px-4 py-3"
-              >
-                <div className={[
-                  'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all',
-                  fondosTercero ? 'bg-ingreso-500 border-ingreso-500' : 'border-slate-600'
-                ].join(' ')}>
-                  {fondosTercero && <span className="text-night-0 text-[10px] font-bold">✓</span>}
-                </div>
-                <div className="flex items-center gap-2 flex-1 text-left">
-                  <Users className={`h-4 w-4 ${fondosTercero ? 'text-ingreso-400' : 'text-slate-600'}`} />
-                  <div>
-                    <p className={`text-xs font-semibold ${fondosTercero ? 'text-ingreso-300' : 'text-slate-400'}`}>
-                      Fondos de tercero
-                    </p>
-                    <p className="text-[10px] text-slate-600">
-                      Ingreso recibido en nombre de otra persona
-                    </p>
-                  </div>
-                </div>
-              </button>
-            </div>
+            <TercerosToggle
+              value={fondosTercero}
+              onChange={setFondosTercero}
+              ayuda={tipo === 'ingreso'
+                ? 'Me transfirieron plata que es de otra persona (no es mi ingreso)'
+                : 'Lo pagué con plata de otra persona (no es mi gasto)'}
+            />
           )}
 
           {/* Vincular a compromiso — solo gastos manuales */}

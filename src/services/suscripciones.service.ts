@@ -220,6 +220,7 @@ export interface PagoConDeudaData {
   monto:     number
   fecha:     string
   nota?:     string
+  fondos_tercero?: boolean   // pagado con plata de terceros: no cuenta como gasto propio
 }
 
 /** El dinero ya se movió bien, pero no se pudo marcar el compromiso: se puede reintentar solo ese paso. */
@@ -283,6 +284,7 @@ export async function registrarPagoCompromisoConDeuda(
       deuda_id:        deudaId,
       compromiso_id:   compromiso.id,
       contexto_pago:   'deuda_propia',
+      fondos_tercero:  pago.fondos_tercero ?? false,
       categoria_id:    compromiso.categoria_id    || null,
       subcategoria_id: compromiso.subcategoria_id || null,
       nota:            pago.nota ?? `Pago: ${compromiso.nombre} · ${deuda.nombre.trim()}`,

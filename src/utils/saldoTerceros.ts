@@ -76,11 +76,14 @@ export function montoParaMi(texto: string | number, sobrante: number): number {
 //  - no toca ningún saldo de cuenta (no hay cuenta asociada, así que nada se suma ni se resta).
 
 export const MARCA_SOBRANTE = '[SOBRANTE DE TERCEROS]'
+/** Texto que usó la primera versión del traspaso (sin marca). */
+const NOTA_SOBRANTE_ANTIGUA = 'Sobrante de dinero de terceros pasa a mi dinero'
 
 export function notaSobrante(cuentaNombre: string | null): string {
   return `${MARCA_SOBRANTE} Pasa a mi dinero${cuentaNombre ? ` · queda en ${cuentaNombre.trim()}` : ''}`
 }
 
 export function esSobranteAMiDinero(m: { tipo: string; fondos_tercero?: boolean; nota?: string | null; cuenta_id?: string | null }): boolean {
-  return m.tipo === 'gasto' && !!m.fondos_tercero && !m.cuenta_id && !!m.nota && m.nota.startsWith(MARCA_SOBRANTE)
+  return m.tipo === 'gasto' && !!m.fondos_tercero && !m.cuenta_id && !!m.nota &&
+    (m.nota.startsWith(MARCA_SOBRANTE) || m.nota === NOTA_SOBRANTE_ANTIGUA)
 }

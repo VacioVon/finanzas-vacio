@@ -122,3 +122,12 @@ describe('sobrante que me quedo (se registra como ingreso)', () => {
     expect(s.disponible).toBe(0)
   })
 })
+
+describe('sobrante creado por la primera versión (nota sin marca)', () => {
+  it('los $845 ya registrados se reconocen como ingreso mío', () => {
+    const viejo = { tipo: 'gasto', monto: 845, fondos_tercero: true, cuenta_id: null, nota: 'Sobrante de dinero de terceros pasa a mi dinero' } as unknown as Movimiento
+    expect(esSobranteAMiDinero(viejo)).toBe(true)
+    expect(esIngresoPersonal(viejo)).toBe(true)
+    expect(clasificar(viejo)).toBe('Ingreso personal')
+  })
+})

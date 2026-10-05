@@ -252,6 +252,8 @@ export async function updateMovimiento(
     comision:           form.comision       !== undefined ? form.comision        : original.comision,
     para_tercero:       r.paraTercero,
     tercero_nombre:     r.terceroNombre,
+    // Marca "dinero de terceros": solo afecta estadísticas, nunca saldos
+    fondos_tercero:     form.fondos_tercero !== undefined ? form.fondos_tercero : original.fondos_tercero,
     updated_at:         new Date().toISOString()
   }
 

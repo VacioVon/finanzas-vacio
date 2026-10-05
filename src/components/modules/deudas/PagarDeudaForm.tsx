@@ -13,6 +13,7 @@ import { useSaldoTerceros } from '@/hooks/useCuentas'
 import { formatCLP } from '@/utils/currency'
 import { todayISO } from '@/utils/dates'
 import { sobranteTrasPago } from '@/utils/saldoTerceros'
+import { TercerosToggle } from '@/components/ui/TercerosToggle'
 import { SobranteTercerosModal } from '@/components/modules/movimientos/SobranteTercerosModal'
 import { montoProximaCuota } from '@/utils/planCuotas'
 import type { Deuda } from '@/types/app.types'
@@ -41,7 +42,8 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
   const { data: cuentas }        = useCuentas()
   const { data: saldoTerceros }  = useSaldoTerceros()
   const createMov                = useCreateMovimiento()
-  const [sobrante, setSobrante]  = useState<number | null>(null)   // dinero de terceros que sobró tras pagar
+  const [sobrante, setSobrante]  = useState<number | null>(null)   // (sin uso: ya no hay billetera virtual)
+  const [deTerceros, setDeTerceros] = useState(false)
 
   const cuentasPago = (cuentas ?? []).filter(c => c.activa && c.tipo !== 'inversion')
 
@@ -49,9 +51,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
     ? (cuentas ?? []).find(c => c.id === saldoTerceros.primaryCuentaId)?.nombre ?? null
     : null
 
-  const virtualTerceros = saldoTerceros && saldoTerceros.disponible > 0
-    ? { disponible: saldoTerceros.disponible, primaryCuentaId: saldoTerceros.primaryCuentaId, primaryCuentaNombre }
-    : null
+  const virtualTerceros = null   // ya no hay billetera virtual: se usa el interruptor "Es dinero de terceros"
 
   const realPagado    = deuda.monto_pagado_real    ?? Math.max(0, deuda.monto_total - deuda.monto_pendiente)
   const realPendiente = deuda.monto_pendiente_real ?? Math.max(0, deuda.monto_total - realPagado)
@@ -70,6 +70,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
 
   useEffect(() => {
     if (isOpen) {
+      setDeTerceros(false)
       reset({
         monto:     montoProximaCuota(realPendiente, deuda.cuota_mensual),
         fecha:     todayISO(),
@@ -91,7 +92,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
         cuenta_id:      cuentaFinal,
         deuda_id:       deuda.id,
         nota:           data.nota || undefined,
-        fondos_tercero: esTerceros,
+        fondos_tercero: esTerceros || deTerceros,
       })
       // Pagó con dinero de terceros: si sobra, se pregunta si queda para el usuario
       if (esTerceros && saldoTerceros) {
@@ -208,6 +209,8 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
             </p>
           </div>
         )}
+
+        <TercerosToggle value={deTerceros} onChange={setDeTerceros} ayuda="Pago con plata de otra persona (no es mi gasto)" />
 
         {/* Fecha */}
         <div>
