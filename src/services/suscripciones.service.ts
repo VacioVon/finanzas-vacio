@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import type { Suscripcion, SuscripcionFormData } from '@/types/app.types'
 import { addDays, addMonths, addWeeks, addYears, format, parseISO, setDate } from 'date-fns'
+import { validarPagoConDeuda } from '@/utils/pagoCompromisoDeuda'
 
 export interface PagoCompromisoHistorial {
   id:            string
@@ -188,12 +189,17 @@ export async function registrarPagoCompromiso(
   if (rpcError) throw new Error(rpcError.message)
 
   // 3. Avanzar proxima_fecha
+  await marcarCompromisoPagado(compromiso, pago.fecha)
+}
+
+/** Deja el compromiso como pagado: avanza proxima_fecha al siguiente ciclo y guarda el último pago. */
+export async function marcarCompromisoPagado(compromiso: Suscripcion, fechaPago: string): Promise<void> {
   const base      = compromiso.proxima_fecha ? parseISO(compromiso.proxima_fecha) : new Date()
   const siguiente = avanzarFecha(base, compromiso.frecuencia, compromiso.dia_cobro)
 
   const updates: Record<string, unknown> = {
     proxima_fecha:     format(siguiente, 'yyyy-MM-dd'),
-    ultimo_pago_fecha: pago.fecha,
+    ultimo_pago_fecha: fechaPago,
   }
   if (compromiso.fecha_fin && siguiente > parseISO(compromiso.fecha_fin)) {
     updates.activa = false
@@ -207,12 +213,115 @@ export async function registrarPagoCompromiso(
   if (updErr) throw new Error(updErr.message)
 }
 
+// ─── Pago de un compromiso con una deuda de tarjeta ──────────────
+
+export interface PagoConDeudaData {
+  cuenta_id: string   // cuenta de donde sale el dinero (débito, efectivo…)
+  monto:     number
+  fecha:     string
+  nota?:     string
+}
+
+/** El dinero ya se movió bien, pero no se pudo marcar el compromiso: se puede reintentar solo ese paso. */
+export class PagoRegistradoSinMarcarError extends Error {
+  constructor(public movimientoId: string, detalle: string) {
+    super('El pago se registró correctamente, pero no se pudo marcar el compromiso como pagado. ' +
+          'Reintenta ese paso (no vuelve a descontar dinero). Detalle: ' + detalle)
+  }
+}
+
+/**
+ * Paga un compromiso abonando a una deuda ligada a una tarjeta de crédito, con UN solo movimiento:
+ *  1. Crea el movimiento 'pago_deuda' enlazado a la deuda y al compromiso.
+ *  2. procesar_movimiento: baja la cuenta de origen, la deuda y la deuda de la tarjeta (una sola vez).
+ *  3. Avanza el compromiso al siguiente ciclo.
+ * Si falla el paso 2 se deshace el movimiento. Si falla el 3 el dinero ya quedó bien (ver error).
+ */
+export async function registrarPagoCompromisoConDeuda(
+  userId: string,
+  compromiso: Suscripcion,
+  deudaId: string,
+  pago: PagoConDeudaData
+): Promise<{ movimientoId: string }> {
+  // Revalidar contra la base (no confiar en datos de la pantalla)
+  const { data: deuda, error: dErr } = await supabase
+    .from('deudas')
+    .select('id, nombre, estado, monto_total, cuenta:cuentas(tipo, activa)')
+    .eq('id', deudaId)
+    .single()
+  if (dErr) throw new Error(dErr.message)
+  if (deuda.estado === 'pagada') throw new Error('Esa deuda ya está pagada')
+  const tarjeta = deuda.cuenta as unknown as { tipo?: string } | { tipo?: string }[] | null
+  if ((Array.isArray(tarjeta) ? tarjeta[0]?.tipo : tarjeta?.tipo) !== 'credito') {
+    throw new Error('Esa deuda no está ligada a una tarjeta de crédito')
+  }
+
+  const { data: pagosPrevios, error: pErr } = await supabase
+    .from('movimientos')
+    .select('monto')
+    .eq('usuario_id', userId)
+    .eq('tipo', 'pago_deuda')
+    .eq('deuda_id', deudaId)
+  if (pErr) throw new Error(pErr.message)
+  const pendiente = Math.max(0, Number(deuda.monto_total) - (pagosPrevios ?? []).reduce((s, p) => s + Number(p.monto), 0))
+
+  const { data: origen, error: oErr } = await supabase
+    .from('cuentas').select('tipo, activa').eq('id', pago.cuenta_id).single()
+  if (oErr) throw new Error(oErr.message)
+  const invalido = validarPagoConDeuda(pendiente, pago.monto, origen)
+  if (invalido) throw new Error(invalido)
+
+  // 1. Movimiento único y conectado
+  const { data: mov, error: movErr } = await supabase
+    .from('movimientos')
+    .insert({
+      usuario_id:      userId,
+      tipo:            'pago_deuda',
+      fecha:           pago.fecha,
+      monto:           pago.monto,
+      cuenta_id:       pago.cuenta_id,
+      deuda_id:        deudaId,
+      compromiso_id:   compromiso.id,
+      contexto_pago:   'deuda_propia',
+      categoria_id:    compromiso.categoria_id    || null,
+      subcategoria_id: compromiso.subcategoria_id || null,
+      nota:            pago.nota ?? `Pago: ${compromiso.nombre} · ${deuda.nombre.trim()}`,
+    })
+    .select('id')
+    .single()
+  if (movErr) throw new Error(movErr.message)
+
+  // 2. Saldos (cuenta, deuda y tarjeta, una sola vez)
+  const { error: rpcError } = await supabase.rpc('procesar_movimiento', {
+    p_tipo:              'pago_deuda',
+    p_cuenta_id:         pago.cuenta_id,
+    p_cuenta_destino_id: null,
+    p_objetivo_id:       null,
+    p_deuda_id:          deudaId,
+    p_monto:             pago.monto,
+    p_movimiento_id:     mov.id,
+  })
+  if (rpcError) {
+    await supabase.from('movimientos').delete().eq('id', mov.id)   // deshacer el movimiento recién creado
+    throw new Error(rpcError.message)
+  }
+
+  // 3. Compromiso pagado
+  try {
+    await marcarCompromisoPagado(compromiso, pago.fecha)
+  } catch (e: unknown) {
+    throw new PagoRegistradoSinMarcarError(mov.id, e instanceof Error ? e.message : String(e))
+  }
+
+  return { movimientoId: mov.id }
+}
+
 export async function getPagosCompromiso(userId: string): Promise<PagoCompromisoHistorial[]> {
   const { data, error } = await supabase
     .from('movimientos')
     .select('id, compromiso_id, monto, fecha, nota')
     .eq('usuario_id', userId)
-    .eq('tipo', 'gasto')
+    .in('tipo', ['gasto', 'pago_deuda'])
     .not('compromiso_id', 'is', null)
     .order('fecha', { ascending: false })
     .limit(200)

@@ -13,6 +13,7 @@ import {
   type PagoCompromisoHistorial,
 } from '@/services/suscripciones.service'
 import { procesarEventoRPG } from '@/services/rpg/rpg.service'
+import { registrarPagoCompromisoConDeuda, marcarCompromisoPagado, type PagoConDeudaData } from '@/services/suscripciones.service'
 import type { Suscripcion, SuscripcionFormData } from '@/types/app.types'
 
 export type { PagoCompromisoHistorial }
@@ -87,6 +88,34 @@ export function useRegistrarPagoCompromiso() {
       qc.invalidateQueries({ queryKey: ['movimientos'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
     }
+  })
+}
+
+/** Paga un compromiso abonando a una deuda de tarjeta (un solo movimiento conectado). */
+export function useRegistrarPagoCompromisoConDeuda() {
+  const { user } = useAuthStore()
+  const qc       = useQueryClient()
+  const refrescar = () => {
+    qc.invalidateQueries({ queryKey: KEY })
+    qc.invalidateQueries({ queryKey: KEY_PAG })
+    qc.invalidateQueries({ queryKey: ['movimientos'] })
+    qc.invalidateQueries({ queryKey: ['cuentas'] })
+    qc.invalidateQueries({ queryKey: ['deudas'] })
+  }
+  return useMutation({
+    mutationFn: ({ compromiso, deudaId, pago }: { compromiso: Suscripcion; deudaId: string; pago: PagoConDeudaData }) =>
+      registrarPagoCompromisoConDeuda(user!.id, compromiso, deudaId, pago),
+    onSuccess: refrescar,
+    onError:   refrescar,   // si el dinero se movió pero faltó marcar el compromiso, la pantalla debe reflejarlo
+  })
+}
+
+/** Reintenta solo el paso de marcar el compromiso como pagado (no mueve dinero). */
+export function useMarcarCompromisoPagado() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ compromiso, fecha }: { compromiso: Suscripcion; fecha: string }) => marcarCompromisoPagado(compromiso, fecha),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: KEY }); qc.invalidateQueries({ queryKey: KEY_PAG }) },
   })
 }
 

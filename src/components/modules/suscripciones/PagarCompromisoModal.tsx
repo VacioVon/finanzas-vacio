@@ -8,7 +8,10 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { AccountPicker } from '@/components/ui/AccountPicker'
 import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
-import { useRegistrarPagoCompromiso } from '@/hooks/useSuscripciones'
+import { useRegistrarPagoCompromiso, useRegistrarPagoCompromisoConDeuda, useMarcarCompromisoPagado } from '@/hooks/useSuscripciones'
+import { useDeudas } from '@/hooks/useDeudas'
+import { PagoRegistradoSinMarcarError } from '@/services/suscripciones.service'
+import { deudasPagablesDeTarjeta, validarPagoConDeuda, resumenPagoConDeuda } from '@/utils/pagoCompromisoDeuda'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
 import type { Suscripcion, Cuenta } from '@/types/app.types'
@@ -35,6 +38,9 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   const { data: cuentas }       = useCuentas()
   const { data: saldoTerceros } = useSaldoTerceros()
   const pagarMutation            = useRegistrarPagoCompromiso()
+  const pagarConDeudaMutation    = useRegistrarPagoCompromisoConDeuda()
+  const marcarMutation           = useMarcarCompromisoPagado()
+  const { data: deudas }         = useDeudas()
 
   const primaryCuentaNombre = saldoTerceros?.primaryCuentaId
     ? (cuentas ?? []).find(c => c.id === saldoTerceros.primaryCuentaId)?.nombre ?? null
@@ -49,6 +55,11 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   const [saldoAntes, setSaldoAntes]   = useState<number>(0)
   const [montoFinal, setMontoFinal]   = useState<number>(0)
   const wasOpen = useRef(false)
+
+  // 'cuenta': pago normal desde una cuenta · 'deuda': abono a una compra en cuotas de la tarjeta
+  const [modo, setModo]           = useState<'cuenta' | 'deuda'>('cuenta')
+  const [deudaId, setDeudaId]     = useState<string>('')
+  const [pendienteMarcar, setPendienteMarcar] = useState<string | null>(null)   // pago hecho, falta marcar compromiso
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -68,6 +79,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
     if (isOpen && !wasOpen.current) {
       setPaso('formulario')
       setError(null)
+      setModo('cuenta'); setDeudaId(''); setPendienteMarcar(null)
       reset({
         fecha:     todayISO(),
         monto:     compromiso?.monto ?? 0,
@@ -89,6 +101,12 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
     const esTerceros   = data.cuenta_id === TERCEROS_VIRTUAL
     const realCuentaId = esTerceros ? (saldoTerceros?.primaryCuentaId ?? '') : data.cuenta_id
     const cuenta       = (cuentas ?? []).find(c => c.id === realCuentaId) ?? null
+    if (modo === 'deuda') {
+      if (!deudaElegida) { setError('Elige la deuda de la tarjeta que vas a pagar'); return }
+      const invalido = validarPagoConDeuda(deudaElegida.pendiente, data.monto, cuenta)
+      if (invalido) { setError(invalido); return }
+    }
+    setError(null)
     setCuentaFinal(cuenta)
     setSaldoAntes(cuenta?.saldo_actual ?? 0)
     setMontoFinal(data.monto)
@@ -99,6 +117,20 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   async function ejecutarPago() {
     if (!compromiso || !cuentaFinal) return
     setError(null)
+    if (modo === 'deuda' && deudaElegida) {
+      try {
+        await pagarConDeudaMutation.mutateAsync({
+          compromiso, deudaId: deudaElegida.deuda.id,
+          pago: { cuenta_id: cuentaFinal.id, monto: montoFinal, fecha: watch('fecha'), nota: watch('nota') || undefined },
+        })
+        setPaso('exito')
+      } catch (e: unknown) {
+        if (e instanceof PagoRegistradoSinMarcarError) setPendienteMarcar(e.movimientoId)
+        setError(e instanceof Error ? e.message : 'Error al registrar pago')
+        setPaso('formulario')
+      }
+      return
+    }
     const esTerceros = watch('cuenta_id') === TERCEROS_VIRTUAL
     try {
       const data = {
@@ -119,6 +151,25 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   if (!compromiso) return null
 
   const cuentasDisponibles = (cuentas ?? []).filter(c => c.activa && c.tipo !== 'credito')
+  const pagables      = deudasPagablesDeTarjeta(deudas ?? [], cuentas ?? [], compromiso.nombre)
+  const deudaElegida  = pagables.find(p => p.deuda.id === deudaId) ?? null
+  const montoNum      = Number(montoActual) || 0
+  const resumenDeuda  = deudaElegida ? resumenPagoConDeuda(deudaElegida.pendiente, montoFinal || montoNum, deudaElegida.deuda.cuota_mensual) : null
+
+  function elegirModo(m: 'cuenta' | 'deuda') {
+    setModo(m); setError(null)
+    if (m === 'deuda') {
+      const primera = pagables[0]
+      if (primera) { setDeudaId(primera.deuda.id); setValue('monto', primera.cuotaSugerida) }
+    } else {
+      setDeudaId(''); setValue('monto', compromiso?.monto ?? 0)
+    }
+  }
+  function elegirDeuda(id: string) {
+    setDeudaId(id)
+    const p = pagables.find(x => x.deuda.id === id)
+    if (p) setValue('monto', p.cuotaSugerida)
+  }
   const saldoDespues       = saldoAntes - montoFinal
   const saldoInsuficiente  = saldoDespues < 0
 
@@ -163,6 +214,57 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
             </div>
           </div>
 
+          {/* Cómo se paga */}
+          <div>
+            <label className="text-xs text-slate-400 font-medium uppercase tracking-wide block mb-1.5">Cómo lo pagas</label>
+            <div className="grid grid-cols-2 gap-1 bg-night-3/40 rounded-xl p-1">
+              {([['cuenta', 'Desde una cuenta'], ['deuda', 'Con deuda de tarjeta']] as const).map(([k, label]) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => elegirModo(k)}
+                  className={[
+                    'py-2 rounded-lg text-[11px] font-semibold transition-all',
+                    modo === k ? 'bg-night-2 text-slate-100 shadow' : 'text-slate-500 hover:text-slate-400',
+                  ].join(' ')}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {modo === 'deuda' && (
+            <div className="space-y-2" data-testid="selector-deuda-tarjeta">
+              {pagables.length === 0 ? (
+                <p className="text-xs text-xp-300 bg-xp-500/10 border border-xp-500/25 rounded-xl p-3">
+                  No hay compras en cuotas de tarjeta pendientes. Regístralas primero en Deudas, ligadas a tu tarjeta.
+                </p>
+              ) : (
+                <>
+                  <label className="text-xs text-slate-400 font-medium uppercase tracking-wide block">Compra de la tarjeta que pagas</label>
+                  <select
+                    value={deudaId}
+                    onChange={e => elegirDeuda(e.target.value)}
+                    className="w-full h-11 px-3 rounded-xl border border-night-border bg-night-3 text-white text-sm outline-none"
+                  >
+                    {pagables.map(p => (
+                      <option key={p.deuda.id} value={p.deuda.id}>
+                        {p.coincideNombre ? '★ ' : ''}{p.deuda.nombre.trim()} · pendiente {formatCLP(p.pendiente)} · {p.tarjeta.nombre.trim()}
+                      </option>
+                    ))}
+                  </select>
+                  {deudaElegida && (
+                    <p className="text-[11px] text-slate-500 tabular-nums">
+                      Cuota sugerida {formatCLP(deudaElegida.cuotaSugerida)} · {deudaElegida.cuotasRestantes}{' '}
+                      {deudaElegida.cuotasRestantes === 1 ? 'cuota restante' : 'cuotas restantes'}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {/* Monto */}
           <div>
             <label className="text-xs text-slate-400 font-medium uppercase tracking-wide block mb-1.5">
@@ -192,7 +294,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
             selectedId={cuentaIdSeleccionada}
             onChange={id => setValue('cuenta_id', id, { shouldValidate: true })}
             error={errors.cuenta_id?.message}
-            virtualTerceros={virtualTerceros}
+            virtualTerceros={modo === 'deuda' ? null : virtualTerceros}
           />
 
           {cuentaIdSeleccionada === TERCEROS_VIRTUAL && primaryCuentaNombre && (
@@ -229,6 +331,23 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
             </div>
           )}
 
+          {pendienteMarcar && compromiso && (
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              loading={marcarMutation.isPending}
+              onClick={async () => {
+                try {
+                  await marcarMutation.mutateAsync({ compromiso, fecha: watch('fecha') })
+                  setPendienteMarcar(null); setError(null); setPaso('exito')
+                } catch (e: unknown) { setError(e instanceof Error ? e.message : 'No se pudo marcar el compromiso') }
+              }}
+            >
+              Reintentar: marcar compromiso como pagado
+            </Button>
+          )}
+
           <div className="flex gap-2 pt-1">
             <Button type="button" variant="secondary" fullWidth onClick={handleClose}>Cancelar</Button>
             <Button type="submit" variant="primary" fullWidth>Continuar</Button>
@@ -262,6 +381,18 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
                   −{formatCLP(montoFinal)}
                 </span>
               </div>
+
+              {modo === 'deuda' && deudaElegida && resumenDeuda && (
+                <div className="rounded-xl bg-night-3/50 p-3 space-y-1.5 text-xs" data-testid="resumen-pago-deuda">
+                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Un solo movimiento conecta:</p>
+                  <div className="flex justify-between"><span className="text-slate-400">Deuda de {deudaElegida.tarjeta.nombre.trim()}</span><span className="tabular-nums text-ingreso-400">−{formatCLP(montoFinal)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-400">{deudaElegida.deuda.nombre.trim()} pendiente</span>
+                    <span className="tabular-nums text-slate-200">{formatCLP(deudaElegida.pendiente)} → {formatCLP(resumenDeuda.pendienteDespues)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-400">Cuotas restantes</span>
+                    <span className="tabular-nums text-slate-200">{resumenDeuda.saldaLaDeuda ? 'Deuda saldada' : `${resumenDeuda.plan?.cuotasRestantes ?? 1}`}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-400">Compromiso «{compromiso.nombre.trim()}»</span><span className="text-ingreso-400">queda pagado</span></div>
+                </div>
+              )}
 
               {/* Cuenta */}
               <div className="flex items-center justify-between">
@@ -313,7 +444,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
               type="button"
               variant="primary"
               fullWidth
-              loading={pagarMutation.isPending}
+              loading={pagarMutation.isPending || pagarConDeudaMutation.isPending}
               onClick={ejecutarPago}
             >
               Confirmar pago

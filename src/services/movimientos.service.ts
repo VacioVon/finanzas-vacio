@@ -172,6 +172,24 @@ export async function createMovimiento(
 
 // ✅ CORREGIDO: elimina el registro Y revierte los saldos usando RPC atómica
 export async function deleteMovimiento(id: string): Promise<void> {
+  // Pago de una deuda ligada a una tarjeta: la reversa de la base aún no deshace el efecto sobre la
+  // tarjeta, así que eliminarlo descuadraría su saldo. Se bloquea hasta corregir esa función.
+  const { data: mov } = await supabase
+    .from('movimientos')
+    .select('tipo, deuda_id, deuda:deudas(nombre, cuenta:cuentas(tipo))')
+    .eq('id', id)
+    .maybeSingle()
+  if (mov?.tipo === 'pago_deuda' && mov.deuda_id) {
+    const deuda = mov.deuda as unknown as { nombre?: string; cuenta?: { tipo?: string } | { tipo?: string }[] | null } | null
+    const cuenta = Array.isArray(deuda?.cuenta) ? deuda?.cuenta[0] : deuda?.cuenta
+    if (cuenta?.tipo === 'credito') {
+      throw new Error(
+        `Este pago pertenece a la deuda "${deuda?.nombre?.trim()}", ligada a una tarjeta de crédito. ` +
+        'Eliminarlo aún no es seguro (descuadraría el saldo de la tarjeta). Pendiente de corregir en la base de datos.'
+      )
+    }
+  }
+
   const { error } = await supabase.rpc('eliminar_movimiento', {
     p_movimiento_id: id
   })
