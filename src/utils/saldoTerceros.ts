@@ -59,3 +59,10 @@ export function calcularSaldoTerceros(movs: MovTerceros[]): SaldoTercerosCalcula
 export function sobranteTrasPago(disponible: number, monto: number): number {
   return Math.max(0, Math.round(disponible - monto))
 }
+
+/** Monto que el usuario decide pasar a su dinero: entero entre 0 y el sobrante disponible. */
+export function montoParaMi(texto: string | number, sobrante: number): number {
+  const n = typeof texto === 'number' ? texto : parseFloat(String(texto).replace(/[^\d.-]/g, ''))
+  if (!Number.isFinite(n) || n <= 0) return 0
+  return Math.min(Math.round(n), Math.max(0, Math.round(sobrante)))
+}

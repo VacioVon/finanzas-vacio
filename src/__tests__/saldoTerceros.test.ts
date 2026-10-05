@@ -68,3 +68,18 @@ describe('calcularSaldoTerceros', () => {
     expect(sobranteTrasPago(8000, 8000)).toBe(0)
   })
 })
+
+import { montoParaMi } from '../utils/saldoTerceros'
+
+describe('montoParaMi (cuánto del sobrante pasa a mi dinero)', () => {
+  it('un monto válido se respeta', () => expect(montoParaMi('300', 500)).toBe(300))
+  it('no puede superar el sobrante', () => expect(montoParaMi(900, 500)).toBe(500))
+  it('vacío, cero, negativo o texto inválido = 0 (no pasa nada a mi dinero)', () => {
+    expect(montoParaMi('', 500)).toBe(0)
+    expect(montoParaMi('0', 500)).toBe(0)
+    expect(montoParaMi('-50', 500)).toBe(0)
+    expect(montoParaMi('abc', 500)).toBe(0)
+  })
+  it('acepta puntos de miles escritos a mano y redondea', () => expect(montoParaMi('1.5', 500)).toBe(2))
+  it('con sobrante 0 siempre es 0', () => expect(montoParaMi(100, 0)).toBe(0))
+})
