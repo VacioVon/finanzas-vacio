@@ -5,6 +5,7 @@ import { useDeleteSuscripcion, useToggleSuscripcion, useMarcarCompromisoPagado }
 import type { PagoCompromisoHistorial } from '@/hooks/useSuscripciones'
 import { SuscripcionForm } from './SuscripcionForm'
 import { PagarCompromisoModal } from './PagarCompromisoModal'
+import { CompraConTarjetaModal } from './CompraConTarjetaModal'
 import type { Suscripcion } from '@/types/app.types'
 import { format, parseISO, differenceInDays } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -67,6 +68,7 @@ interface Props {
 export function SuscripcionCard({ suscripcion: s, historial = [] }: Props) {
   const [editOpen,  setEditOpen]  = useState(false)
   const [pagarOpen, setPagarOpen] = useState(false)
+  const [tarjetaOpen, setTarjetaOpen] = useState(false)
 
   const deleteMutation = useDeleteSuscripcion()
   const toggleMutation = useToggleSuscripcion()
@@ -228,6 +230,16 @@ export function SuscripcionCard({ suscripcion: s, historial = [] }: Props) {
             )}
             {!pagadoEstePeriodo && s.activa && (
               <button
+                onClick={() => setTarjetaOpen(true)}
+                className="text-[11px] font-medium px-2 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors"
+                title="Lo compré con la tarjeta en cuotas: darlo por pagado este mes"
+                data-testid="compre-con-tarjeta"
+              >
+                Con tarjeta
+              </button>
+            )}
+            {!pagadoEstePeriodo && s.activa && (
+              <button
                 onClick={handleYaPagado}
                 disabled={marcarMutation.isPending}
                 className="text-[11px] font-medium px-2 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors"
@@ -306,6 +318,7 @@ export function SuscripcionCard({ suscripcion: s, historial = [] }: Props) {
         onClose={() => setPagarOpen(false)}
         compromiso={s}
       />
+      {tarjetaOpen && <CompraConTarjetaModal isOpen onClose={() => setTarjetaOpen(false)} compromiso={s} />}
     </>
   )
 }
