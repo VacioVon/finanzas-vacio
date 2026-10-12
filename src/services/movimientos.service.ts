@@ -3,6 +3,7 @@ import type { Movimiento, MovimientoFormData } from '@/types/app.types'
 import { getCurrentMonthRange } from '@/utils/dates'
 import { resolverEdicion, deudasInvolucradas } from '@/utils/movimientosEdicion'
 import { calcularSaldoTerceros } from '@/utils/saldoTerceros'
+import type { UsoComercio } from '@/utils/comercios'
 
 // Fragmento de JOIN reutilizable
 const MOVIMIENTO_SELECT = `
@@ -12,6 +13,19 @@ const MOVIMIENTO_SELECT = `
   cuenta:cuentas!movimientos_cuenta_id_fkey(id, nombre, tipo, color),
   cuenta_destino:cuentas!movimientos_cuenta_destino_id_fkey(id, nombre, tipo, color)
 `
+
+/** Comercio y categoría de los movimientos que tienen comercio (solo lectura), para sugerir al escribir. */
+export async function getUsosComercio(userId: string): Promise<UsoComercio[]> {
+  const { data, error } = await supabase
+    .from('movimientos')
+    .select('comercio, categoria_id')
+    .eq('usuario_id', userId)
+    .not('comercio', 'is', null)
+    .order('fecha', { ascending: false })
+    .limit(3000)
+  if (error) throw error
+  return (data ?? []) as UsoComercio[]
+}
 
 export async function getMovimientos(
   userId: string,

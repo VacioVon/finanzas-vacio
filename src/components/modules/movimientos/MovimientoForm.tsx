@@ -12,7 +12,8 @@ import { TercerosToggle } from '@/components/ui/TercerosToggle'
 import { PagarVariasDeudasModal } from '@/components/modules/deudas/PagarVariasDeudasModal'
 import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
 import { useCategoriasByTipo } from '@/hooks/useCategorias'
-import { useCreateMovimiento, useUpdateMovimiento } from '@/hooks/useMovimientos'
+import { useCreateMovimiento, useUpdateMovimiento, useUsosComercio } from '@/hooks/useMovimientos'
+import { comerciosUnicos, filtrarSugerencias } from '@/utils/comercios'
 import { useCreateCuota } from '@/hooks/useCuotas'
 import { useCrearGastoTercero } from '@/hooks/useCobros'
 import { useDeudas } from '@/hooks/useDeudas'
@@ -225,6 +226,9 @@ export function MovimientoForm({
 
   const selectedCategoriaId = watch('categoria_id')
   const selectedCuentaId    = watch('cuenta_id')
+  const comercioEscrito     = watch('comercio') ?? ''
+  const { data: usosComercio } = useUsosComercio()
+  const sugerenciasComercio = filtrarSugerencias(comerciosUnicos(usosComercio ?? [], selectedCategoriaId || null), comercioEscrito)
   const selectedDestId      = watch('cuenta_destino_id')
   const monto               = Number(watch('monto') ?? 0)
 
@@ -836,8 +840,23 @@ export function MovimientoForm({
               {...register('comercio')}
               type="text"
               placeholder="Ej: Falabella, Uber, Netflix…"
+              autoComplete="off"
               className={`w-full mt-1 h-11 px-3 rounded-xl border text-sm outline-none ${inputDark}`}
             />
+            {sugerenciasComercio.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2" data-testid="sugerencias-comercio">
+                {sugerenciasComercio.map(c => (
+                  <button
+                    key={c.nombre}
+                    type="button"
+                    onClick={() => setValue('comercio', c.nombre, { shouldDirty: true })}
+                    className="px-2.5 py-1 rounded-full border border-night-border bg-night-3/60 text-xs text-slate-300 hover:border-gasto-500/40 hover:text-white transition-colors"
+                  >
+                    {c.nombre}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Nota */}

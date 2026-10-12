@@ -5,6 +5,7 @@ import {
   getMovimientosDelMes,
   getMovimientosPorPeriodo,
   getEvolucionMensual,
+  getUsosComercio,
   createMovimiento,
   deleteMovimiento,
   updateMovimiento,
@@ -25,6 +26,17 @@ export function useMovimientos(options?: { limit?: number; tipo?: string; search
     queryKey: [MOVIMIENTOS_KEY, user?.id, options],
     queryFn: () => getMovimientos(user!.id, options),
     enabled: !!user?.id
+  })
+}
+
+/** Comercios ya ingresados (para sugerirlos en el formulario). Se refresca al crear o editar movimientos. */
+export function useUsosComercio() {
+  const { user } = useAuthStore()
+  return useQuery({
+    queryKey: [MOVIMIENTOS_KEY, user?.id, 'comercios'],
+    queryFn: () => getUsosComercio(user!.id),
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000
   })
 }
 
