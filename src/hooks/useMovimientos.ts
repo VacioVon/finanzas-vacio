@@ -139,6 +139,9 @@ export function useSetComprobanteMovimiento() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, url }: { id: string; url: string | null }) => setComprobanteMovimiento(id, url),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [MOVIMIENTOS_KEY] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [MOVIMIENTOS_KEY] })
+      qc.invalidateQueries({ queryKey: [DEUDAS_KEY, 'historial'] })
+    },
   })
 }

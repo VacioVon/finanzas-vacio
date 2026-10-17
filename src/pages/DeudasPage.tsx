@@ -25,13 +25,13 @@ const filtros: { value: Filtro; label: string }[] = [
 
 export function DeudasPage() {
   const { data: deudas, isLoading } = useDeudas()
-  const [filtro,   setFiltro]   = useState<Filtro>('todas')
+  const [filtro,   setFiltro]   = useState<Filtro>('activa')
   const [formOpen, setFormOpen] = useState(false)
   const [editing,  setEditing]  = useState<Deuda | null>(null)
   const [pagando,  setPagando]  = useState<Deuda | null>(null)
   const [pagoVarias, setPagoVarias] = useState(false)
 
-  const lista = (deudas ?? []).filter(d => filtro === 'todas' || d.estado === filtro)
+  const lista = (deudas ?? []).filter(d => filtro === 'todas' || d.estado === filtro || (filtro === 'activa' && d.estado === 'en_mora'))  // "Activas" incluye las que están en mora: siguen sin pagarse
 
   const activas        = (deudas ?? []).filter(d => d.estado === 'activa' || d.estado === 'en_mora')
   const totalPendiente = activas.reduce((s, d) => s + (d.monto_pendiente_real ?? Math.max(0, d.monto_total - (d.monto_pagado_real ?? 0))), 0)

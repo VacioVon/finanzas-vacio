@@ -8,7 +8,8 @@ import type { Movimiento } from '@/types/app.types'
 interface Props {
   isOpen:     boolean
   onClose:    () => void
-  movimiento: Movimiento
+  movimiento: Pick<Movimiento, 'id' | 'comprobante_url'>
+  onGuardado?: (url: string | null) => void
 }
 
 /**
@@ -16,7 +17,7 @@ interface Props {
  * Solo escribe la columna comprobante_url: no toca montos, saldos, deudas ni tarjetas,
  * por eso funciona con cualquier tipo de movimiento (incluidos los pagos de deuda).
  */
-export function ComprobanteMovimientoModal({ isOpen, onClose, movimiento }: Props) {
+export function ComprobanteMovimientoModal({ isOpen, onClose, movimiento, onGuardado }: Props) {
   const guardar = useSetComprobanteMovimiento()
   const [url, setUrl] = useState<string | null>(movimiento.comprobante_url)
   const [error, setError] = useState('')
@@ -28,6 +29,7 @@ export function ComprobanteMovimientoModal({ isOpen, onClose, movimiento }: Prop
     try {
       await guardar.mutateAsync({ id: movimiento.id, url: nuevaUrl })
       setUrl(nuevaUrl)
+      onGuardado?.(nuevaUrl)
       setGuardado(true)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : ((e as { message?: string })?.message ?? 'No se pudo guardar el comprobante'))

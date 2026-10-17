@@ -1,8 +1,9 @@
-import { ChevronDown, ChevronUp, Receipt } from 'lucide-react'
+import { ChevronDown, ChevronUp, Receipt, Paperclip } from 'lucide-react'
 import { useState } from 'react'
 import { useHistorialPagosDeuda } from '@/hooks/useDeudas'
 import { formatCLP } from '@/utils/currency'
-import type { ContextoPago } from '@/types/app.types'
+import { PagoDeudaDetalleModal } from './PagoDeudaDetalleModal'
+import type { ContextoPago, PagoDeudaHistorial } from '@/types/app.types'
 
 const CONTEXTO_LABEL: Record<ContextoPago, string> = {
   deuda_propia:        'Deuda propia',
@@ -18,10 +19,12 @@ function formatFecha(iso: string) {
 
 interface Props {
   deudaId: string
+  deudaNombre?: string
 }
 
-export function HistorialPagosDeuda({ deudaId }: Props) {
+export function HistorialPagosDeuda({ deudaId, deudaNombre = '' }: Props) {
   const [abierto, setAbierto] = useState(false)
+  const [detalle, setDetalle] = useState<PagoDeudaHistorial | null>(null)
   const { data: pagos, isLoading } = useHistorialPagosDeuda(abierto ? deudaId : null)
 
   return (
@@ -54,9 +57,12 @@ export function HistorialPagosDeuda({ deudaId }: Props) {
           ) : (
             <div className="space-y-2">
               {pagos.map(p => (
-                <div
+                <button
+                  type="button"
                   key={p.id}
-                  className="flex items-start gap-3 p-2.5 rounded-xl bg-night-3/30 border border-night-border/40"
+                  onClick={() => setDetalle(p)}
+                  data-testid="pago-historial"
+                  className="w-full text-left flex items-start gap-3 p-2.5 rounded-xl bg-night-3/30 border border-night-border/40 hover:border-brand-500/40 hover:bg-night-3/60 transition-colors"
                 >
                   {/* Indicador visual */}
                   <div className="size-1.5 rounded-full bg-ingreso-500 mt-1.5 flex-shrink-0" />
@@ -66,7 +72,8 @@ export function HistorialPagosDeuda({ deudaId }: Props) {
                       <span className="text-xs font-semibold text-slate-200 tabular-nums">
                         {formatCLP(p.monto)}
                       </span>
-                      <span className="text-[10px] text-slate-500 tabular-nums flex-shrink-0">
+                      <span className="flex items-center gap-1.5 text-[10px] text-slate-500 tabular-nums flex-shrink-0">
+                        {p.comprobante_url && <Paperclip className="size-3 text-brand-400" aria-label="Tiene comprobante" />}
                         {formatFecha(p.fecha)}
                       </span>
                     </div>
@@ -94,10 +101,11 @@ export function HistorialPagosDeuda({ deudaId }: Props) {
                       )}
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
 
-              <p className="text-[10px] text-slate-600 text-center pt-1 tabular-nums">
+              <p className="text-[10px] text-slate-600 text-center pt-1">Toca un pago para ver su detalle o adjuntar el comprobante</p>
+              <p className="text-[10px] text-slate-600 text-center tabular-nums">
                 {pagos.length} pago{pagos.length !== 1 ? 's' : ''} · total{' '}
                 {formatCLP(pagos.reduce((s, p) => s + p.monto, 0))}
               </p>
@@ -105,6 +113,7 @@ export function HistorialPagosDeuda({ deudaId }: Props) {
           )}
         </div>
       )}
+      {detalle && <PagoDeudaDetalleModal pago={detalle} deuda={deudaNombre} onClose={() => setDetalle(null)} />}
     </div>
   )
 }

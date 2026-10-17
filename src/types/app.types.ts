@@ -259,6 +259,9 @@ export interface PagoDeudaHistorial {
   nota:          string | null
   contexto_pago: ContextoPago | null
   created_at:    string
+  tipo?:            string
+  comprobante_url?: string | null
+  fondos_tercero?:  boolean
 }
 
 export interface DeudaFormData {

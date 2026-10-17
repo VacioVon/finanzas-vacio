@@ -274,7 +274,7 @@ export function DeudaCard({ deuda, onEdit, onPagar }: DeudaCardProps) {
 
       {/* Historial de pagos — full-bleed al fondo */}
       <div className="border-t" style={{ borderColor: `${color}15` }}>
-        <HistorialPagosDeuda deudaId={deuda.id} />
+        <HistorialPagosDeuda deudaId={deuda.id} deudaNombre={deuda.nombre} />
       </div>
     </div>
   )

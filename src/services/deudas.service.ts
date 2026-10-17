@@ -138,10 +138,21 @@ export async function getHistorialPagosDeuda(
   deudaId: string,
   userId: string
 ): Promise<PagoDeudaHistorial[]> {
+  // Lectura directa (mismos filtros que el RPC obtener_historial_pagos_deuda) para traer también el comprobante
   const { data, error } = await supabase
-    .rpc('obtener_historial_pagos_deuda', { p_deuda_id: deudaId, p_user_id: userId })
+    .from('movimientos')
+    .select('id, fecha, monto, capital, interes_pago, cuenta_id, nota, contexto_pago, created_at, tipo, comprobante_url, fondos_tercero, cuenta:cuentas!movimientos_cuenta_id_fkey(nombre)')
+    .eq('deuda_id', deudaId)
+    .eq('usuario_id', userId)
+    .in('tipo', ['pago_deuda', 'pago_tarjeta', 'transferencia', 'gasto'])
+    .order('fecha', { ascending: false })
+    .order('created_at', { ascending: false })
   if (error) throw error
-  return (data ?? []) as PagoDeudaHistorial[]
+  return (data ?? []).map(r => {
+    const { cuenta, ...resto } = r as unknown as Record<string, unknown> & { cuenta: { nombre: string } | { nombre: string }[] | null }
+    const nombre = Array.isArray(cuenta) ? cuenta[0]?.nombre : cuenta?.nombre
+    return { ...resto, cuenta_nombre: nombre ?? null } as unknown as PagoDeudaHistorial
+  })
 }
 
 /** Total pendiente de todas las deudas activas — usado para Patrimonio Neto */
