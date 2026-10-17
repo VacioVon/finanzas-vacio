@@ -10,6 +10,8 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useCuentas } from '@/hooks/useCuentas'
 import { useCreateMovimiento } from '@/hooks/useMovimientos'
 import { useSaldoTerceros } from '@/hooks/useCuentas'
+import { useCategoriasByTipo } from '@/hooks/useCategorias'
+import { parseMora, totalConMora, categoriaParaMora, notaMora } from '@/utils/mora'
 import { formatCLP } from '@/utils/currency'
 import { todayISO } from '@/utils/dates'
 import { sobranteTrasPago } from '@/utils/saldoTerceros'
@@ -22,7 +24,8 @@ const schema = z.object({
   monto:     z.coerce.number().positive('Debe ser mayor a 0'),
   cuenta_id: z.string().min(1, 'Selecciona una cuenta'),
   fecha:     z.string().min(1, 'Requerido'),
-  nota:      z.string().max(120).optional()
+  nota:      z.string().max(120).optional(),
+  mora:      z.union([z.string(), z.number()]).optional()
 })
 type FormValues = z.infer<typeof schema>
 
@@ -42,6 +45,7 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
   const { data: cuentas }        = useCuentas()
   const { data: saldoTerceros }  = useSaldoTerceros()
   const createMov                = useCreateMovimiento()
+  const { data: categoriasGasto } = useCategoriasByTipo('gasto')
   const [sobrante, setSobrante]  = useState<number | null>(null)   // (sin uso: ya no hay billetera virtual)
   const [deTerceros, setDeTerceros] = useState(false)
 
@@ -75,7 +79,8 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
         monto:     montoProximaCuota(realPendiente, deuda.cuota_mensual),
         fecha:     todayISO(),
         cuenta_id: '',
-        nota:      ''
+        nota:      '',
+        mora:      ''
       })
     }
   }, [isOpen, deuda, reset])
@@ -94,6 +99,23 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
         nota:           data.nota || undefined,
         fondos_tercero: esTerceros || deTerceros,
       })
+      // Mora por atraso (opcional): gasto aparte, no baja la deuda
+      const mora = parseMora(data.mora)
+      if (mora > 0) {
+        try {
+          await createMov.mutateAsync({
+            tipo:           'gasto',
+            fecha:          data.fecha,
+            monto:          mora,
+            cuenta_id:      cuentaFinal,
+            categoria_id:   categoriaParaMora(categoriasGasto ?? [])?.id,
+            nota:           notaMora(deuda.nombre),
+            fondos_tercero: esTerceros || deTerceros,
+          })
+        } catch (e: unknown) {
+          alert('El pago de la cuota quedó registrado, pero la mora no se pudo guardar: ' + (e instanceof Error ? e.message : 'error') + '\nRegístrala como gasto aparte.')
+        }
+      }
       // Pagó con dinero de terceros: si sobra, se pregunta si queda para el usuario
       if (esTerceros && saldoTerceros) {
         const resto = sobranteTrasPago(saldoTerceros.disponible, data.monto)
@@ -209,6 +231,29 @@ export function PagarDeudaForm({ isOpen, onClose, deuda }: PagarDeudaFormProps) 
             </p>
           </div>
         )}
+
+        {/* Mora por atraso: se escribe a mano porque cambia según los días */}
+        <div>
+          <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+            Mora / interés por atraso <span className="normal-case font-normal">(opcional)</span>
+          </label>
+          <div className="relative mt-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">$</span>
+            <input
+              {...register('mora')}
+              type="number"
+              inputMode="numeric"
+              placeholder="Ej: 1092"
+              data-testid="mora"
+              className={[inputBase, inputRing, 'h-10 pl-7 pr-3 text-sm tabular-nums', inputBorder].join(' ')}
+            />
+          </div>
+          {parseMora(watch('mora')) > 0 && (
+            <p className="text-[11px] text-slate-400 mt-1 tabular-nums" data-testid="resumen-mora">
+              Sale de la cuenta {formatCLP(totalConMora(Number(watch('monto')) || 0, Number(watch('mora'))))}: {formatCLP(Number(watch('monto')) || 0)} baja la deuda y {formatCLP(parseMora(watch('mora')))} de mora se registra como gasto aparte.
+            </p>
+          )}
+        </div>
 
         <TercerosToggle value={deTerceros} onChange={setDeTerceros} ayuda="Pago con plata de otra persona (no es mi gasto)" />
 
