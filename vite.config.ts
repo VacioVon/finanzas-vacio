@@ -26,23 +26,28 @@ export default defineConfig({
     spaFallbackPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icons/*.png'],
+      includeAssets: ['icons/apple-touch-icon.png', 'icons/favicon-32.png'],
       manifest: {
-        name: 'Finanzas Vacío',
-        short_name: 'Finanzas',
+        id: '/',
+        name: 'Quemen los Barcos',
+        short_name: 'QloB',
         description: 'Tu asistente financiero personal',
-        theme_color: '#2563EB',
-        background_color: '#F8FAFC',
+        lang: 'es',
+        theme_color: '#1A1822',
+        background_color: '#1A1822',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
+        scope: '/',
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globIgnores: ['icons/icon-512.png', 'icons/icon-maskable-512.png'],
         // Clave para PWA: cualquier navegación sin match sirve index.html
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/rest/, /^\/auth/, /^\/storage/],
