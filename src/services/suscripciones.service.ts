@@ -192,6 +192,67 @@ export async function registrarPagoCompromiso(
   await marcarCompromisoPagado(compromiso, pago.fecha)
 }
 
+/**
+ * Paga un compromiso con varios medios de pago (p. ej. efectivo + débito): un gasto por cuenta,
+ * ambos ligados al compromiso, y el compromiso se marca pagado UNA sola vez.
+ * Si una parte falla, se deshacen las anteriores para no dejar el pago a medias.
+ */
+export async function registrarPagoCompromisoDividido(
+  userId: string,
+  compromiso: Suscripcion,
+  partes: { cuenta_id: string; monto: number }[],
+  comun: { fecha: string; nota?: string; fondos_tercero?: boolean }
+): Promise<{ movimientoIds: string[] }> {
+  if (partes.length < 2) throw new Error('Un pago dividido necesita al menos dos cuentas')
+  const hechos: string[] = []
+  const deshacer = async () => {
+    for (const id of hechos.splice(0).reverse()) await supabase.rpc('eliminar_movimiento', { p_movimiento_id: id })
+  }
+
+  for (const parte of partes) {
+    const { data: mov, error: movErr } = await supabase
+      .from('movimientos')
+      .insert({
+        usuario_id:      userId,
+        tipo:            'gasto',
+        fecha:           comun.fecha,
+        monto:           parte.monto,
+        cuenta_id:       parte.cuenta_id,
+        categoria_id:    compromiso.categoria_id    || null,
+        subcategoria_id: compromiso.subcategoria_id || null,
+        nota:            comun.nota ?? `Pago: ${compromiso.nombre} (pago dividido)`,
+        compromiso_id:   compromiso.id,
+        fondos_tercero:  comun.fondos_tercero ?? false,
+      })
+      .select('id')
+      .single()
+    if (movErr) { await deshacer(); throw new Error(movErr.message) }
+
+    const { error: rpcError } = await supabase.rpc('procesar_movimiento', {
+      p_tipo:              'gasto',
+      p_cuenta_id:         parte.cuenta_id,
+      p_cuenta_destino_id: null,
+      p_objetivo_id:       null,
+      p_deuda_id:          null,
+      p_monto:             parte.monto,
+      p_movimiento_id:     mov.id,
+    })
+    if (rpcError) {
+      await supabase.from('movimientos').delete().eq('id', mov.id)   // este movimiento aún no movió saldos
+      await deshacer()
+      throw new Error(rpcError.message)
+    }
+    hechos.push(mov.id)
+  }
+
+  try {
+    await marcarCompromisoPagado(compromiso, comun.fecha)
+  } catch (e: unknown) {
+    throw new PagoRegistradoSinMarcarError(hechos[0], e instanceof Error ? e.message : String(e))
+  }
+  return { movimientoIds: hechos }
+}
+
 /** Deja el compromiso como pagado: avanza proxima_fecha al siguiente ciclo y guarda el último pago. */
 export async function marcarCompromisoPagado(compromiso: Suscripcion, fechaPago: string): Promise<void> {
   const base      = compromiso.proxima_fecha ? parseISO(compromiso.proxima_fecha) : new Date()

@@ -13,7 +13,7 @@ import {
   type PagoCompromisoHistorial,
 } from '@/services/suscripciones.service'
 import { procesarEventoRPG } from '@/services/rpg/rpg.service'
-import { registrarPagoCompromisoConDeuda, marcarCompromisoPagado, type PagoConDeudaData } from '@/services/suscripciones.service'
+import { registrarPagoCompromisoConDeuda, registrarPagoCompromisoDividido, marcarCompromisoPagado, type PagoConDeudaData } from '@/services/suscripciones.service'
 import type { Suscripcion, SuscripcionFormData } from '@/types/app.types'
 
 export type { PagoCompromisoHistorial }
@@ -82,6 +82,25 @@ export function useRegistrarPagoCompromiso() {
   return useMutation({
     mutationFn: ({ compromiso, pago }: { compromiso: Suscripcion; pago: PagoCompromisoData }) =>
       registrarPagoCompromiso(user!.id, compromiso, pago),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY })
+      qc.invalidateQueries({ queryKey: KEY_PAG })
+      qc.invalidateQueries({ queryKey: ['movimientos'] })
+      qc.invalidateQueries({ queryKey: ['cuentas'] })
+    }
+  })
+}
+
+/** Paga un compromiso con dos medios de pago (un gasto por cuenta). */
+export function useRegistrarPagoCompromisoDividido() {
+  const { user } = useAuthStore()
+  const qc       = useQueryClient()
+  return useMutation({
+    mutationFn: ({ compromiso, partes, comun }: {
+      compromiso: Suscripcion
+      partes: { cuenta_id: string; monto: number }[]
+      comun: { fecha: string; nota?: string; fondos_tercero?: boolean }
+    }) => registrarPagoCompromisoDividido(user!.id, compromiso, partes, comun),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY })
       qc.invalidateQueries({ queryKey: KEY_PAG })

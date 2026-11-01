@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { AccountPicker } from '@/components/ui/AccountPicker'
 import { useCuentas, useSaldoTerceros } from '@/hooks/useCuentas'
-import { useRegistrarPagoCompromiso, useRegistrarPagoCompromisoConDeuda, useMarcarCompromisoPagado } from '@/hooks/useSuscripciones'
+import { useRegistrarPagoCompromiso, useRegistrarPagoCompromisoConDeuda, useRegistrarPagoCompromisoDividido, useMarcarCompromisoPagado } from '@/hooks/useSuscripciones'
 import { useDeudas } from '@/hooks/useDeudas'
 import { PagoRegistradoSinMarcarError } from '@/services/suscripciones.service'
 import { sobranteTrasPago } from '@/utils/saldoTerceros'
 import { TercerosToggle } from '@/components/ui/TercerosToggle'
 import { SobranteTercerosModal } from '@/components/modules/movimientos/SobranteTercerosModal'
 import { deudasPagablesDeTarjeta, validarPagoConDeuda, resumenPagoConDeuda } from '@/utils/pagoCompromisoDeuda'
+import { validarPagoDividido, partesDePago, montoSegundaParte } from '@/utils/pagoDividido'
 import { todayISO } from '@/utils/dates'
 import { formatCLP } from '@/utils/currency'
 import type { Suscripcion, Cuenta } from '@/types/app.types'
@@ -42,6 +43,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   const { data: saldoTerceros } = useSaldoTerceros()
   const pagarMutation            = useRegistrarPagoCompromiso()
   const pagarConDeudaMutation    = useRegistrarPagoCompromisoConDeuda()
+  const pagarDivididoMutation    = useRegistrarPagoCompromisoDividido()
   const marcarMutation           = useMarcarCompromisoPagado()
   const { data: deudas }         = useDeudas()
 
@@ -63,6 +65,11 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
   const [pendienteMarcar, setPendienteMarcar] = useState<string | null>(null)
   const [sobrante, setSobrante] = useState<number | null>(null)   // (sin uso: ya no hay billetera virtual)
   const [deTerceros, setDeTerceros] = useState(false)   // pago hecho, falta marcar compromiso
+  // Pago dividido entre dos medios de pago (p. ej. efectivo + débito)
+  const [dividir, setDividir]       = useState(false)
+  const [monto1, setMonto1]         = useState('')          // lo que sale de la primera cuenta
+  const [cuenta2Id, setCuenta2Id]   = useState('')
+  const [partes, setPartes]         = useState<{ cuenta: Cuenta; monto: number; saldoAntes: number }[]>([])
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -83,6 +90,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
       setPaso('formulario')
       setError(null)
       setModo('cuenta'); setDeudaId(''); setPendienteMarcar(null); setDeTerceros(false)
+      setDividir(false); setMonto1(''); setCuenta2Id(''); setPartes([])
       reset({
         fecha:     todayISO(),
         monto:     compromiso?.monto ?? 0,
@@ -109,6 +117,18 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
       const invalido = validarPagoConDeuda(deudaElegida.pendiente, data.monto, cuenta)
       if (invalido) { setError(invalido); return }
     }
+    if (modo === 'cuenta' && dividir) {
+      const cuenta2 = (cuentas ?? []).find(c => c.id === cuenta2Id) ?? null
+      const invalido = validarPagoDividido(data.monto, Number(monto1), cuenta, cuenta2)
+      if (invalido || !cuenta || !cuenta2) { setError(invalido ?? 'Elige las dos cuentas'); return }
+      const [p1, p2] = partesDePago(data.monto, cuenta.id, Number(monto1), cuenta2.id)
+      setPartes([
+        { cuenta,  monto: p1.monto, saldoAntes: cuenta.saldo_actual },
+        { cuenta: cuenta2, monto: p2.monto, saldoAntes: cuenta2.saldo_actual },
+      ])
+    } else {
+      setPartes([])
+    }
     setError(null)
     setCuentaFinal(cuenta)
     setSaldoAntes(cuenta?.saldo_actual ?? 0)
@@ -125,6 +145,21 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
         await pagarConDeudaMutation.mutateAsync({
           compromiso, deudaId: deudaElegida.deuda.id,
           pago: { cuenta_id: cuentaFinal.id, monto: montoFinal, fecha: watch('fecha'), nota: watch('nota') || undefined, fondos_tercero: deTerceros },
+        })
+        setPaso('exito')
+      } catch (e: unknown) {
+        if (e instanceof PagoRegistradoSinMarcarError) setPendienteMarcar(e.movimientoId)
+        setError(e instanceof Error ? e.message : 'Error al registrar pago')
+        setPaso('formulario')
+      }
+      return
+    }
+    if (modo === 'cuenta' && partes.length === 2) {
+      try {
+        await pagarDivididoMutation.mutateAsync({
+          compromiso,
+          partes: partes.map(p => ({ cuenta_id: p.cuenta.id, monto: p.monto })),
+          comun: { fecha: watch('fecha'), nota: watch('nota') || undefined, fondos_tercero: deTerceros },
         })
         setPaso('exito')
       } catch (e: unknown) {
@@ -304,6 +339,60 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
             virtualTerceros={modo === 'deuda' ? null : virtualTerceros}
           />
 
+          {/* Pagar con dos medios de pago */}
+          {modo === 'cuenta' && (
+            <div className="space-y-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={dividir}
+                onClick={() => setDividir(v => !v)}
+                data-testid="dividir-pago"
+                className={['w-full flex items-center justify-between gap-3 p-3 rounded-2xl border text-left transition-colors',
+                  dividir ? 'border-mover-500/40 bg-mover-500/10' : 'border-night-border bg-night-3/40'].join(' ')}
+              >
+                <span>
+                  <span className="block text-sm font-semibold text-slate-100">Pagar con dos medios de pago</span>
+                  <span className="block text-[11px] text-slate-500">Ej: una parte en efectivo y otra con débito</span>
+                </span>
+                <span className={['w-10 h-6 rounded-full p-0.5 flex-shrink-0 transition-colors', dividir ? 'bg-mover-500' : 'bg-night-border'].join(' ')}>
+                  <span className={['block size-5 rounded-full bg-white transition-transform', dividir ? 'translate-x-4' : ''].join(' ')} />
+                </span>
+              </button>
+
+              {dividir && (
+                <div className="space-y-3 p-3 rounded-2xl border border-night-border/60 bg-night-3/30" data-testid="pago-dividido">
+                  <div>
+                    <label className="text-xs text-slate-400 font-medium uppercase tracking-wide block mb-1.5">
+                      Monto desde la primera cuenta
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={monto1}
+                      onChange={e => setMonto1(e.target.value)}
+                      placeholder="Ej: 8000"
+                      data-testid="monto-primera-cuenta"
+                      className="w-full h-11 px-3 rounded-xl border border-night-border bg-night-3 text-white text-sm tabular-nums outline-none focus:border-mover-500"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1">La primera cuenta es la de arriba («Pagar desde»).</p>
+                  </div>
+                  <AccountPicker
+                    label="Segunda cuenta"
+                    cuentas={cuentasDisponibles.filter(c => c.id !== cuentaIdSeleccionada)}
+                    selectedId={cuenta2Id}
+                    onChange={setCuenta2Id}
+                  />
+                  {Number(monto1) > 0 && montoNum > 0 && (
+                    <p className="text-[11px] text-ingreso-400 tabular-nums" data-testid="resumen-dividido">
+                      Primera cuenta {formatCLP(Number(monto1))} + segunda cuenta {formatCLP(montoSegundaParte(montoNum, Number(monto1)))} = total {formatCLP(montoNum)}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {cuentaIdSeleccionada === TERCEROS_VIRTUAL && primaryCuentaNombre && (
             <div className="flex items-start gap-2 p-3 rounded-xl border border-dashed"
               style={{ borderColor: '#F4645F40', backgroundColor: '#F4645F08' }}>
@@ -404,11 +493,25 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
               )}
 
               {/* Cuenta */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Desde</span>
-                <span className="text-sm font-semibold text-white">{cuentaFinal.nombre}</span>
-              </div>
+              {partes.length === 2 ? (
+                <div className="space-y-2" data-testid="confirmar-dividido">
+                  {partes.map(p => (
+                    <div key={p.cuenta.id} className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-slate-500">Desde {p.cuenta.nombre.trim()}</span>
+                      <span className="text-xs tabular-nums text-slate-300">
+                        −{formatCLP(p.monto)} · {formatCLP(p.saldoAntes)} → <span style={{ color: p.saldoAntes - p.monto < 0 ? '#F4645F' : '#10D97F' }}>{formatCLP(p.saldoAntes - p.monto)}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500">Desde</span>
+                  <span className="text-sm font-semibold text-white">{cuentaFinal.nombre}</span>
+                </div>
+              )}
 
+              {partes.length !== 2 && (
               <div className="border-t border-night-border/40 pt-3 mt-1">
                 {/* Balance antes → después */}
                 <div className="flex items-center justify-between gap-2">
@@ -425,15 +528,16 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
                   </div>
                 </div>
               </div>
+              )}
             </div>
           </div>
 
           {/* Advertencia saldo insuficiente */}
-          {saldoInsuficiente && (
+          {(partes.length === 2 ? partes.some(p => p.saldoAntes - p.monto < 0) : saldoInsuficiente) && (
             <div className="flex items-start gap-2 p-3 rounded-xl bg-xp-500/10 border border-xp-500/25">
               <AlertCircle className="h-4 w-4 text-xp-400 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-xp-300">
-                El saldo de <strong>{cuentaFinal.nombre}</strong> quedaría negativo. El pago se registrará igual.
+                {partes.length === 2 ? 'El saldo de una de las cuentas' : <>El saldo de <strong>{cuentaFinal.nombre}</strong></>} quedaría negativo. El pago se registrará igual.
               </p>
             </div>
           )}
@@ -453,7 +557,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
               type="button"
               variant="primary"
               fullWidth
-              loading={pagarMutation.isPending || pagarConDeudaMutation.isPending}
+              loading={pagarMutation.isPending || pagarConDeudaMutation.isPending || pagarDivididoMutation.isPending}
               onClick={ejecutarPago}
             >
               Confirmar pago
@@ -483,7 +587,16 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
             </p>
           </div>
 
+          {partes.length === 2 && (
+            <div className="space-y-1 text-xs text-slate-300 tabular-nums" data-testid="exito-dividido">
+              {partes.map(p => (
+                <p key={p.cuenta.id}>{p.cuenta.nombre.trim()}: −{formatCLP(p.monto)} → {formatCLP(p.saldoAntes - p.monto)}</p>
+              ))}
+            </div>
+          )}
+
           {/* Cambio de saldo */}
+          {partes.length !== 2 && (
           <div
             className="flex items-center justify-center gap-3 p-4 rounded-2xl border"
             style={{ backgroundColor: '#10D97F08', borderColor: '#10D97F20' }}
@@ -498,6 +611,7 @@ export function PagarCompromisoModal({ isOpen, onClose, compromiso }: Props) {
               <p className="text-sm font-bold tabular-nums text-ingreso-400">{formatCLP(saldoAntes - montoFinal)}</p>
             </div>
           </div>
+          )}
 
           <Button type="button" variant="primary" fullWidth onClick={handleClose}>
             Listo
