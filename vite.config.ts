@@ -47,7 +47,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        globIgnores: ['icons/icon-512.png', 'icons/icon-maskable-512.png'],
+        globIgnores: ['icons/icon-512.png', 'icons/icon-maskable-512.png', '**/exceljs*.js'],
         // Clave para PWA: cualquier navegación sin match sirve index.html
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/rest/, /^\/auth/, /^\/storage/],
@@ -64,6 +64,22 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // Librerías estables en archivos aparte: cargan en paralelo y, al desplegar cambios de la app,
+        // el teléfono ya las tiene en caché (solo baja el código nuevo).
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) return 'vendor-react'
+          if (id.includes('@supabase')) return 'vendor-supabase'
+          if (id.includes('@tanstack')) return 'vendor-query'
+          if (/node_modules\/(zod|react-hook-form|@hookform)\//.test(id)) return 'vendor-forms'
+          return undefined
+        }
+      }
+    }
+  },
   resolve: {
     // path.resolve garantiza compatibilidad Windows/Unix
     alias: { '@': path.resolve(__dirname, './src') }

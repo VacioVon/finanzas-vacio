@@ -69,9 +69,30 @@ function useApplyTheme() {
   }, [tema])
 }
 
+function usePrecargarPantallas() {
+  const { user } = useAuthStore()
+  useEffect(() => {
+    if (!user) return
+    const precargar = () => {
+      void import('@/pages/MovimientosPage')
+      void import('@/pages/DeudasPage')
+      void import('@/pages/SuscripcionesPage')
+      void import('@/pages/CuentasPage')
+    }
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void }
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(precargar, { timeout: 4000 })
+      return () => w.cancelIdleCallback?.(id)
+    }
+    const t = window.setTimeout(precargar, 2500)
+    return () => window.clearTimeout(t)
+  }, [user])
+}
+
 export function App() {
   useAuthListener()
   useApplyTheme()
+  usePrecargarPantallas()
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-background" />}>

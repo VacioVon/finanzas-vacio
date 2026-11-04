@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { Plus, ListChecks } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Header } from '@/components/layout/Header'
@@ -11,14 +11,22 @@ import { PagarDeudaForm } from '@/components/modules/deudas/PagarDeudaForm'
 import { PagarVariasDeudasModal } from '@/components/modules/deudas/PagarVariasDeudasModal'
 import { Button } from '@/components/ui/Button'
 import { useDeudas } from '@/hooks/useDeudas'
+import { useCuentas } from '@/hooks/useCuentas'
+import { useMovimientosPorPeriodo } from '@/hooks/useMovimientos'
+import { useAuthStore } from '@/store/authStore'
+import { getCurrentMesAnio, etiquetaRangoPeriodo } from '@/utils/periodo'
+import { resumenTarjetas } from '@/utils/deudasTarjeta'
+import { DeudasTarjetaResumen } from '@/components/modules/deudas/DeudasTarjetaResumen'
+import { PagarMontoTarjetaModal } from '@/components/modules/deudas/PagarMontoTarjetaModal'
 import { formatCLP } from '@/utils/currency'
 import type { Deuda } from '@/types/app.types'
 
-type Filtro = 'todas' | 'activa' | 'en_mora' | 'pagada'
+type Filtro = 'todas' | 'activa' | 'tarjeta' | 'en_mora' | 'pagada'
 
 const filtros: { value: Filtro; label: string }[] = [
   { value: 'todas',   label: 'Todas'    },
   { value: 'activa',  label: 'Activas'  },
+  { value: 'tarjeta', label: 'Tarjeta (juntas)' },
   { value: 'en_mora', label: 'En mora'  },
   { value: 'pagada',  label: 'Pagadas'  }
 ]
@@ -30,8 +38,20 @@ export function DeudasPage() {
   const [editing,  setEditing]  = useState<Deuda | null>(null)
   const [pagando,  setPagando]  = useState<Deuda | null>(null)
   const [pagoVarias, setPagoVarias] = useState(false)
+  const [pagoMonto, setPagoMonto]   = useState(false)
 
-  const lista = (deudas ?? []).filter(d => filtro === 'todas' || d.estado === filtro || (filtro === 'activa' && d.estado === 'en_mora'))  // "Activas" incluye las que están en mora: siguen sin pagarse
+  // Vista "Tarjeta (juntas)": deudas de tarjeta agrupadas + lo pagado en el período actual
+  const { data: cuentas } = useCuentas()
+  const { profile } = useAuthStore()
+  const fechaSueldo = profile?.fecha_sueldo ?? 1
+  const { mes: mesP, anio: anioP } = getCurrentMesAnio(fechaSueldo)
+  const { data: movimientosPeriodo } = useMovimientosPorPeriodo(mesP, anioP, fechaSueldo)
+  const resumenTarj = useMemo(
+    () => resumenTarjetas(deudas ?? [], cuentas ?? [], (movimientosPeriodo ?? []).filter(m => m.tipo === 'pago_deuda')),
+    [deudas, cuentas, movimientosPeriodo]
+  )
+
+  const lista = filtro === 'tarjeta' ? [] : (deudas ?? []).filter(d => filtro === 'todas' || d.estado === filtro || (filtro === 'activa' && d.estado === 'en_mora'))  // "Activas" incluye las que están en mora: siguen sin pagarse
 
   const activas        = (deudas ?? []).filter(d => d.estado === 'activa' || d.estado === 'en_mora')
   const totalPendiente = activas.reduce((s, d) => s + (d.monto_pendiente_real ?? Math.max(0, d.monto_total - (d.monto_pagado_real ?? 0))), 0)
@@ -95,6 +115,8 @@ export function DeudasPage() {
         <div className="px-4 lg:px-0 pb-8">
           {isLoading ? (
             <SkeletonList count={3} />
+          ) : filtro === 'tarjeta' ? (
+            <DeudasTarjetaResumen resumen={resumenTarj} periodo={etiquetaRangoPeriodo(mesP, anioP, fechaSueldo)} onPagarMonto={() => setPagoMonto(true)} />
           ) : lista.length === 0 ? (
             <EmptyState
               icon="💳"
@@ -139,6 +161,7 @@ export function DeudasPage() {
         />
       )}
       <PagarVariasDeudasModal isOpen={pagoVarias} onClose={() => setPagoVarias(false)} />
+      <PagarMontoTarjetaModal isOpen={pagoMonto} onClose={() => setPagoMonto(false)} resumen={resumenTarj} />
     </AppLayout>
   )
 }
