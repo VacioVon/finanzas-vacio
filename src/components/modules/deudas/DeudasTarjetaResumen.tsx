@@ -4,15 +4,20 @@ import { Button } from '@/components/ui/Button'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { formatCLP } from '@/utils/currency'
 import type { ResumenTarjetas } from '@/utils/deudasTarjeta'
+import type { Movimiento } from '@/types/app.types'
 
 interface Props {
   resumen:      ResumenTarjetas
   periodo:      string          // "28 sep – 27 oct"
   onPagarMonto: () => void
+  sinAsignar:   Movimiento[]
+  onRegistrarSinAsignar: () => void
+  onAsignar:    (pago: Movimiento) => void
 }
 
 /** Todas las deudas de tarjeta juntas: cuánto debes, cuánto pagaste este período y qué pagar primero. */
-export function DeudasTarjetaResumen({ resumen, periodo, onPagarMonto }: Props) {
+export function DeudasTarjetaResumen({ resumen, periodo, onPagarMonto, sinAsignar, onRegistrarSinAsignar, onAsignar }: Props) {
+  const totalSin = sinAsignar.reduce((s, p) => s + p.monto, 0)
   if (resumen.cantidad === 0) {
     return (
       <Card>
@@ -56,6 +61,29 @@ export function DeudasTarjetaResumen({ resumen, periodo, onPagarMonto }: Props) 
         <Button type="button" variant="primary" fullWidth className="mt-3" onClick={onPagarMonto} data-testid="pagar-monto-tarjeta">
           <Wallet className="h-4 w-4" />
           Pagar un monto y repartirlo
+        </Button>
+      </Card>
+
+      {/* Pagos a la tarjeta que aún no se asignan a una deuda */}
+      <Card>
+        <p className="text-xs font-semibold text-slate-200 mb-1">Pagos sin asignar</p>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          ¿Pagaste a la tarjeta y aún no sabes qué deuda se pagó? Regístralo aquí y asígnalo cuando llegue el estado de cuenta.
+        </p>
+        {sinAsignar.length > 0 && (
+          <div className="mt-3 space-y-2" data-testid="lista-sin-asignar">
+            <p className="text-sm font-bold text-ingreso-400 tabular-nums">Acumulado: {formatCLP(totalSin)}</p>
+            {sinAsignar.map(p => (
+              <div key={p.id} className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-night-border bg-night-3/40">
+                <span className="text-xs text-slate-300 tabular-nums">{formatCLP(p.monto)} · {p.fecha}</span>
+                <Button type="button" size="sm" variant="secondary" onClick={() => onAsignar(p)} data-testid="asignar-pago">Asignar</Button>
+              </div>
+            ))}
+          </div>
+        )}
+        <Button type="button" variant="secondary" fullWidth className="mt-3" onClick={onRegistrarSinAsignar} data-testid="registrar-sin-asignar">
+          <CreditCard className="h-4 w-4" />
+          Pagué a la tarjeta (sin asignar)
         </Button>
       </Card>
 

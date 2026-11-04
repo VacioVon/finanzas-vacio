@@ -18,8 +18,11 @@ import { getCurrentMesAnio, etiquetaRangoPeriodo } from '@/utils/periodo'
 import { resumenTarjetas } from '@/utils/deudasTarjeta'
 import { DeudasTarjetaResumen } from '@/components/modules/deudas/DeudasTarjetaResumen'
 import { PagarMontoTarjetaModal } from '@/components/modules/deudas/PagarMontoTarjetaModal'
+import { PagoTarjetaSinAsignarModal, AsignarPagoTarjetaModal } from '@/components/modules/deudas/PagosSinAsignarModales'
+import { esPagoSinAsignar } from '@/utils/pagosSinAsignar'
+import { useMovimientos } from '@/hooks/useMovimientos'
 import { formatCLP } from '@/utils/currency'
-import type { Deuda } from '@/types/app.types'
+import type { Deuda, Movimiento } from '@/types/app.types'
 
 type Filtro = 'todas' | 'activa' | 'tarjeta' | 'en_mora' | 'pagada'
 
@@ -39,6 +42,10 @@ export function DeudasPage() {
   const [pagando,  setPagando]  = useState<Deuda | null>(null)
   const [pagoVarias, setPagoVarias] = useState(false)
   const [pagoMonto, setPagoMonto]   = useState(false)
+  const [sinAsignarOpen, setSinAsignarOpen] = useState(false)
+  const [asignando, setAsignando] = useState<Movimiento | null>(null)
+  const { data: pagosTarjeta } = useMovimientos({ tipo: 'pago_tarjeta' })
+  const sinAsignar = useMemo(() => (pagosTarjeta ?? []).filter(esPagoSinAsignar), [pagosTarjeta])
 
   // Vista "Tarjeta (juntas)": deudas de tarjeta agrupadas + lo pagado en el período actual
   const { data: cuentas } = useCuentas()
@@ -116,7 +123,7 @@ export function DeudasPage() {
           {isLoading ? (
             <SkeletonList count={3} />
           ) : filtro === 'tarjeta' ? (
-            <DeudasTarjetaResumen resumen={resumenTarj} periodo={etiquetaRangoPeriodo(mesP, anioP, fechaSueldo)} onPagarMonto={() => setPagoMonto(true)} />
+            <DeudasTarjetaResumen resumen={resumenTarj} periodo={etiquetaRangoPeriodo(mesP, anioP, fechaSueldo)} onPagarMonto={() => setPagoMonto(true)} sinAsignar={sinAsignar} onRegistrarSinAsignar={() => setSinAsignarOpen(true)} onAsignar={setAsignando} />
           ) : lista.length === 0 ? (
             <EmptyState
               icon="💳"
@@ -161,6 +168,8 @@ export function DeudasPage() {
         />
       )}
       <PagarVariasDeudasModal isOpen={pagoVarias} onClose={() => setPagoVarias(false)} />
+      <PagoTarjetaSinAsignarModal isOpen={sinAsignarOpen} onClose={() => setSinAsignarOpen(false)} />
+      <AsignarPagoTarjetaModal pago={asignando} resumen={resumenTarj} onClose={() => setAsignando(null)} />
       <PagarMontoTarjetaModal isOpen={pagoMonto} onClose={() => setPagoMonto(false)} resumen={resumenTarj} />
     </AppLayout>
   )

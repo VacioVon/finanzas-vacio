@@ -7,7 +7,8 @@ import {
   updateEstadoDeuda,
   deleteDeuda,
   getTotalDeudasActivas,
-  getHistorialPagosDeuda
+  getHistorialPagosDeuda,
+  asignarPagoTarjeta
 } from '@/services/deudas.service'
 import { procesarEventoRPG } from '@/services/rpg/rpg.service'
 import type { DeudaFormData } from '@/types/app.types'
@@ -89,5 +90,22 @@ export function useHistorialPagosDeuda(deudaId: string | null) {
     queryFn:   () => getHistorialPagosDeuda(deudaId!, user!.id),
     enabled:   !!deudaId && !!user?.id,
     staleTime: 30_000,
+  })
+}
+
+/** Asigna un pago a la tarjeta sin asignar a las deudas indicadas. */
+export function useAsignarPagoTarjeta() {
+  const { user } = useAuthStore()
+  const qc = useQueryClient()
+  const refrescar = () => {
+    qc.invalidateQueries({ queryKey: [DEUDAS_KEY] })
+    qc.invalidateQueries({ queryKey: ['movimientos'] })
+    qc.invalidateQueries({ queryKey: ['cuentas'] })
+  }
+  return useMutation({
+    mutationFn: ({ pago, lineas }: { pago: Parameters<typeof asignarPagoTarjeta>[1]; lineas: Parameters<typeof asignarPagoTarjeta>[2] }) =>
+      asignarPagoTarjeta(user!.id, pago, lineas),
+    onSuccess: refrescar,
+    onError: refrescar,
   })
 }
