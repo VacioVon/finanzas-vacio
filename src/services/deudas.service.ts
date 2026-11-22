@@ -46,7 +46,7 @@ export async function createDeuda(userId: string, form: DeudaFormData): Promise<
       usuario_id:          userId,
       nombre:              form.nombre,
       tipo_deuda:          form.tipo_deuda          ?? null,
-      prestamista_nombre:  form.prestamista_nombre  ?? null,
+      prestamista_nombre:  form.prestamista_nombre?.trim() || null,
       categoria_id:        form.categoria_id         || null,
       cuenta_id:           form.cuenta_id            || null,
       monto_total:         form.monto_total,
