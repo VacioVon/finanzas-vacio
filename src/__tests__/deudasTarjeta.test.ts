@@ -72,3 +72,27 @@ describe('resumenTarjetas', () => {
     expect(resumenTarjetas([d('3', null, 100, 10)], [cmr], []).tarjetas).toEqual([])
   })
 })
+
+describe('resumenTarjetas: lo mío vs. de otras personas', () => {
+  const cmr = { id: 'cmr', nombre: 'CMR', tipo: 'credito', activa: true } as unknown as Cuenta
+  const d = (id: string, total: number, cuota: number, persona: string | null): Deuda => ({
+    id, nombre: `Deuda ${id}`, cuenta_id: 'cmr', monto_total: total, monto_pendiente: total, monto_pendiente_real: total,
+    cuota_mensual: cuota, estado: 'activa', direccion: 'debo', fecha_prox_pago: null, prestamista_nombre: persona,
+  } as unknown as Deuda)
+
+  it('separa lo tuyo de lo de tu mamá y el total del banco los suma', () => {
+    const r = resumenTarjetas([d('1', 60000, 20000, null), d('2', 40000, 10000, '  Mamá '), d('3', 5000, 5000, '')], [cmr], [])
+    expect(r.totalMio).toBe(65000)
+    expect(r.totalDeOtros).toBe(40000)
+    expect(r.totalPendiente).toBe(105000)
+    expect(r.cuotasDelMesMio).toBe(25000)
+    expect(r.personas).toEqual([{ nombre: 'Mamá', total: 40000 }])
+    expect(r.tarjetas[0].deudas.find(x => x.deuda.id === '2')!.deOtro).toBe('Mamá')
+    expect(r.tarjetas[0].deudas.find(x => x.deuda.id === '3')!.deOtro).toBeNull()
+  })
+  it('sin deudas de otros, lo tuyo es el total', () => {
+    const r = resumenTarjetas([d('1', 1000, 500, null)], [cmr], [])
+    expect(r.totalDeOtros).toBe(0)
+    expect(r.totalMio).toBe(r.totalPendiente)
+  })
+})

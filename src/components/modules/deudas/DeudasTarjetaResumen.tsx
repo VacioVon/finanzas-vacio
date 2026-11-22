@@ -28,21 +28,26 @@ export function DeudasTarjetaResumen({ resumen, periodo, onPagarMonto, sinAsigna
     )
   }
 
-  const pendienteTrasCuotas = Math.max(0, resumen.totalPendiente - resumen.cuotasDelMes)
+  const pendienteTrasCuotas = Math.max(0, resumen.totalMio - resumen.cuotasDelMesMio)
 
   return (
     <div className="space-y-3" data-testid="resumen-tarjeta">
       {/* Cuadro de lo que debo */}
       <Card padding="none">
         <div className="p-4 text-center border-b border-night-border/40">
-          <p className="text-[11px] text-slate-500 uppercase tracking-wide">Debes en tarjeta</p>
-          <p className="text-3xl font-bold text-gasto-400 tabular-nums mt-1">{formatCLP(resumen.totalPendiente)}</p>
+          <p className="text-[11px] text-slate-500 uppercase tracking-wide">{resumen.totalDeOtros > 0 ? 'Lo tuyo en tarjeta' : 'Debes en tarjeta'}</p>
+          <p className="text-3xl font-bold text-gasto-400 tabular-nums mt-1" data-testid="total-mio">{formatCLP(resumen.totalMio)}</p>
           <p className="text-[11px] text-slate-500 mt-1">{resumen.cantidad} {resumen.cantidad === 1 ? 'deuda' : 'deudas'}</p>
+          {resumen.totalDeOtros > 0 && (
+            <p className="text-[11px] text-slate-400 mt-2 tabular-nums" data-testid="total-de-otros">
+              + de otras personas {formatCLP(resumen.totalDeOtros)} ({resumen.personas.map(p => p.nombre).join(', ')}) = total del banco {formatCLP(resumen.totalPendiente)}
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-2 divide-x divide-night-border/40">
           <div className="p-3 text-center">
-            <p className="text-[10px] text-slate-500">Cuotas del mes</p>
-            <p className="text-sm font-bold text-white tabular-nums">{formatCLP(resumen.cuotasDelMes)}</p>
+            <p className="text-[10px] text-slate-500">Tus cuotas del mes</p>
+            <p className="text-sm font-bold text-white tabular-nums">{formatCLP(resumen.cuotasDelMesMio)}</p>
           </div>
           <div className="p-3 text-center">
             <p className="text-[10px] text-slate-500">Pagado ({periodo})</p>
@@ -55,7 +60,7 @@ export function DeudasTarjetaResumen({ resumen, periodo, onPagarMonto, sinAsigna
       <Card>
         <p className="text-xs font-semibold text-slate-200 mb-1">Qué conviene pagar</p>
         <p className="text-xs text-slate-400 leading-relaxed">
-          Pagando {formatCLP(resumen.cuotasDelMes)} cubres la cuota de todas tus deudas este mes y quedarías debiendo {formatCLP(pendienteTrasCuotas)}.
+          Pagando {formatCLP(resumen.cuotasDelMesMio)} cubres la cuota de todas tus deudas este mes y quedarías debiendo {formatCLP(pendienteTrasCuotas)}.
           Si te sobra, conviene abonar a la deuda de menor saldo para terminarla antes.
         </p>
         <Button type="button" variant="primary" fullWidth className="mt-3" onClick={onPagarMonto} data-testid="pagar-monto-tarjeta">
@@ -101,7 +106,7 @@ export function DeudasTarjetaResumen({ resumen, periodo, onPagarMonto, sinAsigna
             {t.deudas.map(d => (
               <li key={d.deuda.id} className="px-4 py-3 space-y-1.5" data-testid="deuda-tarjeta">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-sm text-slate-200 truncate">{d.deuda.nombre.trim()}</span>
+                  <span className="text-sm text-slate-200 truncate">{d.deuda.nombre.trim()}{d.deOtro && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-xp-500/15 text-xp-300 align-middle">de {d.deOtro}</span>}</span>
                   <span className="text-sm font-semibold text-slate-100 tabular-nums flex-shrink-0">{formatCLP(d.pendiente)}</span>
                 </div>
                 <ProgressBar value={d.deuda.monto_total - d.pendiente} max={d.deuda.monto_total} color="green" size="sm" />

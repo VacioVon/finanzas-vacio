@@ -45,3 +45,11 @@ export function resolverEdicion(original: Movimiento, form: MovimientoFormData):
 export function deudasInvolucradas(original: Movimiento, deudaNueva: string | null): string[] {
   return [...new Set([original.deuda_id, deudaNueva].filter((d): d is string => !!d))]
 }
+
+/**
+ * Tipo que se envía a procesar_movimiento para mover saldos. La versión vigente de esa función en la base
+ * (038) perdió el caso 'pago_tarjeta', así que ese pago no movía ningún saldo. Un pago a la tarjeta es,
+ * en saldos, igual a una transferencia (cuenta de origen −monto, tarjeta +monto), y su reversa en la base
+ * (revertir_movimiento) ya deshace exactamente eso.
+ */
+export const tipoParaSaldos = (tipo: string): string => (tipo === 'pago_tarjeta' ? 'transferencia' : tipo)

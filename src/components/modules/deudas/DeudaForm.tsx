@@ -120,7 +120,8 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
     const form = {
       nombre:              data.nombre,
       tipo_deuda:          (data.tipo_deuda || undefined) as import('@/types/app.types').TipoDeuda | undefined,
-      prestamista_nombre:  esDeudaPersona   ? (data.prestamista_nombre?.trim() || undefined) : undefined,
+      // En deudas de tarjeta, el nombre indica de quién es la compra (vacío = mía); '' permite quitarlo al editar
+      prestamista_nombre:  esDeudaPersona   ? (data.prestamista_nombre?.trim() || undefined) : (esTarjetaCredito ? (data.prestamista_nombre?.trim() ?? '') : undefined),
       cuenta_id:           esTarjetaCredito  ? (data.cuenta_id || undefined) : undefined,
       monto_total:         data.monto_total,
       // Modo monto: el N° de cuotas es una proyeccion (pagadas + restantes); no altera pagos reales
@@ -193,6 +194,14 @@ export function DeudaForm({ isOpen, onClose, editing }: DeudaFormProps) {
             <p className="text-[10px] text-slate-500 mt-1">
               Al pagar esta deuda, el cupo disponible de la tarjeta se recuperará automáticamente.
             </p>
+            <div className="mt-3">
+              <Input
+                label="¿La compra es de otra persona? (opcional)"
+                placeholder="Ej: Mamá. Déjalo vacío si es tuya"
+                {...register('prestamista_nombre')}
+              />
+              <p className="text-[10px] text-slate-500 mt-1">En «Tarjeta (juntas)» se muestra aparte de lo tuyo.</p>
+            </div>
           </div>
         )}
 

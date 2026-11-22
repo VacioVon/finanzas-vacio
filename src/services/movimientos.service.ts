@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import type { Movimiento, MovimientoFormData } from '@/types/app.types'
 import { getCurrentMonthRange } from '@/utils/dates'
-import { resolverEdicion, deudasInvolucradas } from '@/utils/movimientosEdicion'
+import { resolverEdicion, deudasInvolucradas, tipoParaSaldos } from '@/utils/movimientosEdicion'
 import { calcularSaldoTerceros } from '@/utils/saldoTerceros'
 import type { UsoComercio } from '@/utils/comercios'
 
@@ -171,7 +171,7 @@ export async function createMovimiento(
   // afectan el saldo (ingreso +, gasto/pago -). Los gráficos los excluyen por separado.
   {
     const { error: rpcError } = await supabase.rpc('procesar_movimiento', {
-      p_tipo:              form.tipo,
+      p_tipo:              tipoParaSaldos(form.tipo),
       p_cuenta_id:         form.cuenta_id || null,
       p_cuenta_destino_id: form.cuenta_destino_id || null,
       p_objetivo_id:       form.objetivo_ahorro_id || null,

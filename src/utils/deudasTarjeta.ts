@@ -7,7 +7,8 @@ import { agruparDeudasPagables, type DeudaElegible } from '@/utils/pagoVariasDeu
  */
 
 export interface DeudaTarjetaResumen extends DeudaElegible {
-  pagadoPeriodo: number   // pagos a esta deuda dentro del período actual
+  pagadoPeriodo: number         // pagos a esta deuda dentro del período actual
+  deOtro:        string | null  // de quién es la compra si no es mía (prestamista_nombre); null = mía
 }
 export interface TarjetaResumen {
   tarjetaId:       string
@@ -19,10 +20,14 @@ export interface TarjetaResumen {
 }
 export interface ResumenTarjetas {
   tarjetas:        TarjetaResumen[]
-  totalPendiente:  number
+  totalPendiente:  number   // todo lo que cobra el banco (mío + de otros)
   cuotasDelMes:    number
   pagadoPeriodo:   number
   cantidad:        number
+  totalMio:        number   // solo lo mío
+  cuotasDelMesMio: number
+  totalDeOtros:    number
+  personas:        { nombre: string; total: number }[]   // de otras personas, de mayor a menor
 }
 
 /** Agrupa por tarjeta las deudas pendientes ligadas a una tarjeta de crédito, con lo pagado en el período. */
@@ -35,7 +40,7 @@ export function resumenTarjetas(
   const tarjetas: TarjetaResumen[] = agruparDeudasPagables(deudas, cuentas)
     .filter(g => g.tarjetaId)
     .map(g => {
-      const ds = g.items.map(e => ({ ...e, pagadoPeriodo: pagado.get(e.deuda.id) ?? 0 }))
+      const ds = g.items.map(e => ({ ...e, pagadoPeriodo: pagado.get(e.deuda.id) ?? 0, deOtro: e.deuda.prestamista_nombre?.trim() || null }))
       return {
         tarjetaId: g.tarjetaId!, nombre: g.titulo.replace(/^Tarjeta\s+/, ''), deudas: ds,
         totalPendiente: ds.reduce((s, d) => s + d.pendiente, 0),
@@ -43,8 +48,17 @@ export function resumenTarjetas(
         pagadoPeriodo:  ds.reduce((s, d) => s + d.pagadoPeriodo, 0),
       }
     })
+  const todas = tarjetas.flatMap(t => t.deudas)
+  const mias = todas.filter(d => !d.deOtro)
+  const porPersona = new Map<string, number>()
+  for (const d of todas) if (d.deOtro) porPersona.set(d.deOtro, (porPersona.get(d.deOtro) ?? 0) + d.pendiente)
+  const personas = [...porPersona].map(([nombre, total]) => ({ nombre, total })).sort((a, b) => b.total - a.total)
   return {
     tarjetas,
+    totalMio:        mias.reduce((s, d) => s + d.pendiente, 0),
+    cuotasDelMesMio: mias.reduce((s, d) => s + d.cuotaSugerida, 0),
+    totalDeOtros:    personas.reduce((s, p) => s + p.total, 0),
+    personas,
     totalPendiente: tarjetas.reduce((s, t) => s + t.totalPendiente, 0),
     cuotasDelMes:   tarjetas.reduce((s, t) => s + t.cuotasDelMes, 0),
     pagadoPeriodo:  tarjetas.reduce((s, t) => s + t.pagadoPeriodo, 0),

@@ -1,7 +1,7 @@
 /**
  * Ajuste puntual aprobado por el usuario (2026-11-04), según el estado de cuenta CMR del 19/10/2026.
  *  1. Liga Waffle diego y Regalo anillo a la tarjeta CMR (solo cambia deudas.cuenta_id).
- *  2. Crea las deudas de tarjeta Mercado Libre y Skechers (con el pago previo de Mercado Libre, sin cuenta: no mueve saldos).
+ *  2. Crea las deudas de tarjeta Mercado Libre, Estacionamiento Saba y Skechers (con el pago previo de Mercado Libre, sin cuenta: no mueve saldos).
  * No toca saldos, ni borra nada. Idempotente: si las deudas ya existen, no las vuelve a crear.
  * Uso: node supabase/scripts/ajuste_tarjeta_2026-11-04.mjs [--aplicar]   (sin --aplicar solo muestra lo que haría)
  */
@@ -38,6 +38,9 @@ const NUEVAS = [
   { nombre: 'Mercado Libre', monto_total: 72348, pagado_previo: 36174, cuotas_total: 6, cuota_mensual: 12058,
     fecha_compra: '2026-07-05', fecha_prox_pago: '2026-11-05',
     nota: 'Mp *mercado libre · 6 cuotas de $12.058 · la 4/6 se cobra en el estado de cuenta de oct (vence 05/11). Pagado previo: 3 cuotas.' },
+  { nombre: 'Estacionamiento Saba', monto_total: 1000, pagado_previo: 0, cuotas_total: 1, cuota_mensual: 1000,
+    fecha_compra: '2026-09-29', fecha_prox_pago: '2026-11-05',
+    nota: 'Saba estacionamientos (La Serena) · 1 cuota de $1.000 · se cobra en el estado de cuenta de oct (vence 05/11).' },
   { nombre: 'Skechers', monto_total: 37980, pagado_previo: 0, cuotas_total: 3, cuota_mensual: 12660,
     fecha_compra: '2026-10-07', fecha_prox_pago: '2026-11-05',
     nota: 'Skechers Vitacura · 3 cuotas de $12.660 · la 1/3 se cobra en el estado de cuenta de oct (vence 05/11).' },

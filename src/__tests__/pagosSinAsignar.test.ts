@@ -38,3 +38,13 @@ describe('pagos sin asignar', () => {
     expect(validarAsignacion(500, [{ deudaId: 'a', nombre: 'A', pendiente: 500, monto: 500 }]).restante).toBe(0)
   })
 })
+
+import { tipoParaSaldos } from '@/utils/movimientosEdicion'
+describe('tipoParaSaldos', () => {
+  it('un pago a la tarjeta mueve saldos como una transferencia (origen −, tarjeta +)', () => {
+    expect(tipoParaSaldos('pago_tarjeta')).toBe('transferencia')
+  })
+  it('los demás tipos no cambian', () => {
+    for (const t of ['ingreso', 'gasto', 'ahorro', 'pago_deuda', 'transferencia']) expect(tipoParaSaldos(t)).toBe(t)
+  })
+})
